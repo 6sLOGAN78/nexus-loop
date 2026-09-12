@@ -24,3 +24,6 @@ htmlcov/
 Thumbs.db
 *.swp
 *~
+
+# Nexus Loop pipeline output
+out/
