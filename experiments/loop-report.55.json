@@ -219,7 +219,7 @@
       },
       "metric": "resolution_rate",
       "window": {
-        "from_day": 34,
+        "from_day": 35,
         "to_day": 45
       },
       "observed": 0.31,
@@ -258,7 +258,7 @@
       },
       "metric": "resolution_rate",
       "window": {
-        "from_day": 40,
+        "from_day": 42,
         "to_day": 52
       },
       "observed": 0.766,

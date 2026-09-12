@@ -119,7 +119,7 @@ report['findings'].append({
 report['diagnoses'].append({
     "id": "d5",
     "finding_id": "f5",
-    "cause_class": "load_event",
+    "cause_class": "load",
     "confidence": 0.99,
     "attributed_change": None,
     "evidence": ["volume spike"]
