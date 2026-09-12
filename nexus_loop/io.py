@@ -142,3 +142,12 @@ class Kit:
 
     def milestones(self) -> Dict[str, Dict[str, List[str]]]:
         return self.catalog.get("milestones") or {}
+
+
+def format_change(c: dict) -> str:
+    """One-line config marker. Target is often equal to kind (e.g. kind=kb,
+    target=kb); saying both avoids the 'kb kb …' stutter in evidence strings."""
+    return ("config_timeline day %d: kind=%s target=%s %s -> %s '%s'"
+            % (c["day"], c.get("kind"), c.get("target"), c.get("from_value"),
+               c.get("to_value"), c.get("note", "")))
+

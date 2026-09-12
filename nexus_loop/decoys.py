@@ -16,6 +16,7 @@ from collections import Counter, defaultdict
 from typing import Dict, List, Optional
 
 from .features import Corpus, contained, mean, median, percentile, rate, resolved
+from .io import format_change
 from .series import DaySeries, best_window
 
 
@@ -253,9 +254,7 @@ def detect_judge_boundary(corpus: Corpus) -> List[dict]:
                     "%s %.3f -> %.3f" % (t, v[0], v[1]) for t, v in sorted(per_tenant.items())),
                 "mean quality within version: %s" % "; ".join(
                     "%s %.3f (n=%d)" % (v, m, n) for v, (m, n) in sorted(within.items())),
-            ] + (["config_timeline day %d: %s %s %s -> %s '%s'" % (
-                change["day"], change["kind"], change["target"], change.get("from_value"),
-                change.get("to_value"), change.get("note", ""))] if change else []),
+            ] + ([format_change(change)] if change else []),
             "diag_evidence": ["both tenants, all cohorts, same day, same direction",
                               "the yardstick moved; resolution and turns do not move with it"],
         })

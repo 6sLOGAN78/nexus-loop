@@ -19,6 +19,7 @@ from typing import Dict, List, Optional
 from .coverage import Coverage
 from .features import (Corpus, abandoned, mean, median, percentile, rate, resolved,
                        unplanned_handoff)
+from .io import format_change
 from .series import DaySeries, best_window, elevated_run
 
 
@@ -143,9 +144,7 @@ def detect_tool_contract(corpus: Corpus, cov: Coverage) -> List[dict]:
                 % (_fmt(observed, 4), _fmt(expected, 4), baseline_note),
             ]
             if change:
-                evidence.append("config_timeline day %d: %s %s %s -> %s '%s'" % (
-                    change["day"], change["kind"], change["target"], change.get("from_value"),
-                    change.get("to_value"), change.get("note", "")))
+                evidence.append(format_change(change))
             else:
                 evidence.append("no kind=tool config change on %s within %d days of the onset — "
                                 "cause proven by mechanism, change not attributed" % (tool, T.ALIGN_BEFORE))
@@ -296,9 +295,7 @@ def detect_resolution_drops(corpus: Corpus, cov: Coverage, claimed: List[dict]) 
                                 "mechanism proven" % (_fmt(kb_in["hit_rate"]), 100 * tool_share))
                 diag = ["outcome moved but no logged mechanism explains it; no change is blamed"]
             if change:
-                evidence.append("config_timeline day %d: %s %s %s -> %s '%s'" % (
-                    change["day"], change["kind"], change["target"], change.get("from_value"),
-                    change.get("to_value"), change.get("note", "")))
+                evidence.append(format_change(change))
                 diag.append("the %s change on day %d ('%s') is the nearest marker; the launch shipped "
                             "without retrievable coverage for this cohort" % (
                                 change["kind"], change["day"], change.get("note", "")))
@@ -404,9 +401,7 @@ def detect_efficiency(corpus: Corpus, cov: Coverage) -> List[dict]:
                 % (", ".join("%s x%.2f" % kv for kv in sorted(strata.items())) or "n/a"),
             ]
             if change:
-                evidence.append("config_timeline day %d: %s %s %s -> %s '%s'" % (
-                    change["day"], change["kind"], change["target"], change.get("from_value"),
-                    change.get("to_value"), change.get("note", "")))
+                evidence.append(format_change(change))
             else:
                 evidence.append("no prompt/model change targeting %s within %d days of onset" % (agent, T.ALIGN_BEFORE))
             out.append({

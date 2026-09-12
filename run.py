@@ -115,6 +115,10 @@ def maybe_score(report_path: str, kit_root: str) -> int:
 
 
 def main(argv=None) -> int:
+    try:
+        sys.stdout.reconfigure(line_buffering=True)
+    except Exception:
+        pass
     ap = argparse.ArgumentParser(description="Nexus Loop cold run")
     ap.add_argument("--kit", default=os.path.join(ROOT, "kit"))
     ap.add_argument("--corpus-dir", default=None,
