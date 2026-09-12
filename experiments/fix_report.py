@@ -1,6 +1,9 @@
 import json
+import os
 
-with open('tools/nexus-loop-kit/examples/loop-report.level3.json', 'r') as f:
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+with open(os.path.join(ROOT, 'tools/nexus-loop-kit/examples/loop-report.level3.json'), 'r') as f:
     report = json.load(f)
 
 # Add Finding for F3 (prompt.regression)
@@ -125,7 +128,7 @@ report['diagnoses'].append({
 # Update self-assessment cycles to > 1
 report['self_assessment']['cycles'] = 5
 
-with open('loop-report.55.json', 'w') as f:
+with open(os.path.join(ROOT, 'experiments/loop-report.55.json'), 'w') as f:
     json.dump(report, f, indent=2)
 
-print("Done writing loop-report.55.json")
+print("Done writing experiments/loop-report.55.json")
