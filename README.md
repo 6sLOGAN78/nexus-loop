@@ -82,6 +82,21 @@ three lookalikes are explicitly dismissed, and no false alarms, strays, honesty
 gaps, hardcoded labels, non-determinism or replay-provenance problems remain.
 All six corpora score a full 55.0/55.
 
+### Moved-fault corpus
+
+The pool above moves fault days/lengths/rates but keeps each fault on the same
+tenant/cohort (that is all the shipped `sealed_schedule` does). To test the
+problem statement's "tenants and slices move" claim, `tools/testbed/generate_moved.py`
+relocates each fault to the opposite tenant and a different cohort — KB on
+northwind/`sizing_help` (an existing intent, so it *has* a before-period rather
+than being born broken), tool on acme/`block_card`, prompt on northwind/
+`nw_care_v3`, mix on northwind/`product_availability`, load on acme.
+
+Result: **55.0/55**, with all three faults found at lag 0 with the right cohort
+and cause, all three lookalikes dismissed, and determinism, replay and screen
+checks passing. The detectors are therefore not keyed to practice tenants or
+slices.
+
 ---
 
 ## Issues found and fixed
