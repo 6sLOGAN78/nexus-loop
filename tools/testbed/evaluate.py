@@ -314,6 +314,68 @@ def literal_scan(workdir: str, globs: List[str], allow: List[str], literals: Lis
 
 
 # --------------------------------------------------------------------------- #
+# rule checks (Rule 1: no LLM for logged facts; Rule 2: yardstick frozen)
+# --------------------------------------------------------------------------- #
+
+LLM_MARKERS = [
+    "import openai", "from openai", "import anthropic", "from anthropic",
+    "google.generativeai", "google.genai", "import cohere", "from cohere",
+    "mistralai", "litellm", "import ollama", "from ollama",
+    "transformers", "sentence_transformers", "api.openai.com", "api.anthropic.com",
+    "generativelanguage.googleapis.com",
+]
+PROTECTED = ["catalog.json", "ground_truth", "loop-report.schema", "score.py"]
+
+
+def _source_texts(workdir: str, globs: List[str], allow: List[str]):
+    files: List[str] = []
+    for g in globs:
+        files.extend(glob.glob(os.path.join(workdir, g), recursive=True))
+    allowset = set()
+    for g in allow:
+        allowset.update(os.path.abspath(p) for p in glob.glob(os.path.join(workdir, g), recursive=True))
+    for path in sorted(set(files)):
+        if os.path.abspath(path) in allowset or not os.path.isfile(path):
+            continue
+        if os.path.getsize(path) > 2_000_000:
+            continue
+        try:
+            yield os.path.relpath(path, workdir), open(path, encoding="utf-8", errors="ignore").read()
+        except OSError:
+            continue
+
+
+def rule_scan(workdir: str, globs: List[str], allow: List[str]) -> Dict:
+    """Static, heuristic checks that are cheap and reviewable.
+
+    - llm_deps: an LLM/embedding SDK is referenced. Rule 1 allows a model for
+      meaning only; a human must confirm it is not used for logged facts.
+    - yardstick_write: a path tries to write catalog/ground-truth/schema/score,
+      which would be a Rule 2 violation (moving the yardstick).
+    """
+    out = {"llm_deps": [], "yardstick_write": []}
+    for rel, text in _source_texts(workdir, globs, allow):
+        low = text.lower()
+        for marker in LLM_MARKERS:
+            if marker.lower() in low:
+                out["llm_deps"].append("%s: %s" % (rel, marker))
+        for i, line in enumerate(text.splitlines(), 1):
+            l = line.lower()
+            if any(p.lower() in l for p in PROTECTED) and re.search(r"open\([^)]*['\"][wa]", l):
+                out["yardstick_write"].append("%s:%d: %s" % (rel, i, line.strip()[:100]))
+    return out
+
+
+def fetch_json(url: str, timeout: float = 5.0):
+    import urllib.request
+    try:
+        with urllib.request.urlopen(url, timeout=timeout) as r:
+            return json.loads(r.read().decode())
+    except Exception:
+        return None
+
+
+# --------------------------------------------------------------------------- #
 # test one candidate on one kit
 # --------------------------------------------------------------------------- #
 
@@ -358,6 +420,19 @@ def test_on_kit(cand: dict, kit: str, tools: str, args) -> Dict:
             reports.append(json.load(open(out)))
         report = reports[0]
         result["report_path"] = os.path.join(outdir, "run1", "loop-report.json")
+
+        # replay provenance: every reported run id must have been issued by the
+        # service during this candidate's run (no fabricated evidence)
+        logged = set()
+        if replay_url:
+            log = fetch_json(replay_url + "/log")
+            if log:
+                logged = {r.get("run_id") for r in log.get("runs", [])}
+        result["replay_log_ids"] = len(logged)
+        foreign = [v.get("replay_run_id") for v in (report.get("verifications") or [])
+                   if str(v.get("replay_run_id", "")).startswith("rp_")
+                   and v.get("replay_run_id") not in logged]
+        result["foreign_replay_ids"] = foreign
 
         # schema + score
         schema = schema_check.load(os.path.join(tools, "schema", "loop-report.schema.json"))
@@ -426,7 +501,7 @@ def screen_test(cand: dict, outdir: str, report: dict, args) -> Dict:
 # verdict + main
 # --------------------------------------------------------------------------- #
 
-def verdict(res: Dict, require_replay: bool) -> Tuple[bool, List[str]]:
+def verdict(res: Dict, require_replay: bool, strict_rules: bool = False) -> Tuple[bool, List[str]]:
     reasons: List[str] = []
     if res.get("errors"):
         return False, res["errors"]
@@ -450,6 +525,14 @@ def verdict(res: Dict, require_replay: bool) -> Tuple[bool, List[str]]:
         reasons.append("non-deterministic")
     if res.get("literals") and res["literals"].get("violations"):
         reasons.append("practice literals: %s" % res["literals"]["violations"][:3])
+    rules = res.get("rules") or {}
+    if rules.get("yardstick_write"):
+        reasons.append("Rule 2: code writes to a protected yardstick path: %s"
+                       % rules["yardstick_write"][:2])
+    if strict_rules and rules.get("llm_deps"):
+        reasons.append("Rule 1 audit: LLM dependency referenced: %s" % rules["llm_deps"][:3])
+    if res.get("foreign_replay_ids"):
+        reasons.append("replay evidence not issued by the service: %s" % res["foreign_replay_ids"])
     if require_replay and not res.get("replay", {}).get("ok"):
         reasons.append("no improved replay verification")
     if res.get("screen") and res["screen"].get("started"):
@@ -472,7 +555,10 @@ def main() -> int:
     ap.add_argument("--quick", action="store_true", help="one run per kit (skip determinism)")
     ap.add_argument("--no-screen", action="store_true")
     ap.add_argument("--no-replay", action="store_true")
+    ap.add_argument("--strict-rules", action="store_true",
+                    help="fail on any LLM dependency reference (Rule 1 audit)")
     ap.add_argument("--json-out", default=None)
+    ap.add_argument("--matrix-out", default=None, help="write a markdown pass/fail matrix")
     a = ap.parse_args()
 
     cands = json.load(open(a.candidates))
@@ -493,10 +579,17 @@ def main() -> int:
         print("\n" + "=" * 78)
         print("CANDIDATE %s   (%s)" % (cand["name"], cand.get("workdir", ".")))
         print("=" * 78)
+        rules = rule_scan(cand.get("workdir", "."),
+                          cand.get("source_globs", ["**/*.py"]),
+                          cand.get("literal_allow_globs", []))
+        if rules.get("llm_deps"):
+            print("  note: LLM dependency referenced (Rule 1 audit): %s" % rules["llm_deps"][:3])
+        if rules.get("yardstick_write"):
+            print("  note: Rule 2 risk, writes to protected path: %s" % rules["yardstick_write"][:2])
         cand_out = []
         for kit in kits:
             res = test_on_kit(cand, kit, a.tools, a)
-            # literals once per candidate, stored per result for the report
+            # literals and rules are candidate-level; attach to each result
             lits = literals_from_kit(kit)
             res["literals"] = {
                 "checked": lits,
@@ -504,7 +597,10 @@ def main() -> int:
                                            cand.get("source_globs", ["**/*.py"]),
                                            cand.get("literal_allow_globs", []), lits),
             }
-            ok, reasons = verdict(res, require_replay=bool(cand.get("replay", True)) and not a.no_replay)
+            res["rules"] = rules
+            ok, reasons = verdict(res,
+                                  require_replay=bool(cand.get("replay", True)) and not a.no_replay,
+                                  strict_rules=a.strict_rules)
             res["pass"] = ok
             res["reasons"] = reasons
             sc = res.get("score", {})
@@ -522,8 +618,35 @@ def main() -> int:
     if a.json_out:
         json.dump(all_out, open(a.json_out, "w"), indent=2, default=str)
         print("\nwrote %s" % a.json_out)
+
+    if a.matrix_out:
+        write_matrix(a.matrix_out, all_out)
+        print("wrote %s" % a.matrix_out)
+
     print("\nOVERALL: %s" % ("ALL CANDIDATES PASS" if overall_pass else "FAILURES PRESENT"))
     return 0 if overall_pass else 1
+
+
+def write_matrix(path: str, all_out: Dict) -> None:
+    kits = sorted({r["kit"] for rows in all_out.values() for r in rows})
+    candidates = list(all_out.keys())
+    lines = ["# Testbed matrix", "", "| corpus | " + " | ".join(candidates) + " |",
+             "|---" * (len(candidates) + 1) + "|"]
+    for kit in kits:
+        cells = []
+        for cand in candidates:
+            row = next((r for r in all_out[cand] if r["kit"] == kit), None)
+            if row is None:
+                cells.append("n/a")
+            else:
+                mark = "PASS" if row.get("pass") else "FAIL"
+                sc = row.get("score", {}).get("machine_score")
+                cells.append("%s (%.1f)" % (mark, sc) if isinstance(sc, (int, float)) else mark)
+        lines.append("| %s | %s |" % (kit, " | ".join(cells)))
+    lines.append("")
+    lines.append("Faults F1/F2/F3 and decoys D1/D2/D3 are marked per corpus in the JSON output.")
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.write("\n".join(lines) + "\n")
 
 
 if __name__ == "__main__":

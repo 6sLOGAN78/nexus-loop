@@ -111,6 +111,23 @@ python3 tools/testbed/evaluate.py \
 See **`tools/testbed/README.md`** for the candidate contract, the full list of
 checks, pass criteria, and how to read the output.
 
+The testbed can also run **hard-mode** corpora, where every tenant, intent, tool
+and agent label is renamed to an opaque id, so a solution cannot pass by
+recognising practice names. It records a pass/fail **matrix** across a pool of
+corpora, scans for Rule 1 (LLM) and Rule 2 (yardstick writes) violations, and
+verifies that replay evidence was actually issued by the replay service:
+
+```bash
+python3 tools/testbed/make_corpora.py --out-dir /tmp/nexus-testbed/pool \
+  --secrets pool-alpha,pool-bravo,pool-charlie
+python3 tools/testbed/make_corpora.py --out-dir /tmp/nexus-testbed/pool \
+  --secrets hard-alpha,hard-bravo,hard-charlie --rename
+python3 tools/testbed/evaluate.py --candidates tools/testbed/candidates.json \
+  --kits-dir /tmp/nexus-testbed/pool --quick \
+  --json-out /tmp/nexus-testbed/pool-result.json \
+  --matrix-out /tmp/nexus-testbed/pool-matrix.md
+```
+
 ### What the testbed is designed to catch
 
 In general, the failure modes that separate a solution tuned to one corpus from
@@ -135,6 +152,12 @@ one that generalises:
   that will not survive a moved layout.
 - **Broken loop mechanics** — no real `rp_*` replay verification, or a decision
   screen that cannot write an approval back.
+- **Fabricated replay evidence** — verification run ids the replay service never
+  issued.
+- **Yardstick manipulation** — code that writes to metric, catalog, ground-truth
+  or schema artifacts (Rule 2).
+- **Name-based detection** — solutions that rely on practice tenant/intent/tool/
+  agent names, caught by hard-mode renaming.
 
 The suite passes a candidate on a corpus only when every fault is found with the
 right cohort and cause, every lookalike is explicitly dismissed, there are no

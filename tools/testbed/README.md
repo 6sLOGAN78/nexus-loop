@@ -42,6 +42,7 @@ perfect evidence — see §9.
 | File | Purpose |
 |---|---|
 | `make_corpora.py` | Generate N held-out corpora from the kit generator with different secrets |
+| `transform_kit.py` | Hard mode: rewrite tenant/intent/tool/agent labels to opaque ids in place |
 | `evaluate.py` | Run, validate, score and judge candidates across corpora |
 | `schema_check.py` | Independent draft-07 validator for `loop-report.json` |
 | `candidates.example.json` | Candidate definition template (copy to `candidates.json`) |
@@ -74,6 +75,34 @@ python3 tools/testbed/evaluate.py \
 `evaluate.py` and `make_corpora.py` locate `tools/nexus-loop-kit` automatically
 whether the testbed sits at `<repo>/testbed` or `<repo>/tools/testbed`, so
 `--tools`/`--generator` are optional when the layout is standard.
+
+### Hard mode and a recorded matrix (recommended)
+
+Build a pool that mixes ordinary held-out layouts with **hard-mode** layouts
+where every tenant, intent, tool and agent label is renamed to an opaque id, then
+record a pass/fail matrix:
+
+```bash
+# ordinary held-out layouts
+python3 tools/testbed/make_corpora.py \
+  --out-dir /tmp/nexus-testbed/pool \
+  --secrets pool-alpha,pool-bravo,pool-charlie
+
+# same generator, labels renamed to opaque ids (hard mode)
+python3 tools/testbed/make_corpora.py \
+  --out-dir /tmp/nexus-testbed/pool \
+  --secrets hard-alpha,hard-bravo,hard-charlie --rename
+
+# run them all and write a matrix
+python3 tools/testbed/evaluate.py \
+  --candidates tools/testbed/candidates.json \
+  --kits-dir /tmp/nexus-testbed/pool \
+  --quick \
+  --json-out /tmp/nexus-testbed/pool-result.json \
+  --matrix-out /tmp/nexus-testbed/pool-matrix.md
+```
+
+`--rename` is described in §13; the matrix format in §8.1.
 
 ---
 
@@ -240,6 +269,21 @@ CANDIDATE example-solution   (/path/to/checkout)
   `score.py` sections, and screen results. This is the artifact to attach to a
   review.
 
+### 8.1 Matrix output
+
+`--matrix-out FILE` writes a markdown table, one row per corpus and one column
+per candidate, with the verdict and machine score:
+
+```markdown
+| corpus | candidate-a | candidate-b |
+|---|---|---|
+| kit_01_pool-alpha  | PASS (54.6) | FAIL (50.1) |
+| kit_02_hard-bravo  | PASS (53.9) | PASS (54.2) |
+```
+
+Use it as the headline evidence for "we believe this survives the sealed run" —
+the detailed per-fault/per-decoy breakdown lives in the `--json-out` file.
+
 ---
 
 ## 9. What the testbed cannot prove
@@ -293,3 +337,80 @@ Use it as a strong filter, not a guarantee.
 
 Keep new checks implementation-agnostic — they should pass any solution that
 follows the written deliverables, not one particular design.
+
+---
+
+## 13. Hard mode: moving tenants and slices
+
+The shipped simulator fixes which tenant, cohort and cause class carry each
+fault; `sealed_schedule` only moves days/lengths/rates. The problem statement,
+however, says the scored corpus moves tenants and slices too. Hard mode closes
+that gap as far as the shipped generator allows.
+
+`transform_kit.py` (used automatically by `make_corpora.py --rename`) rewrites
+every **tenant key, intent, tool and agent id** in a generated kit to an opaque
+token (`xt1`, `xi10`, `xfn9`, `xag4`, ...), in place and consistently across:
+
+- `corpus/*.jsonl.gz`, `corpus/*.csv`, `corpus_sample/*.jsonl.gz`;
+- `labels/*.jsonl`;
+- `catalog.json`, `manifest.json`;
+- `ground_truth_SEALED/ground_truth.json` (tenants, cohorts, coverage keys).
+
+Only **exact token matches** are replaced (not substrings), so free text,
+version strings and event names are untouched. A `_transform.json` in the kit
+records the mapping. All statistics are preserved — only labels change — so a
+solution that detects structure rather than names passes unchanged, while a
+solution that keys off `acme-bank` / `order_status` / `get_order_status` fails.
+
+```bash
+# in place
+python3 tools/testbed/transform_kit.py --kit /tmp/kits/kit_01
+# transform a copy
+python3 tools/testbed/transform_kit.py --kit /tmp/kits/kit_01 --copy-to /tmp/kits/kit_01_hard
+```
+
+Limitation: a true **tenant swap** (moving the fault to the other tenant) is not
+reproducible from the shipped simulator, because fault placement is hardcoded to
+tenant keys. Neutral renaming plus the literal scan is the practical proxy; it
+catches name-based assumptions even though it does not move which tenant is
+affected.
+
+---
+
+## 14. Rule checks and evidence provenance
+
+Two problem-statement rules and one anti-fabrication check are enforced in
+addition to the functional checks.
+
+### Rule 1 — no LLM for logged facts
+
+`evaluate.py` scans the candidate source for LLM/embedding SDKs and provider
+endpoints (`openai`, `anthropic`, `google.generativeai`, `cohere`, `litellm`,
+`transformers`, ...). A model may legitimately be used for questions of
+*meaning*, so this is reported as an audit note by default; `--strict-rules`
+turns any reference into a failure. The recorded hits list is in the JSON
+output under `rules.llm_deps`.
+
+### Rule 2 — the yardstick is frozen
+
+A solution must never change metric definitions, the judge, or the reviewed good
+set to make a result look better. The testbed flags any source line that opens a
+protected artifact (`catalog.json`, `ground_truth`, `loop-report.schema`,
+`score.py`) in a write mode. A hit fails the candidate (`rules.yardstick_write`).
+
+### Evidence provenance
+
+When a replay URL is provided, the testbed fetches the replay service's own
+`GET /log` after the run and requires every `verifications[].replay_run_id` in
+the report to have been issued by that service during this candidate's run.
+Report ids that never appear in the log are flagged as
+`foreign_replay_ids` and fail the candidate — a solution cannot invent replay
+evidence.
+
+### Network scope
+
+Only the replay service is expected to be reached. The rule scan reports network
+client usage for review; the workflow is otherwise offline, so a run that
+depends on external network access will fail or stall and be caught by the
+timeout.
+

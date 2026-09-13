@@ -43,7 +43,7 @@ def existing_kit(path: str) -> bool:
 
 
 def build(generator: str, out_dir: str, name: str, secret: str, scale: float,
-          force: bool) -> str:
+          force: bool, rename: bool = False) -> str:
     dest = os.path.join(out_dir, name)
     if existing_kit(dest) and not force:
         print("skip  %s (exists; use --force to rebuild)" % dest)
@@ -55,6 +55,10 @@ def build(generator: str, out_dir: str, name: str, secret: str, scale: float,
     subprocess.run(cmd, check=True)
     if not existing_kit(dest):
         raise SystemExit("generator did not produce a sealed kit at %s" % dest)
+    if rename:
+        from transform_kit import transform_kit
+        m = transform_kit(dest, "x")
+        print("  hard-mode: renamed %d tenant/intent/tool/agent tokens to opaque ids" % len(m))
     return dest
 
 
@@ -68,12 +72,16 @@ def main() -> int:
     ap.add_argument("--scale", type=float, default=1.0,
                     help="1.0 = full corpus; lower for speed")
     ap.add_argument("--force", action="store_true")
+    ap.add_argument("--rename", action="store_true",
+                    help="hard mode: rewrite tenant/intent/tool/agent names to opaque ids")
     a = ap.parse_args()
 
     names = []
     for i, secret in enumerate([s.strip() for s in a.secrets.split(",") if s.strip()]):
         name = "kit_%02d_%s" % (i + 1, secret[:12].replace("/", "_"))
-        build(a.generator, a.out_dir, name, secret, a.scale, a.force)
+        if a.rename:
+            name += "_renamed"
+        build(a.generator, a.out_dir, name, secret, a.scale, a.force, a.rename)
         names.append(name)
     print("\n%d corpora in %s" % (len(names), os.path.abspath(a.out_dir)))
     return 0
