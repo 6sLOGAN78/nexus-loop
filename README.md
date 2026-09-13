@@ -95,7 +95,9 @@ than being born broken), tool on acme/`block_card`, prompt on northwind/
 Result: **55.0/55**, with all three faults found at lag 0 with the right cohort
 and cause, all three lookalikes dismissed, and determinism, replay and screen
 checks passing. The detectors are therefore not keyed to practice tenants or
-slices.
+slices. A variant with a clean, unseen third tenant (`generate_moved.py
+--tenants 3`, 96,547 sessions) also scores **55.0/55** with no strays, so the
+detectors do not assume exactly two tenants either.
 
 ---
 
