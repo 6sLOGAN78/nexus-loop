@@ -28,3 +28,6 @@ Thumbs.db
 # Testbed local state
 tools/testbed/candidates.json
 tools/testbed/kits/
+
+# Nexus Loop pipeline output
+out/
