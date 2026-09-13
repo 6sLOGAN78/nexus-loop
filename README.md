@@ -115,7 +115,10 @@ The testbed can also run **hard-mode** corpora, where every tenant, intent, tool
 and agent label is renamed to an opaque id, so a solution cannot pass by
 recognising practice names. It records a pass/fail **matrix** across a pool of
 corpora, scans for Rule 1 (LLM) and Rule 2 (yardstick writes) violations, and
-verifies that replay evidence was actually issued by the replay service:
+verifies that replay evidence was actually issued by the replay service. A
+separate generator (`tools/testbed/generate_moved.py`) produces **moved-fault**
+corpora, where the planted faults are relocated to different tenants and slices —
+the case the shipped sealed schedule cannot produce.
 
 ```bash
 python3 tools/testbed/make_corpora.py --out-dir /tmp/nexus-testbed/pool \

@@ -43,6 +43,7 @@ perfect evidence — see §9.
 |---|---|
 | `make_corpora.py` | Generate N held-out corpora from the kit generator with different secrets |
 | `transform_kit.py` | Hard mode: rewrite tenant/intent/tool/agent labels to opaque ids in place |
+| `generate_moved.py` | Moved-fault corpora: relocate the planted faults to different tenants/slices |
 | `evaluate.py` | Run, validate, score and judge candidates across corpora |
 | `schema_check.py` | Independent draft-07 validator for `loop-report.json` |
 | `candidates.example.json` | Candidate definition template (copy to `candidates.json`) |
@@ -436,4 +437,59 @@ Only the replay service is expected to be reached. The rule scan reports network
 client usage for review; the workflow is otherwise offline, so a run that
 depends on external network access will fail or stall and be caught by the
 timeout.
+
+---
+
+## 15. Moved-fault corpora (`generate_moved.py`)
+
+The shipped `sealed_schedule` only moves fault **days/lengths/rates**; tenants,
+cohorts and cause classes stay put. The problem statement says the scored corpus
+moves faults to different **tenants and slices** too. `generate_moved.py`
+produces that harder case, separately from the ordinary pool so nothing is lost
+if the organisers confirm faults do **not** relocate.
+
+It copies the kit's `generate.py` + `nlkit/` to a temp tree, applies the `cross`
+placement profile through **asserted** string edits (each patch must match
+exactly once, or it aborts), runs the patched generator, and moves the ground
+truth to `ground_truth_SEALED/` so the normal testbed can score it.
+
+### `cross` profile — what moves
+
+| fault | practice | moved |
+|---|---|---|
+| KB gap | acme / `premium_card_info` (born broken) | northwind / `sizing_help` (existing intent, **has** a before-period) |
+| tool contract | northwind / `get_order_status` | acme / `block_card` (`card_block`) |
+| prompt regression | acme / `acme_main_v3` | northwind / `nw_care_v3` |
+| traffic mix | acme / `branch_locator` | northwind / `product_availability` |
+| load event | northwind | acme |
+
+So each fault role lands on the opposite tenant and on a different cohort than
+practice, and the KB fault is tested in its harder "existing intent" form rather
+than the born-broken form the practice corpus always shows.
+
+```bash
+python3 tools/testbed/generate_moved.py --out /tmp/nexus-testbed/moved/kit_cross
+python3 tools/testbed/evaluate.py \
+  --candidates tools/testbed/candidates.json \
+  --kits-dir /tmp/nexus-testbed/moved --explain
+```
+
+### Result
+
+Against the `anupamgt-sol-v1` solution, the moved-fault corpus scores **55.0/55**:
+all three faults found with the correct cohort and cause at lag 0, all three
+lookalikes explicitly dismissed, no false alarms, strays, honesty gaps or
+non-determinism, replay verification improved, screen write-back working. So the
+detectors are not keyed to practice tenants/slices.
+
+### Limits
+
+- It relocates **within the two shipped tenants**. A configuration where the
+  sealed corpus has a different tenant count or a brand-new tenant is not
+  reproducible from the shipped simulator.
+- The patches are asserted against the current kit source; if the organisers ship
+  a different generator, `generate_moved.py` aborts rather than silently
+  producing a wrong corpus.
+- `cross` is the only profile implemented; add profiles by extending the patch
+  lists (each must match exactly once).
 
