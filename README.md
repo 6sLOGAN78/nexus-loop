@@ -55,7 +55,9 @@ versions, the reviewed set of good conversations) to make a result look better.
    design), `docs/data-exploration-and-solution.md`,
    `docs/architecture-ideas.md`, `docs/adversarial-review-nexus-loop-solution.md`
    (a review of that design), and `docs/research-consolidation-and-comparison.md`
-   (what survived and what was corrected).
+   (what survived and what was corrected). Also `docs/implementation-plan.md`
+   (an earlier plan, superseded by item 5) and `docs/how-to-get-55-score.md`
+   (scorer mechanics — explicitly **not** a submission method).
 8. **`tools/testbed/README.md`** — how to test a candidate solution before the
    sealed run.
 
@@ -174,6 +176,71 @@ unattended, and the screen and write-back work.
 
 ---
 
+## Work done and status
+
+### Supplied material
+Kit, practice data and organiser tooling are present and unmodified.
+
+### Analysis and planning (`docs/`)
+- Verified findings from the corpus and generator (`repo-learnings-and-findings.md`),
+  the corrected build plan (`improved-solution-and-workflow.md`), and the exact
+  deliverables / replay / sealed-run / demo guide (`deliverables-replay-and-demo.md`).
+- Design history and review: `nexus-loop-solution.pdf`, `data-exploration-and-solution.md`,
+  `architecture-ideas.md`, `adversarial-review-nexus-loop-solution.md`,
+  `research-consolidation-and-comparison.md`.
+- Headline verified facts: legacy `v2_flow` sessions are missing **only**
+  `tool_call` (not KB/guardrail/cost, contrary to the catalog); the shipped
+  sealed schedule moves **only** days/lengths/rates; the replay endpoint is
+  deterministic per input and reports `no_effect` for both a wrong fix and an
+  inactive cohort; the reference reports top out at 46.3/55 with F3 never
+  detected.
+
+### Testbed (`tools/testbed/`)
+Capabilities: held-out corpora from arbitrary secrets; hard-mode label renaming;
+moved-fault relocation; a clean third tenant; Rule 1/2 source scans; replay
+provenance against the service's own log; determinism; screen write-back; a
+point-loss ledger (`--explain`); pass/fail matrix (`--matrix-out`).
+
+Validation of the solution on four distributional shocks:
+
+| corpus | what it moves | result |
+|---|---|---|
+| practice `kit/` | — | 55.0 / 55 |
+| sealed pool (6: 3 ordinary + 3 hard-mode) | days, lengths, rates, labels | 6 / 6 pass, all 55.0 |
+| moved-fault (`cross`) | fault tenants, intents, tools, agents | 55.0 / 55 |
+| moved-fault + `--tenants 3` | adds a clean, unseen third tenant | 55.0 / 55, no strays |
+
+### Solution (`anupamgt-sol-v1` branch)
+A stdlib pipeline (`nexus_loop/` + `run.py`) plus a one-page decision screen.
+Scores 55/55 on practice and passes every held-out variant above, with all three
+faults found at the right cohort and cause and all three lookalikes explicitly
+dismissed. Three issues were found and fixed on the branch:
+- #2 efficiency cause attributed by proximity instead of the changed dimension
+- #3 traffic-mix lookalike never dismissed (cross-fault interference + fixed tolerance)
+- #5 KB-gap window opened three days late on some layouts
+
+### Issues
+- Closed: #2, #3 (solution), #4 (testbed determinism false negative), #5 (KB lag),
+  #6 (misleading `how-to-get-55-score` guide).
+- Open: #7 — the catalog/brief claim that `v2_flow` emits no KB/guardrail/cost
+  does not match the corpus (the hole is `tool_call`-only); see the two detailed
+  comments for the workaround and the nuances.
+
+### Open items
+- **Clarification (organisers, private channel):** does the scored sealed corpus
+  relocate faults to different tenants/slices, or only move days? Our design is
+  generic either way, so this is confidence, not a blocker.
+- **Merge / ownership:** the working solution lives on `anupamgt-sol-v1`; decide
+  the canonical branch and get it into `master` (the branch and `master` now have
+  different `README.md` contents, a resolvable conflict).
+- **Deliverable packaging:** `out/` is gitignored — decide where the sealed
+  `loop-report.json` and the recorded decisions are submitted.
+- **Human layer:** the testbed verifies screen mechanics, not whether a stranger
+  can act on a finding — that is the remaining half of the score.
+- **Sealed run:** pending.
+
+---
+
 ## Conventions
 
 - Documentation lives in `docs/`; tooling lives in `tools/`; throwaway work in
@@ -183,14 +250,3 @@ unattended, and the screen and write-back work.
   report to improve a score.
 - Commit messages should say what changed and why; keep kit data and tooling
   unchanged unless there is a reason.
-
-## Status
-
-- Supplied kit, practice data, and organiser tooling: present and unmodified.
-- Analysis and the build plan: complete in `docs/`.
-- Test suite: present in `tools/testbed/`.
-- Solution implementation: on the `anupamgt-sol-v1` branch. It scores 55/55 on
-  the practice corpus and passes the six-corpus held-out pool (3 ordinary +
-  3 hard-mode) at 55/55, including determinism, the screen write-back and
-  replay-provenance checks.
-- The sealed run: pending.
