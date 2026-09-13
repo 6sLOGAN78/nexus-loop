@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nexus Loop — decision</title>
+  <style>
+    :root {
+      --ink: #1a1f2b;
+      --muted: #5c6578;
+      --line: #d8deea;
+      --paper: #f6f4ef;
+      --card: #fff;
+      --accent: #1f4e79;
+      --good: #1b7f4e;
+      --warn: #9a6700;
+      --bad: #b42318;
+      --chip: #e8eef6;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
+      font: 16px/1.45 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif; }
+    header {
+      background: var(--ink); color: #f3efe6; padding: 1.1rem 1.5rem 1.2rem;
+      display: flex; justify-content: space-between; gap: 1rem; align-items: baseline;
+      flex-wrap: wrap;
+    }
+    header h1 { font-size: 1.15rem; font-weight: 600; margin: 0; letter-spacing: .02em; }
+    header .meta { font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; opacity: .8; }
+    main { max-width: 1100px; margin: 0 auto; padding: 1.25rem 1.25rem 6rem; }
+    .grid { display: grid; grid-template-columns: 1.6fr .9fr; gap: 1.1rem; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+      padding: 1.1rem 1.2rem 1.2rem; box-shadow: 0 1px 0 rgba(26,31,43,.04); }
+    .kicker { font: 11px/1 ui-sans-serif, system-ui, sans-serif; letter-spacing: .14em;
+      text-transform: uppercase; color: var(--muted); margin: 0 0 .35rem; }
+    h2 { font-size: 1.45rem; line-height: 1.25; margin: 0 0 .6rem; }
+    h3 { font: 600 13px/1.3 ui-sans-serif, system-ui, sans-serif; margin: 1rem 0 .4rem;
+      letter-spacing: .04em; text-transform: uppercase; color: var(--accent); }
+    .chips { display: flex; flex-wrap: wrap; gap: .35rem; margin: 0 0 .8rem; }
+    .chip { font: 12px/1.2 ui-sans-serif, system-ui, sans-serif; background: var(--chip);
+      border-radius: 99px; padding: .25rem .6rem; color: var(--ink); }
+    .chip.sev-critical, .chip.sev-high { background: #fde8e6; color: var(--bad); }
+    .chip.sev-medium { background: #fff4d6; color: var(--warn); }
+    .chip.ok { background: #e3f6ea; color: var(--good); }
+    .chip.warn { background: #fff4d6; color: var(--warn); }
+    dl.impact { display: grid; grid-template-columns: repeat(4, 1fr); gap: .6rem .8rem; margin: 0; }
+    @media (max-width: 700px) { dl.impact { grid-template-columns: 1fr 1fr; } }
+    dl.impact dt { font: 11px/1 ui-sans-serif, system-ui, sans-serif; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .08em; }
+    dl.impact dd { margin: .2rem 0 0; font-size: 1.25rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+    p, li { color: var(--ink); }
+    .muted { color: var(--muted); }
+    .derivation, .evidence li, .obs { font: 14px/1.45 ui-sans-serif, system-ui, sans-serif; }
+    .evidence { margin: 0; padding-left: 1.1rem; }
+    .evidence li { margin: 0 0 .35rem; }
+    .decision { background: #f3efe6; border: 1px solid var(--line); border-radius: 8px; padding: .85rem 1rem; }
+    .decision p { margin: .35rem 0; font: 14px/1.45 ui-sans-serif, system-ui, sans-serif; }
+    label { display: block; font: 12px/1.2 ui-sans-serif, system-ui, sans-serif; margin: .5rem 0 .2rem; }
+    input[type=text], textarea, select {
+      width: 100%; font: 14px/1.4 ui-sans-serif, system-ui, sans-serif; padding: .45rem .55rem;
+      border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--ink);
+    }
+    textarea { min-height: 4.5rem; resize: vertical; }
+    .verdicts { display: flex; gap: .5rem; flex-wrap: wrap; margin: .4rem 0; }
+    .verdicts label { display: flex; gap: .35rem; align-items: center; margin: 0;
+      font: 13px/1 ui-sans-serif, system-ui, sans-serif; background: #fff; border: 1px solid var(--line);
+      border-radius: 99px; padding: .35rem .7rem; cursor: pointer; }
+    button {
+      font: 600 14px/1 ui-sans-serif, system-ui, sans-serif; background: var(--accent); color: #fff;
+      border: 0; border-radius: 6px; padding: .7rem 1rem; cursor: pointer; width: 100%; margin-top: .6rem;
+    }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .flash { font: 13px/1.4 ui-sans-serif, system-ui, sans-serif; margin-top: .5rem; }
+    .flash.err { color: var(--bad); }
+    .flash.ok { color: var(--good); }
+    .obs { border-top: 1px solid var(--line); padding: .7rem 0; }
+    .obs:first-child { border-top: 0; padding-top: 0; }
+    .obs strong { display: block; margin-bottom: .2rem; }
+    footer { font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; color: var(--muted);
+      margin-top: 1rem; }
+    .recorded { background: #e3f6ea; border-color: #b7e0c5; }
+    code { font: 12px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Nexus Loop · one decision</h1>
+    <div class="meta" id="hdr">loading report…</div>
+  </header>
+  <main>
+    <div class="grid">
+      <section class="card" id="primary">
+        <p class="kicker">Primary finding</p>
+        <p class="muted">Waiting for <code>out/loop-report.json</code>.</p>
+      </section>
+      <aside>
+        <section class="card" id="gate">
+          <p class="kicker">Approval gate</p>
+          <p class="muted">A reason is required. The verdict is written back into the report.</p>
+        </section>
+        <section class="card" style="margin-top:1.1rem" id="other">
+          <p class="kicker">Other observations</p>
+        </section>
+      </aside>
+    </div>
+    <footer id="foot"></footer>
+  </main>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const fmt = (n, d=2) => (n === null || n === undefined) ? "—" : Number(n).toLocaleString(undefined, {maximumFractionDigits: d});
+    const pct = (n) => (n === null || n === undefined) ? "—" : (100 * n).toFixed(1) + "%";
+
+    function primaryOf(rep) {
+      const findings = rep.findings || [];
+      const diags = Object.fromEntries((rep.diagnoses || []).map(d => [d.id, d]));
+      const byFid = Object.fromEntries((rep.diagnoses || []).map(d => [d.finding_id, d]));
+      const pres = rep.prescriptions || [];
+      const vers = rep.verifications || [];
+      if (vers.length) {
+        const p = pres.find(x => x.id === vers[0].prescription_id);
+        const d = p && diags[p.diagnosis_id];
+        const f = d && findings.find(x => x.id === d.finding_id);
+        if (f) return {f, d, p, v: vers[0]};
+      }
+      const regs = findings.filter(x => x.is_regression);
+      const prefer = regs.find(x => (byFid[x.id] || {}).cause_class === "tool.contract_break") || regs[0];
+      if (!prefer) return {f: findings[0], d: byFid[(findings[0] || {}).id], p: null, v: null};
+      const d = byFid[prefer.id];
+      const p = pres.find(x => x.diagnosis_id === (d || {}).id);
+      const v = (vers.find(x => x.prescription_id === (p || {}).id)) || null;
+      return {f: prefer, d, p, v};
+    }
+
+    function chips(f, d) {
+      const c = [];
+      c.push(`<span class="chip sev-${f.severity || "medium"}">${f.severity || "n/a"}</span>`);
+      if (d && d.cause_class) c.push(`<span class="chip">${d.cause_class}</span>`);
+      c.push(`<span class="chip">${f.tenant}</span>`);
+      const coh = f.cohort || {};
+      Object.keys(coh).forEach(k => c.push(`<span class="chip">${k}=${coh[k]}</span>`));
+      if (f.window) c.push(`<span class="chip">days ${f.window.from_day}–${f.window.to_day}</span>`);
+      (f.audience || []).forEach(a => c.push(`<span class="chip">${a}</span>`));
+      return c.join("");
+    }
+
+    function impactDl(imp) {
+      if (!imp) return "";
+      const down = imp.downstream || {};
+      return `<dl class="impact">
+        <div><dt>Conversations</dt><dd>${fmt(imp.conversations_affected, 0)}</dd></div>
+        <div><dt>Share of tenant</dt><dd>${pct(imp.share_of_traffic)}</dd></div>
+        <div><dt>Days running</dt><dd>${fmt(imp.days_running, 0)}</dd></div>
+        <div><dt>Recorded cost</dt><dd>${imp.cost_usd == null ? "null" : "$" + fmt(imp.cost_usd)}</dd></div>
+        <div><dt>Would have resolved</dt><dd>${fmt(down.would_have_resolved_at_baseline, 0)}</dd></div>
+        <div><dt>Unplanned handoffs</dt><dd>${fmt(down.unplanned_handoffs, 0)}</dd></div>
+        <div><dt>Abandoned</dt><dd>${fmt(down.abandoned, 0)}</dd></div>
+        <div><dt>Extra turns</dt><dd>${fmt(down.extra_turns, 0)}</dd></div>
+      </dl>`;
+    }
+
+    function renderPrimary(rep, pack) {
+      const {f, d, p, v} = pack;
+      if (!f) { $("primary").innerHTML = "<p>No findings in this report.</p>"; return; }
+      const ev = (f.evidence || []).map(e => `<li>${e}</li>`).join("");
+      const ac = (d && d.attributed_change) ? `${d.attributed_change.kind} on day ${d.attributed_change.day}` : "none attributed";
+      const dec = (p && p.decision) || {};
+      const pd = (p && p.predicted_delta) || {};
+      const replay = v ? `<p><strong>${v.verdict}</strong> · run <code>${v.replay_run_id}</code> ·
+        ${v.metric} ${fmt(v.before, 4)} → ${fmt(v.after, 4)} · golden set ${v.golden_set_pass === true ? "pass" : v.golden_set_pass === false ? "FAILED" : "n/a"}
+        ${v.prediction_error == null ? "" : " · prediction error " + fmt(v.prediction_error, 4)}
+        <br><span class="muted">Replay 'before' is the endpoint's simulated baseline, not this system's corpus number.</span></p>`
+        : `<p class="muted">No replay this run. The report is still the decision record; verification can be attached later.</p>`;
+      $("primary").innerHTML = `
+        <p class="kicker">Primary finding · ${f.id}</p>
+        <h2>${f.headline || f.metric}</h2>
+        <div class="chips">${chips(f, d)}</div>
+        <p><strong>Observed ${f.metric}</strong> ${fmt(f.observed, 4)} against baseline ${fmt(f.expected, 4)}.
+          ${f.baseline ? `<span class="muted">${f.baseline}</span>` : ""}</p>
+        ${impactDl(f.impact)}
+        <h3>If nothing changes</h3>
+        <p>${f.if_nothing_changes || "—"}</p>
+        <h3>Why this baseline is fair</h3>
+        <p class="derivation muted">${(f.impact && f.impact.derivation) || "—"}</p>
+        <h3>Evidence</h3>
+        <ul class="evidence">${ev}</ul>
+        <h3>Diagnosis</h3>
+        <p>${(d && d.cause_class) || "unknown"} · confidence ${d ? fmt(d.confidence, 2) : "—"} · attributed change: ${ac}</p>
+        <ul class="evidence">${((d && d.evidence) || []).map(e => `<li>${e}</li>`).join("")}</ul>
+        <h3>Proposed change</h3>
+        ${p ? `<p><code>${p.change_type}</code> on <code>${p.target}</code> · predicted ${pd.metric} ${fmt(pd.from, 4)} → ${fmt(pd.to, 4)}</p>
+               <p>${p.description || ""}</p>
+               <div class="decision">
+                 <p><strong>Asking approval for.</strong> ${dec.asking_approval_for || ""}</p>
+                 <p><strong>Risk if the diagnosis is wrong.</strong> ${dec.risk_if_diagnosis_wrong || ""}</p>
+                 <p><strong>Would not ship if.</strong> ${dec.would_not_ship_if || ""}</p>
+               </div>` : `<p class="muted">No prescription on this finding.</p>`}
+        <h3>Replay</h3>
+        ${replay}
+      `;
+      renderGate(p);
+    }
+
+    function renderGate(p) {
+      if (!p) {
+        $("gate").innerHTML = `<p class="kicker">Approval gate</p><p class="muted">Nothing to approve on the primary finding.</p>`;
+        return;
+      }
+      const a = p.approval || {};
+      const recorded = a.verdict ? `<div class="decision recorded" style="margin-bottom:.8rem">
+        <p><strong>Recorded ${a.verdict}</strong> by ${a.decided_by || "operator"} at ${a.at || ""}.</p>
+        <p>${a.reason || ""}</p></div>` : "";
+      $("gate").innerHTML = `
+        <p class="kicker">Approval gate · ${p.id}</p>
+        <h2 style="font-size:1.1rem">Approve, reject, or defer</h2>
+        ${recorded}
+        <form id="decform">
+          <div class="verdicts">
+            <label><input type="radio" name="verdict" value="accepted" required> Accept</label>
+            <label><input type="radio" name="verdict" value="rejected"> Reject</label>
+            <label><input type="radio" name="verdict" value="deferred"> Defer</label>
+          </div>
+          <label for="who">Decided by</label>
+          <input id="who" name="decided_by" type="text" value="operator" required>
+          <label for="why">Reason (required)</label>
+          <textarea id="why" name="reason" required placeholder="Why this is the call for Monday morning."></textarea>
+          <button type="submit">Write decision into the report</button>
+          <div class="flash" id="flash"></div>
+        </form>`;
+      $("decform").addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        const fd = new FormData(ev.target);
+        const payload = {
+          prescription_id: p.id,
+          verdict: fd.get("verdict"),
+          decided_by: fd.get("decided_by"),
+          reason: fd.get("reason"),
+        };
+        const btn = ev.target.querySelector("button");
+        btn.disabled = true;
+        try {
+          const res = await fetch("/decision", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(payload),
+          });
+          const body = await res.json();
+          if (!res.ok) throw new Error(body.detail || body.error || res.statusText);
+          $("flash").className = "flash ok";
+          $("flash").textContent = "Saved " + body.approval.verdict + " at " + body.approval.at;
+          const rep = await (await fetch("/report.json")).json();
+          render(rep);
+        } catch (e) {
+          $("flash").className = "flash err";
+          $("flash").textContent = String(e.message || e);
+          btn.disabled = false;
+        }
+      });
+    }
+
+    function renderOther(rep, pack) {
+      const skip = pack.f && pack.f.id;
+      const diags = Object.fromEntries((rep.diagnoses || []).map(d => [d.finding_id, d]));
+      const items = [];
+      (rep.findings || []).forEach(f => {
+        if (f.id === skip) return;
+        const d = diags[f.id] || {};
+        if (f.is_regression) {
+          items.push(`<div class="obs"><strong>${f.headline || f.id}</strong>
+            ${f.tenant} · ${d.cause_class || ""} · days ${(f.window||{}).from_day}–${(f.window||{}).to_day}
+            · ${fmt((f.impact||{}).conversations_affected, 0)} conversations</div>`);
+        } else {
+          items.push(`<div class="obs"><strong>Dismissed · ${d.cause_class || f.metric}</strong>
+            ${f.not_a_regression_because || ""}</div>`);
+        }
+      });
+      const a11 = (rep.gaps || []).find(g => g.ask_id === "A11");
+      if (a11) {
+        const ev = a11.required_event || {};
+        items.push(`<div class="obs"><strong>Refused · ${a11.ask_id} ${a11.verdict}</strong>
+          ${a11.why}<br><span class="muted">Required event: ${ev.name} at ${ev.grain} grain,
+          fields ${(ev.fields||[]).join(", ")}, owner ${ev.owner}.
+          Proxy ${a11.nearest_proxy} misleads because ${a11.why_the_proxy_misleads}</span></div>`);
+      }
+      const a09 = (rep.gaps || []).find(g => g.ask_id === "A09");
+      if (a09) {
+        items.push(`<div class="obs"><strong>Refused · ${a09.ask_id} ${a09.verdict}</strong> ${a09.why}</div>`);
+      }
+      $("other").innerHTML = `<p class="kicker">Other observations</p>` + (items.join("") || "<p class='muted'>None.</p>");
+    }
+
+    function render(rep) {
+      $("hdr").textContent = `${rep.team} · corpus ${rep.corpus} · ${rep.generated_at || ""}`;
+      const pack = primaryOf(rep);
+      renderPrimary(rep, pack);
+      renderOther(rep, pack);
+      $("foot").textContent = "Every number on this screen is copied from the report. Changing a verdict updates prescriptions[].approval and appends out/decisions.log.";
+    }
+
+    fetch("/report.json").then(r => {
+      if (!r.ok) throw new Error("report missing — run python3 run.py first");
+      return r.json();
+    }).then(render).catch(e => {
+      $("primary").innerHTML = `<p class="kicker">Report</p><p>${e.message}</p>`;
+    });
+  </script>
+</body>
+</html>
