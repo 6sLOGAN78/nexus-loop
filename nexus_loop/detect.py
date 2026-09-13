@@ -68,6 +68,24 @@ def _fmt(x, nd=3):
     return "n/a" if x is None else ("%.*f" % (nd, x))
 
 
+def _fmt_set(xs) -> str:
+    return ",".join(sorted(str(x) for x in xs)) if xs else "n/a"
+
+
+def _changed_dimension(rows_in: List[dict], rows_base: List[dict]):
+    """Which of the agent's config dimensions actually changed between the
+    baseline and the window, read from the sessions themselves. Attribution
+    uses this instead of proximity, because an innocent change can share the
+    onset day with the guilty one."""
+    pv = ({r.get("prompt_version") for r in rows_base if r.get("prompt_version")},
+          {r.get("prompt_version") for r in rows_in if r.get("prompt_version")})
+    md = ({r.get("model") for r in rows_base if r.get("model")},
+          {r.get("model") for r in rows_in if r.get("model")})
+    prompt_changed = bool(pv[0] and pv[1] and pv[0] != pv[1])
+    model_changed = bool(md[0] and md[1] and md[0] != md[1])
+    return prompt_changed, model_changed, pv, md
+
+
 # ------------------------------------------------------------------ tool ---
 
 def detect_tool_contract(corpus: Corpus, cov: Coverage) -> List[dict]:
@@ -382,10 +400,23 @@ def detect_efficiency(corpus: Corpus, cov: Coverage) -> List[dict]:
             cost_base = mean([float(s["cost_usd"]) for s in base_rows
                               if cov.covered("llm_call", s) and s.get("cost_usd") is not None])
             outcome_flat = res_in is not None and res_base is not None and abs(res_in - res_base) <= T.OUTCOME_FLAT
-            change = corpus.nearest_change(tenant, a, {"prompt", "model"}, target=agent,
-                                           before=T.ALIGN_BEFORE, after=T.ALIGN_AFTER)
-            cause = ("prompt.regression" if change and change["kind"] == "prompt"
-                     else "model.change" if change and change["kind"] == "model" else "unknown")
+            # attribute by what actually changed in the data, not by which config
+            # marker happens to sit closest to an onset day an innocent change
+            # may share.
+            prompt_changed, model_changed, pv, md = _changed_dimension(in_rows, base_rows)
+            if prompt_changed:
+                cause = "prompt.regression"
+                change = corpus.nearest_change(tenant, a, {"prompt"}, target=agent,
+                                               before=T.ALIGN_BEFORE, after=T.ALIGN_AFTER)
+            elif model_changed:
+                cause = "model.change"
+                change = corpus.nearest_change(tenant, a, {"model"}, target=agent,
+                                               before=T.ALIGN_BEFORE, after=T.ALIGN_AFTER)
+            else:
+                change = corpus.nearest_change(tenant, a, {"prompt", "model"}, target=agent,
+                                               before=T.ALIGN_BEFORE, after=T.ALIGN_AFTER)
+                cause = ("prompt.regression" if change and change["kind"] == "prompt"
+                         else "model.change" if change and change["kind"] == "model" else "unknown")
             evidence = [
                 "%s median turns to resolve %s -> %s (mean %s -> %s, +%.0f%%) on days %d-%d vs %s"
                 % (agent, _fmt(med_base, 1), _fmt(med_in, 1), _fmt(mean_base, 2), _fmt(mean_in, 2),
@@ -395,6 +426,8 @@ def detect_efficiency(corpus: Corpus, cov: Coverage) -> List[dict]:
                 "cost per session %s -> %s USD (%s), recorded llm_call cost, coverage-limited to the "
                 "agent_kind that emits cost" % (_fmt(cost_base, 5), _fmt(cost_in, 5),
                                                 "+%.0f%%" % (100 * (cost_in / cost_base - 1)) if cost_in and cost_base else "n/a"),
+                "config dimension that changed vs baseline — prompt_version %s -> %s, model %s -> %s"
+                % (_fmt_set(pv[0]), _fmt_set(pv[1]), _fmt_set(md[0]), _fmt_set(md[1])),
                 "peer control — sibling agents in the same tenant over the same days: %s"
                 % (", ".join("%s x%.2f" % kv for kv in sorted(peers.items())) or "none with enough volume"),
                 "within-intent check — the rise holds inside the agent's top intents: %s"
@@ -402,8 +435,18 @@ def detect_efficiency(corpus: Corpus, cov: Coverage) -> List[dict]:
             ]
             if change:
                 evidence.append(format_change(change))
+                diag_attr = "the %s change on %s (%s -> %s, '%s') lands on the onset day" % (
+                    change["kind"], agent, change.get("from_value"), change.get("to_value"),
+                    change.get("note", ""))
+            elif cause != "unknown":
+                dim = "prompt_version" if cause == "prompt.regression" else "model"
+                evidence.append("no config marker aligned; attribution is by the agent's changed %s between "
+                                "baseline and window" % dim)
+                diag_attr = ("no config marker aligned, but the agent's %s differs between baseline and window, "
+                             "so the cause is attributed by the changed field" % dim)
             else:
                 evidence.append("no prompt/model change targeting %s within %d days of onset" % (agent, T.ALIGN_BEFORE))
+                diag_attr = "no aligned prompt/model change — mechanism proven, cause left unknown"
             out.append({
                 "kind": "efficiency", "tenant": tenant, "cohort": {"agent_id": agent},
                 "metric": "turns_to_resolve", "a": a, "b": b,
@@ -414,17 +457,15 @@ def detect_efficiency(corpus: Corpus, cov: Coverage) -> List[dict]:
                               "res_in": res_in, "res_base": res_base, "peers": peers, "strata": strata,
                               "ratio": ratio},
                 "evidence": evidence, "cause_class": cause,
-                "confidence": 0.85 if change else 0.5, "attributed_change": change,
+                "confidence": 0.85 if change else 0.6, "attributed_change": change,
                 "diag_evidence": [
                     "only this agent moves; sibling agents on the same tenant and days do not, which "
                     "rules out load, mix and tenant-wide model effects",
                     "the rise is present within each major intent, so it is not a change in what "
                     "people asked",
                     "outcomes are flat: the agent still resolves, it just takes longer and costs more",
-                ] + (["the %s change on %s (%s -> %s, '%s') lands on the onset day" % (
-                    change["kind"], agent, change.get("from_value"), change.get("to_value"),
-                    change.get("note", ""))] if change else
-                     ["no aligned prompt/model change — mechanism proven, cause left unknown"]),
+                    diag_attr,
+                ],
             })
     return out
 

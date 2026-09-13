@@ -25,6 +25,7 @@ class T:
     MIX_MIN_SHARE_ABS = 0.10
     MIX_MIN_AGG_MOVE = 0.01
     MIX_FLAT_TOL = 0.05
+    MIX_FLAT_Z = 3.0               # two-proportion z bar, so small cohorts' noise is tolerated
     LOAD_MIN_VOLUME_RATIO = 2.0
     LOAD_HOLD_RATIO = 1.5
     LOAD_MAX_LEN = 7
@@ -45,6 +46,18 @@ def _in(rows, a, b):
 
 def _out(rows, a, b):
     return [r for r in rows if not (a <= int(r["day"]) < b)]
+
+
+def _rate_moved(r_in, r_out, n_in, n_out, floor=T.MIX_FLAT_TOL, z=T.MIX_FLAT_Z) -> bool:
+    """A rate only counts as moved when the gap clears a floor AND is
+    statistically real for the cohort's size; otherwise small cohorts flag on
+    noise and block a legitimate mix-shift dismissal."""
+    diff = abs(r_in - r_out)
+    if diff <= floor:
+        return False
+    p = (r_in * n_in + r_out * n_out) / float(n_in + n_out)
+    se = (p * (1.0 - p) * (1.0 / n_in + 1.0 / n_out)) ** 0.5
+    return True if se == 0 else (diff / se) >= z
 
 
 # ------------------------------------------------------------- traffic mix --
@@ -75,7 +88,13 @@ def detect_traffic_mix(corpus: Corpus, regressions: List[dict]) -> List[dict]:
             agg_out = rate(sum(1 for s in _out(rows, a, b) if contained(s)), len(_out(rows, a, b)))
             if agg_in is None or agg_out is None or abs(agg_in - agg_out) < T.MIX_MIN_AGG_MOVE:
                 continue
-            # every existing intent's own rate must be flat in the window
+            # every existing intent's own rate must be flat in the window.
+            # An intent that is itself a detected regression may legitimately
+            # move, and its window need not overlap this one (a fault can sit in
+            # the mix window's outside period). A mix-shift dismissal therefore
+            # tolerates regression cohorts regardless of window overlap.
+            reg_intents = {g["cohort"].get("intent") for g in regressions
+                           if g.get("tenant") == tenant and (g.get("cohort") or {}).get("intent")}
             per_intent = {}
             moved = []
             for p_intent, p_rows in by_intent.items():
@@ -85,10 +104,7 @@ def detect_traffic_mix(corpus: Corpus, regressions: List[dict]) -> List[dict]:
                 r_in = rate(sum(1 for s in p_in if resolved(s)), len(p_in))
                 r_out = rate(sum(1 for s in p_out if resolved(s)), len(p_out))
                 per_intent[p_intent] = (r_in, r_out)
-                # a real regression in the same tenant window is allowed to move
-                if abs(r_in - r_out) > T.MIX_FLAT_TOL and not any(
-                        g["tenant"] == tenant and g["cohort"].get("intent") == p_intent
-                        and not (b <= g["a"] or a >= g["b"]) for g in regressions):
+                if _rate_moved(r_in, r_out, len(p_in), len(p_out)) and p_intent not in reg_intents:
                     moved.append(p_intent)
             if moved:
                 continue
