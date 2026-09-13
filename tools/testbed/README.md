@@ -284,6 +284,29 @@ per candidate, with the verdict and machine score:
 Use it as the headline evidence for "we believe this survives the sealed run" —
 the detailed per-fault/per-decoy breakdown lives in the `--json-out` file.
 
+### 8.2 Point ledger (`--explain`)
+
+The JSON already carries `score.py`'s per-criterion notes, but `--explain`
+prints a compact ledger that names **exactly which points were lost and what the
+candidate said**, so a failure can be handed to the author without guesswork:
+
+```
+machine 51.20/55  (lost 3.80)
+Diagnostic accuracy  17.67/20  lost 2.33
+    HIT   F3  lag=0d  cohort=ok  cause=model.change  -> 4.3/6.7
+Specificity          13.53/15  lost 1.47
+    QUIET D1 — not flagged, but never examined either (partial credit)
+...
+LOST F3 2.33 — candidate finding f03_efficiency_xt1 said cause=model.change,
+     expected prompt.regression; cohort_ok=True lag=0
+     cohort={'agent_id': 'xag4'} window={'from_day': 9, 'to_day': 20}
+     attributed={'kind': 'model', 'day': 9, ...} (wanted {'kind': 'prompt', 'day': 9})
+LOST D1 1.47 — never explicitly dismissed (no non-regression finding with a
+     linked traffic_mix diagnosis)
+```
+
+`res["explain"]` in the JSON holds the same lines for every corpus.
+
 ---
 
 ## 9. What the testbed cannot prove

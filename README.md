@@ -128,6 +128,11 @@ python3 tools/testbed/evaluate.py --candidates tools/testbed/candidates.json \
   --matrix-out /tmp/nexus-testbed/pool-matrix.md
 ```
 
+Add `--explain` to print a point ledger naming exactly which points were lost and
+what the candidate reported (e.g. "LOST F3 2.33 — candidate said cause=model.change,
+expected prompt.regression"), so a failure can be handed to the author without
+guesswork.
+
 ### What the testbed is designed to catch
 
 In general, the failure modes that separate a solution tuned to one corpus from

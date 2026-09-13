@@ -165,23 +165,44 @@ def objective(report: dict, gt: dict, scoremod) -> Dict:
     regs = [f for f in findings if f.get("is_regression")]
     diags = {d["finding_id"]: d for d in report.get("diagnoses", [])}
     res = {"faults": {}, "decoys": {}, "strays": []}
+    per = 20.0 / float(len(faults))
 
     for flt in faults:
         hits = [f for f in regs if scoremod.match_fault(f, [flt])]
         if not hits:
-            res["faults"][flt["id"]] = {"found": False}
+            res["faults"][flt["id"]] = {"found": False, "points": 0.0,
+                                        "max": round(per, 2), "lost": round(per, 2)}
             continue
         best = min(hits, key=lambda f: abs(f["window"].get("from_day", 0) - flt["onset_day"]))
         lag = max(0, best["window"].get("from_day", 0) - flt["onset_day"])
         d = diags.get(best["id"], {})
         cohort_ok = scoremod.cohort_matches(best.get("cohort") or {}, flt.get("cohort") or {})
-        cause_ok = d.get("cause_class") == flt["cause_class"]
+        cause = d.get("cause_class")
+        exp_cause = flt["cause_class"]
+        cause_ok = cause == exp_cause
+        ac = d.get("attributed_change") or {}
+        exp_ch = flt.get("attributable_change") or {}
+        attr_ok = bool(cause) and ac.get("kind") == exp_ch.get("kind") and isinstance(ac.get("day"), int) \
+            and abs(ac["day"] - exp_ch.get("day", -99)) <= 2
+        # mirror score.py's accuracy arithmetic (detection + localisation + diagnosis)
+        det = 0.45 * max(0.35, 1.0 - (lag / float(scoremod.DETECT_GRACE)) * 0.65)
+        loc = 0.20 if cohort_ok else 0.0
+        dg = 0.35 if cause_ok else (0.18 if cause and exp_cause.split(".")[0] == cause.split(".")[0] else 0.0)
+        if dg and attr_ok:
+            dg = min(0.35, dg + 0.05)
+        got = (det + loc + dg) * per
         res["faults"][flt["id"]] = {
             "found": True, "lag": lag, "cohort_ok": cohort_ok, "cause_ok": cause_ok,
-            "cause": d.get("cause_class"), "expected_cause": flt["cause_class"],
+            "cause": cause, "expected_cause": exp_cause, "attribution_ok": attr_ok,
+            "candidate_finding": best["id"], "candidate_cohort": best.get("cohort"),
+            "candidate_window": best.get("window"), "candidate_observed": best.get("observed"),
+            "candidate_expected": best.get("expected"), "attributed_change": ac,
+            "expected_change": exp_ch,
             "clean": cohort_ok and cause_ok and lag <= scoremod.DETECT_GRACE,
+            "points": round(got, 2), "max": round(per, 2), "lost": round(per - got, 2),
         }
 
+    per_dec = 0.28 * 15.0
     for dec in decoys:
         bad = [f for f in regs if scoremod.match_decoy(f, [dec])
                and not scoremod.match_fault(f, faults)]
@@ -191,15 +212,80 @@ def objective(report: dict, gt: dict, scoremod) -> Dict:
                      and scoremod.match_decoy(f, [dec])
                      and f.get("not_a_regression_because")
                      and diags.get(f["id"], {}).get("cause_class") == expect]
+        if bad:
+            lost = per_dec
+        elif dismissed:
+            lost = 0.0
+        else:
+            lost = per_dec * 0.35
         res["decoys"][dec["id"]] = {
             "false_alarm": bool(bad), "false_alarm_ids": [f["id"] for f in bad],
             "explicitly_dismissed": bool(dismissed),
+            "dismissal_finding": dismissed[0]["id"] if dismissed else None,
+            "dismissal_cause": diags.get(dismissed[0]["id"], {}).get("cause_class") if dismissed else None,
+            "expected_cause": expect,
             "clean": not bad and bool(dismissed),
+            "points_lost": round(lost, 2), "max": round(per_dec, 2),
         }
 
     res["strays"] = [f["id"] for f in regs
                      if not scoremod.match_fault(f, faults) and not scoremod.match_decoy(f, decoys)]
     return res
+
+
+def explain_kit(res: Dict) -> List[str]:
+    """A point ledger: exactly where points were lost, and what the candidate said."""
+    sc = res.get("score", {})
+    sec = sc.get("sections", {})
+    lines: List[str] = []
+    total = sc.get("machine_score")
+    if total is not None:
+        lines.append("machine %s/55  (lost %.2f)" % (total, 55.0 - float(total)))
+    for name in ("Diagnostic accuracy", "Specificity", "Loop completeness", "Honesty"):
+        s = sec.get(name)
+        if not s:
+            continue
+        lines.append("%-20s %5.2f/%-3d lost %.2f" % (name, s.get("score", 0), s.get("max", 0),
+                                                     s.get("max", 0) - s.get("score", 0)))
+        for n in s.get("notes", []):
+            lines.append("    " + n)
+    obj = res.get("objective") or {}
+    for fid, f in obj.get("faults", {}).items():
+        if f.get("lost", 0) <= 0.05:
+            continue
+        if not f.get("found"):
+            lines.append("LOST %s %.2f — fault not detected" % (fid, f["lost"]))
+            continue
+        lines.append("LOST %s %.2f — candidate finding %s said cause=%s, expected %s; cohort_ok=%s lag=%d"
+                     % (fid, f["lost"], f.get("candidate_finding"), f.get("cause"),
+                        f.get("expected_cause"), f.get("cohort_ok"), f.get("lag", -1)))
+        lines.append("        cohort=%s window=%s observed=%s expected=%s attributed=%s (wanted %s)"
+                     % (f.get("candidate_cohort"), f.get("candidate_window"),
+                        f.get("candidate_observed"), f.get("candidate_expected"),
+                        f.get("attributed_change"), f.get("expected_change")))
+    for did, d in obj.get("decoys", {}).items():
+        if d.get("points_lost", 0) <= 0.05:
+            continue
+        if d.get("false_alarm"):
+            lines.append("LOST %s %.2f — FALSE ALARM: reported %s as a regression"
+                         % (did, d["points_lost"], d["false_alarm_ids"]))
+        else:
+            lines.append("LOST %s %.2f — never explicitly dismissed (no non-regression "
+                         "finding with a linked %s diagnosis)"
+                         % (did, d["points_lost"], d.get("expected_cause")))
+    for sid in obj.get("strays", []):
+        lines.append("STRAY %s — regression matching neither a fault nor a decoy" % sid)
+    for sid in res.get("foreign_replay_ids", []) or []:
+        lines.append("FOREIGN REPLAY ID %s — not issued by the replay service" % sid)
+    for name in ("schema_problems", "invariants"):
+        for e in res.get(name) or []:
+            lines.append("%s: %s" % ("SCHEMA" if name == "schema_problems" else "INVARIANT", e))
+    rules = res.get("rules") or {}
+    for e in rules.get("llm_deps", []):
+        lines.append("RULE1 (audit): %s" % e)
+    for e in rules.get("yardstick_write", []):
+        lines.append("RULE2: %s" % e)
+    return lines
 
 
 # --------------------------------------------------------------------------- #
@@ -557,6 +643,8 @@ def main() -> int:
     ap.add_argument("--no-replay", action="store_true")
     ap.add_argument("--strict-rules", action="store_true",
                     help="fail on any LLM dependency reference (Rule 1 audit)")
+    ap.add_argument("--explain", action="store_true",
+                    help="print a point ledger: exactly which points were lost and why")
     ap.add_argument("--json-out", default=None)
     ap.add_argument("--matrix-out", default=None, help="write a markdown pass/fail matrix")
     a = ap.parse_args()
@@ -598,6 +686,7 @@ def main() -> int:
                                            cand.get("literal_allow_globs", []), lits),
             }
             res["rules"] = rules
+            res["explain"] = explain_kit(res)
             ok, reasons = verdict(res,
                                   require_replay=bool(cand.get("replay", True)) and not a.no_replay,
                                   strict_rules=a.strict_rules)
@@ -611,6 +700,9 @@ def main() -> int:
                 "".join("/" if f.get("clean") else "x" for f in res["objective"]["faults"].values()) if res.get("objective") else "?",
                 "".join("/" if d.get("clean") else "x" for d in res["objective"]["decoys"].values()) if res.get("objective") else "?",
                 "" if ok else "| " + "; ".join(reasons)[:110]))
+            if a.explain:
+                for ln in res["explain"]:
+                    print("        " + ln)
             cand_out.append(res)
             overall_pass = overall_pass and ok
         all_out[cand["name"]] = cand_out
