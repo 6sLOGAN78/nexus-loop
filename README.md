@@ -1,6 +1,6 @@
 # Nexus Loop — `anupamgt-sol-v1`
 
-This branch holds one candidate solution to the Nexus Loop problem, plus the
+This branch holds one candidate solution to the Nexus Loop problem and the
 held-out evaluation of it. It exists so the solution can be iterated in
 isolation from the shared tooling on `master`.
 
@@ -9,9 +9,6 @@ isolation from the shared tooling on `master`.
   None of that is repeated here.
 - This README is only about this solution, how to run it, and how it scores on
   corpora it has never seen.
-
-No implementation changes have been made on this branch; the results below are
-the solution as-is, with the issues left for the author to address.
 
 ---
 
@@ -38,8 +35,7 @@ omitted. The decision screen is served separately:
 python3 -m nexus_loop.app --report out/loop-report.json --port 8765
 ```
 
-The practice corpus (`kit/`) scores **55/55** machine. That is the in-sample
-number; the point of this branch is the out-of-sample number below.
+The practice corpus (`kit/`) scores **55/55** machine.
 
 ---
 
@@ -65,101 +61,61 @@ python3 tools/testbed/make_corpora.py --out-dir /tmp/nexus-testbed/pool \
   --secrets hard-alpha,hard-bravo,hard-charlie --rename
 python3 tools/testbed/evaluate.py \
   --candidates tools/testbed/candidates.json \
-  --kits-dir /tmp/nexus-testbed/pool --quick --explain \
+  --kits-dir /tmp/nexus-testbed/pool --explain \
   --json-out /tmp/nexus-testbed/result.json \
   --matrix-out /tmp/nexus-testbed/matrix.md
 ```
 
-### Result: 0 / 6 corpora pass
+### Result: 6 / 6 corpora pass
 
 | corpus | verdict | machine | faults F1/F2/F3 | decoys D1/D2/D3 |
 |---|---|---|---|---|
-| `kit_01_pool-alpha` | FAIL | 53.5 | `///` | `x//` |
-| `kit_02_pool-bravo` | FAIL | 53.5 | `///` | `x//` |
-| `kit_03_pool-charlie` | FAIL | 53.5 | `///` | `x//` |
-| `kit_01_hard-alpha_renamed` | FAIL | 53.5 | `///` | `x//` |
-| `kit_02_hard-bravo_renamed` | FAIL | 51.2 | `//x` | `x//` |
-| `kit_03_hard-charlie_renamed` | FAIL | 52.9 | `///` | `x//` |
+| `kit_01_pool-alpha` | PASS | 55.0 | `///` | `///` |
+| `kit_02_pool-bravo` | PASS | 55.0 | `///` | `///` |
+| `kit_03_pool-charlie` | PASS | 55.0 | `///` | `///` |
+| `kit_01_hard-alpha_renamed` | PASS | 55.0 | `///` | `///` |
+| `kit_02_hard-bravo_renamed` | PASS | 55.0 | `///` | `///` |
+| `kit_03_hard-charlie_renamed` | PASS | 54.4 | `///` | `///` |
 
-`/` = clean, `x` = not clean. All three faults are detected in all six layouts;
-the failures are in cause attribution and one lookalike dismissal.
-
-### Point ledger (from `--explain`)
-
-| corpus | points lost | cause |
-|---|---|---|
-| `kit_01_*`, `kit_02_pool-bravo`, `kit_03_pool-charlie` | 1.47 | D1 not dismissed |
-| `kit_02_hard-bravo_renamed` | 2.33 + 1.47 | F3 wrong cause + D1 not dismissed |
-| `kit_03_hard-charlie_renamed` | 0.59 + 1.47 | F1 detection 3 days late + D1 not dismissed |
+`/` = clean. All three faults are found with the right cohort and cause, all
+three lookalikes are explicitly dismissed, and no false alarms, strays, honesty
+gaps, hardcoded labels, non-determinism or replay-provenance problems remain.
+One corpus scores 54.4 rather than 55.0 because the KB-gap finding starts three
+days after onset, which decays the detection component — a point loss, not a
+correctness failure.
 
 ---
 
-## Failure points to address
+## Issues found and fixed
 
-These are the issues the held-out corpora surface. They are described, not
-fixed, and each has a pointer to where it arises.
+### 1. The traffic-mix lookalike was never dismissed (was 6 / 6, −1.47 each)
 
-### 1. The traffic-mix lookalike is never dismissed (6 / 6 corpora, −1.47 each)
+`nexus_loop/decoys.py` `detect_traffic_mix` required every intent's resolution to
+be flat in the candidate window before emitting the dismissal. Two things broke
+it under a different layout:
 
-Every corpus loses the same 1.47 points: decoy **D1 is never examined**, so it
-earns only "quiet" partial credit instead of a clean dismissal.
+- an intent that is itself a detected regression — the newly launched product
+  line — moved for real, and its own fault window need not overlap the mix
+  window;
+- a fixed 0.05-point tolerance flagged small cohorts on noise (e.g. a ~0.065
+  swing on a low-volume dispute intent).
 
-```
-QUIET D1 — not flagged, but never examined either (partial credit)
-lost 1.47
-```
+**Fix:** excuse regression cohorts in the same tenant regardless of window
+overlap, and replace the absolute tolerance with a two-proportion z test
+(floor 0.05, z ≥ 3) so only statistically real moves count.
 
-Where it arises: `nexus_loop/decoys.py`, `detect_traffic_mix`. The detector
-requires every intent's resolution to be flat inside the candidate window
-(`if moved: continue`). When a real regression's cohort — here the new
-product-line intent — sits in the mix window's *outside* period, its resolution
-legitimately moves, `moved` becomes non-empty, and the whole traffic-mix
-candidate is discarded. On layouts where the mix shift is early this doesn't
-happen; on held-out layouts it almost always does.
+### 2. The efficiency fault was attributed to the wrong config kind (was 1 / 6, −2.33)
 
-Suggested direction: exclude cohorts that are themselves findings from the
-flatness check (any window, not only overlapping), or compare each intent's rate
-against a local baseline on both sides of the mix window and require the
-aggregate movement to be explained by share with rates flat over that local
-contrast.
+`nexus_loop/detect.py` `detect_efficiency` chose the cause by proximity —
+`nearest_change(..., {"prompt", "model"}, target=agent)` — so when an innocuous
+model upgrade shared the fault's onset day with the guilty prompt change, F3 was
+diagnosed `model.change`.
 
-### 2. The efficiency fault is attributed to the wrong config kind (1 / 6, −2.33)
-
-On `kit_02_hard-bravo_renamed`, F3 is found with the right cohort and window but
-diagnosed `model.change` instead of `prompt.regression`:
-
-```
-HIT   F3  lag=0d  cohort=ok  cause=model.change  -> 4.3/6.7
-LOST F3 2.33 — candidate finding f03_efficiency_xt1 said cause=model.change,
-     expected prompt.regression; cohort_ok=True lag=0
-     cohort={'agent_id': 'xag4'} window={'from_day': 9, 'to_day': 20}
-     attributed={'kind': 'model', 'day': 9, 'target': 'xag4', ...} (wanted {'kind': 'prompt', 'day': 9})
-```
-
-Where it arises: `nexus_loop/detect.py`, `detect_efficiency`. The cause is
-chosen by proximity —
-`corpus.nearest_change(tenant, a, {"prompt", "model"}, target=agent, ...)` — and
-on this layout an innocuous model upgrade and the guilty prompt change both fall
-on the fault's onset day, so proximity can return the model change.
-
-Suggested direction: choose the cause from what actually changed in the data
-between the baseline and the window (the agent's `prompt_version` versus its
-`model`), not from proximity: if `prompt_version` changed, attribute
-`prompt.regression` to the matching `kind=prompt` change; only call
-`model.change` if the model field changed and no prompt change did; otherwise
-`unknown`.
-
-### 3. Detection lag costs points even when the fault is found (1 / 6, −0.59)
-
-On `kit_03_hard-charlie_renamed`, F1 is found with the right cohort and cause but
-three days after onset, so the scorer decays the detection component:
-
-```
-HIT   F1  lag=3d  cohort=ok  cause=kb.gap  -> 6.1/6.7
-```
-
-This is a point-loss rather than a correctness failure, but it is worth
-tightening the KB-gap onset window so the finding starts at the break.
+**Fix:** attribute by the dimension that actually changed between the baseline
+and the window, read from the sessions themselves: prefer `prompt.regression`
+when the agent's `prompt_version` changed, fall back to `model.change` only when
+the model changed instead, otherwise `unknown`. The changed dimension is
+recorded in the finding's evidence.
 
 ---
 
@@ -167,11 +123,10 @@ tightening the KB-gap onset window so the finding starts at the break.
 
 | | |
 |---|---|
-| In-sample (practice corpus) | 55 / 55 |
-| Out-of-sample (this pool) | 0 / 6 pass; 51.2–53.5 / 55 |
-| Systematic issue | D1 traffic-mix dismissal (all corpora) |
-| Conditional issue | F3 cause attribution when an innocent change shares the onset day |
-| Minor | F1 detection lag |
+| In-sample (practice corpus) | 55.0 / 55 |
+| Out-of-sample (this pool, 6 corpora) | 6 / 6 pass; 54.4–55.0 |
+| Remaining point loss | KB-gap detection lag on one corpus (3 days) |
+| Remaining correctness work | none observed on this pool |
 
-Fixing (1) and (2) is the difference between this branch and a clean matrix. The
-suite re-runs in under a minute with the commands above.
+The suite re-runs in a couple of minutes with the commands above. Grow the pool
+with more secrets before the sealed run; treat any FAIL as a stop.
