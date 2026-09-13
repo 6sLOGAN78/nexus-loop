@@ -482,11 +482,26 @@ lookalikes explicitly dismissed, no false alarms, strays, honesty gaps or
 non-determinism, replay verification improved, screen write-back working. So the
 detectors are not keyed to practice tenants/slices.
 
+### More than two tenants (`--tenants 3`)
+
+Pass `--tenants 3` to append a clean, unseen third tenant (`globex-telco`) with
+its own agents and no planted fault. This tests the remaining assumption — that
+the detectors do not assume exactly two tenants — and whether a clean tenant
+produces stray findings.
+
+Result against `anupamgt-sol-v1`: **55.0/55** on a 96,547-session, three-tenant
+corpus (all faults at lag 0, all lookalikes dismissed, no strays from the clean
+tenant, determinism/replay/screen pass). Note the scorer's tool-coverage line
+reads `4/6` because the third tenant's tool coverage (1 − v2_share = 0.85) is not
+one of the catalog's declared acme/northwind values; the check still passes since
+the acme/northwind tool metrics match.
+
 ### Limits
 
-- It relocates **within the two shipped tenants**. A configuration where the
-  sealed corpus has a different tenant count or a brand-new tenant is not
-  reproducible from the shipped simulator.
+- It relocates within the two shipped tenants and can add a clean third tenant.
+  A tenant with **genuinely new intents/tools/milestones**, or a different
+  tenant count with faults on the new tenants, is not reproducible from the
+  shipped simulator (the whole kit is built on the two-tenant world).
 - The patches are asserted against the current kit source; if the organisers ship
   a different generator, `generate_moved.py` aborts rather than silently
   producing a wrong corpus.

@@ -143,6 +143,21 @@ WORLD_PATCHES = [
                 "tenant": "acme-bank",'''),
 ]
 
+# ---- optional: append a third, clean tenant (tests "more than two tenants")
+THIRD_TENANT_PATCH = [
+    ("world-third-tenant",
+     "TENANTS = [ACME, NORTHWIND]",
+     '''GLOBEX = Tenant(
+    key="globex-telco", label="Globex Telecom", vertical="telecom",
+    daily_sessions=340, v2_share=0.15,
+    agents=["gl_care_v3", "gl_orders_v3", "gl_returns_v3"],
+    tools=NORTHWIND.tools,
+    intents=NORTHWIND.intents,
+    kb_docs=140,
+)
+TENANTS = [ACME, NORTHWIND, GLOBEX]'''),
+]
+
 
 def patch_file(path: str, patches, label: str) -> None:
     with open(path, encoding="utf-8") as fh:
@@ -158,6 +173,8 @@ def main() -> int:
     ap.add_argument("--out", required=True, help="destination kit directory")
     ap.add_argument("--source", default=DEFAULT_SOURCE, help="kit tools dir")
     ap.add_argument("--profile", default="cross", choices=["cross"])
+    ap.add_argument("--tenants", type=int, default=2, choices=[2, 3],
+                    help="2 = the shipped two tenants; 3 = append a clean, unseen third tenant")
     ap.add_argument("--seed", type=int, default=42)
     a = ap.parse_args()
 
@@ -173,8 +190,11 @@ def main() -> int:
         world = os.path.join(tmp, "nlkit", "world.py")
         patch_file(sim, SIM_PATCHES, "simulate.py")
         patch_file(world, WORLD_PATCHES, "world.py")
+        if a.tenants == 3:
+            patch_file(world, THIRD_TENANT_PATCH, "world.py")
 
-        print("generating moved-fault corpus (profile=%s) -> %s" % (a.profile, a.out))
+        print("generating moved-fault corpus (profile=%s, tenants=%d) -> %s"
+              % (a.profile, a.tenants, a.out))
         os.makedirs(a.out, exist_ok=True)
         rc = subprocess.call([sys.executable, os.path.join(tmp, "generate.py"),
                               "--seed", str(a.seed), "--out", a.out])
@@ -191,6 +211,7 @@ def main() -> int:
     with open(os.path.join(a.out, "_placement.json"), "w", encoding="utf-8") as fh:
         json.dump({
             "profile": a.profile,
+            "tenants": a.tenants,
             "kb": {"tenant": "northwind-retail", "intent": "sizing_help"},
             "tool": {"tenant": "acme-bank", "intent": "card_block", "tool": "block_card"},
             "prompt": {"tenant": "northwind-retail", "agent": "nw_care_v3"},
