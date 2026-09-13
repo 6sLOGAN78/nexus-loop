@@ -147,7 +147,8 @@ def normalize(report: dict) -> dict:
     def walk(o):
         if isinstance(o, dict):
             return {k: walk(v) for k, v in o.items()
-                    if k not in ("generated_at", "at", "generated", "out")}
+                    if k not in ("generated_at", "at", "generated", "out", "team",
+                                 "runs_used", "run_budget")}
         if isinstance(o, list):
             return [walk(x) for x in o]
         return o
@@ -493,7 +494,7 @@ def test_on_kit(cand: dict, kit: str, tools: str, args) -> Dict:
             sub = os.path.join(outdir, "run%d" % (i + 1))
             os.makedirs(sub, exist_ok=True)
             out = os.path.join(sub, "loop-report.json")
-            cmd = cand["run"].format(kit=kit, team="%s-%s-r%d" % (name, os.path.basename(kit), i + 1),
+            cmd = cand["run"].format(kit=kit, team="%s-%s" % (name, os.path.basename(kit)),
                                      out=out, outdir=sub, replay_url=replay_url,
                                      port=free_port())
             rc, log, secs = run(cmd, workdir, args.timeout, env=os.environ.copy())
