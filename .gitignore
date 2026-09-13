@@ -24,3 +24,7 @@ htmlcov/
 Thumbs.db
 *.swp
 *~
+
+# Testbed local state
+tools/testbed/candidates.json
+tools/testbed/kits/
