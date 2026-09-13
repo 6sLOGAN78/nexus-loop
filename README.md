@@ -186,4 +186,8 @@ unattended, and the screen and write-back work.
 - Supplied kit, practice data, and organiser tooling: present and unmodified.
 - Analysis and the build plan: complete in `docs/`.
 - Test suite: present in `tools/testbed/`.
-- The solution implementation and the sealed run: pending.
+- Solution implementation: on the `anupamgt-sol-v1` branch. It scores 55/55 on
+  the practice corpus and passes the six-corpus held-out pool (3 ordinary +
+  3 hard-mode) at 55/55, including determinism, the screen write-back and
+  replay-provenance checks.
+- The sealed run: pending.
