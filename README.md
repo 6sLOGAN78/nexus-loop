@@ -75,14 +75,12 @@ python3 tools/testbed/evaluate.py \
 | `kit_03_pool-charlie` | PASS | 55.0 | `///` | `///` |
 | `kit_01_hard-alpha_renamed` | PASS | 55.0 | `///` | `///` |
 | `kit_02_hard-bravo_renamed` | PASS | 55.0 | `///` | `///` |
-| `kit_03_hard-charlie_renamed` | PASS | 54.4 | `///` | `///` |
+| `kit_03_hard-charlie_renamed` | PASS | 55.0 | `///` | `///` |
 
 `/` = clean. All three faults are found with the right cohort and cause, all
 three lookalikes are explicitly dismissed, and no false alarms, strays, honesty
 gaps, hardcoded labels, non-determinism or replay-provenance problems remain.
-One corpus scores 54.4 rather than 55.0 because the KB-gap finding starts three
-days after onset, which decays the detection component — a point loss, not a
-correctness failure.
+All six corpora score a full 55.0/55.
 
 ---
 
@@ -117,6 +115,23 @@ when the agent's `prompt_version` changed, fall back to `model.change` only when
 the model changed instead, otherwise `unknown`. The changed dimension is
 recorded in the finding's evidence.
 
+### 3. The KB-gap finding started three days late on one corpus (was 54.4, −0.59)
+
+`nexus_loop/detect.py` took the window from `series.best_window`, which opens on
+the first day that clears its minimum sample size. For a cohort that launches
+mid-corpus and ramps up (the new product line), that put the window start ~3
+days after the real onset, decaying the detection component. The existing
+"open on the launch change" logic only fired when the change was within 2 days
+of the statistical window start, so it never triggered.
+
+**Fix:** treat a cohort whose first traffic is within 5 days of the window as
+born-broken and open the window on the launch `kind=kb` change (or the cohort's
+first traffic day when there is no marker), recomputing in-window, baseline and
+peer rows from that start. The F1 window now opens on the onset day.
+
+The three fixes are tracked as issues #2 (efficiency mis-attribution), #3
+(traffic-mix dismissal) and #5 (KB-gap lag).
+
 ---
 
 ## Summary
@@ -124,8 +139,8 @@ recorded in the finding's evidence.
 | | |
 |---|---|
 | In-sample (practice corpus) | 55.0 / 55 |
-| Out-of-sample (this pool, 6 corpora) | 6 / 6 pass; 54.4–55.0 |
-| Remaining point loss | KB-gap detection lag on one corpus (3 days) |
+| Out-of-sample (this pool, 6 corpora) | 6 / 6 pass, all 55.0 |
+| Remaining point loss | none observed on this pool |
 | Remaining correctness work | none observed on this pool |
 
 The suite re-runs in a couple of minutes with the commands above. Grow the pool
