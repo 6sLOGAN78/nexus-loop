@@ -49,6 +49,7 @@ class T:
     OUTCOME_FLAT = 0.05
     LOOKBACK = 14
     MIN_DAYS_OUT = 7               # a window needs a week of contrast outside it
+    NEW_COHORT_LOOKBACK = 5        # a cohort starting within this many days of the window is born broken
     ALIGN_BEFORE, ALIGN_AFTER = 3, 2
 
 
@@ -222,15 +223,26 @@ def detect_resolution_drops(corpus: Corpus, cov: Coverage, claimed: List[dict]) 
             if not w or (w.outside - w.inside) < T.RES_MIN_DROP or w.z < T.RES_MIN_Z:
                 continue
             a, b = w.a, w.b
+            first = ser.first_day()
+            # A cohort whose traffic begins at/after the window is "born broken": it has
+            # no before-period. Open the window on its first traffic, or the launch
+            # change that created it, rather than on the first day that cleared
+            # best_window's minimum sample size — that gap is what creates detection lag.
+            is_new = (first is not None and first >= a - T.NEW_COHORT_LOOKBACK
+                      and a >= T.MIN_DAYS_OUT)
+            launch = None
+            if is_new:
+                launch = corpus.nearest_change(tenant, a, {"kb"}, before=T.NEW_COHORT_LOOKBACK,
+                                               after=T.ALIGN_AFTER)
+                if launch and launch["day"] < a:
+                    a = launch["day"]
+                elif first < a:
+                    a = first
             if any(c["tenant"] == tenant and c["cohort"].get("intent") == intent
                    and not (b <= c["a"] or a >= c["b"]) for c in claimed):
                 continue                                 # owned by the tool detector
 
             in_rows = _in_rows(rows, a, b)
-            first = ser.first_day()
-            # "born broken": the cohort's first traffic is the window start and the
-            # tenant itself has been live for a while before that
-            is_new = first is not None and first >= a and a >= T.MIN_DAYS_OUT
             kb_in = _kb_stats(in_rows)
             tool_share = rate(sum(1 for s in in_rows if s["derived"]["n_tool_calls"]),
                               len(in_rows)) or 0.0
@@ -281,10 +293,9 @@ def detect_resolution_drops(corpus: Corpus, cov: Coverage, claimed: List[dict]) 
             if kb_mech:
                 cause = "kb.gap"
                 change = corpus.nearest_change(tenant, a, {"kb"}, before=T.ALIGN_BEFORE, after=T.ALIGN_AFTER)
-                if is_new and change and change["day"] < a and a - change["day"] <= 2:
-                    from_day = change["day"]     # a new cohort opens with its launch change
+                if launch and first is not None and launch["day"] == a:
                     evidence.append("window opens on day %d, the launch change that created the "
-                                    "cohort; first traffic arrives on day %d" % (from_day, a))
+                                    "cohort; first traffic arrives on day %d" % (a, first))
                 evidence.append("kb_hit is true on %s of %d lookups in the cohort; kb_top_score median "
                                 "%s (p10-p90 %s-%s)" % (_fmt(kb_in["hit_rate"]), kb_in["n_lookups"],
                                                         _fmt(kb_in["score_median"]), _fmt(kb_in["score_p10"]),
