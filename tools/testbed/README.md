@@ -447,6 +447,27 @@ client usage for review; the workflow is otherwise offline, so a run that
 depends on external network access will fail or stall and be caught by the
 timeout.
 
+### Robustness and strictness
+
+- **Timeouts.** A candidate that exceeds `--timeout` is recorded as a failed run
+  (no traceback, other candidates/corpora continue).
+- **Literal universe.** The literal scan uses the union of every tenant, intent,
+  tool and agent name across the practice kit *and* every corpus under test, so
+  practice names are still caught on moved/renamed corpora. `source_globs` still
+  decides which files are scanned; include non-`.py` source/config files if a
+  candidate keeps names outside Python.
+- **Skipped checks are recorded.** `result["skipped"]` lists anything not
+  exercised (`--quick`, `--no-screen`, `--no-replay`, a candidate with no
+  `serve`, or an unavailable replay server), so an all-PASS line cannot hide a
+  check that never ran.
+- **Schema backend.** `result["schema_backend"]` reports `jsonschema` or the
+  built-in subset; the built-in ignores `additionalProperties`, so install
+  `jsonschema` for full draft-07 validation.
+- **Strictness is intentional.** `invariants()` is deliberately stricter than
+  `score.py` (exact A11 fields, a judged metric must publish calibration, the
+  customer_ref cardinality refusal). Pass `--lenient-invariants` to gate on
+  schema + score only and treat the extras as advisories.
+
 ---
 
 ## 15. Moved-fault corpora (`generate_moved.py`)

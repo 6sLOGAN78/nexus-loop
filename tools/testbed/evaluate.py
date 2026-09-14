@@ -384,10 +384,12 @@ def literals_from_kit(kit: str) -> List[str]:
         names.update(t.get("tools", []))
     for tkey, intents in cat.get("milestones", {}).items():
         names.update(intents.keys())
-    gt_path = os.path.join(kit, "ground_truth_SEALED", "ground_truth.json")
-    if os.path.exists(gt_path):
-        for flt in json.load(open(gt_path)).get("faults", []):
-            names.update(str(v) for v in (flt.get("cohort") or {}).values())
+    for gt_name in ("ground_truth_SEALED", "ground_truth"):
+        gt_path = os.path.join(kit, gt_name, "ground_truth.json")
+        if os.path.exists(gt_path):
+            for flt in json.load(open(gt_path)).get("faults", []):
+                names.update(str(v) for v in (flt.get("cohort") or {}).values())
+            break
     return sorted(n for n in names if len(n) >= 4)
 
 
@@ -485,7 +487,7 @@ def test_on_kit(cand: dict, kit: str, tools: str, args) -> Dict:
     workdir = cand.get("workdir", ".")
     outdir = os.path.join(args.out_root, name, os.path.basename(kit))
     os.makedirs(outdir, exist_ok=True)
-    result: Dict = {"kit": os.path.basename(kit), "runs": [], "errors": []}
+    result: Dict = {"kit": os.path.basename(kit), "runs": [], "errors": [], "skipped": []}
     # the candidate never sees the sealed answer key
     run_kit = sanitized_kit(kit, os.path.join(outdir, "candidate-kit"))
 
@@ -503,6 +505,17 @@ def test_on_kit(cand: dict, kit: str, tools: str, args) -> Dict:
             result["errors"].append("replay server did not start")
             replay_url = ""
 
+    if not (cand.get("replay", True) and not args.no_replay):
+        result["skipped"].append("replay (%s)" % ("--no-replay" if args.no_replay else "candidate replay=false"))
+    elif not replay_url:
+        result["skipped"].append("replay (server unavailable)")
+    if args.quick:
+        result["skipped"].append("determinism (--quick)")
+    if not cand.get("serve"):
+        result["skipped"].append("screen (candidate has no serve command)")
+    elif args.no_screen:
+        result["skipped"].append("screen (--no-screen)")
+
     try:
         reports = []
         n_runs = 1 if args.quick else 2
@@ -513,7 +526,12 @@ def test_on_kit(cand: dict, kit: str, tools: str, args) -> Dict:
             cmd = cand["run"].format(kit=run_kit, team="%s-%s" % (name, os.path.basename(kit)),
                                      out=out, outdir=sub, replay_url=replay_url,
                                      port=free_port())
-            rc, log, secs = run(cmd, workdir, args.timeout, env=os.environ.copy())
+            try:
+                rc, log, secs = run(cmd, workdir, args.timeout, env=os.environ.copy())
+            except subprocess.TimeoutExpired:
+                result["runs"].append({"rc": -9, "seconds": args.timeout, "report": False})
+                result["errors"].append("run %d timed out after %ds" % (i + 1, args.timeout))
+                return result
             result["runs"].append({"rc": rc, "seconds": round(secs, 1),
                                    "report": os.path.exists(out)})
             if rc != 0 or not os.path.exists(out):
@@ -560,6 +578,7 @@ def test_on_kit(cand: dict, kit: str, tools: str, args) -> Dict:
         # schema + score
         schema = schema_check.load(os.path.join(tools, "schema", "loop-report.schema.json"))
         result["schema_problems"] = schema_check.problems(report, schema)
+        result["schema_backend"] = schema_check.BACKEND
         gt = os.path.join(kit, "ground_truth_SEALED", "ground_truth.json")
         rc, out, _ = run("%s %s --report %s --ground-truth %s --json" % (
             sys.executable, os.path.join(tools, "score.py"),
@@ -624,7 +643,8 @@ def screen_test(cand: dict, outdir: str, report: dict, args) -> Dict:
 # verdict + main
 # --------------------------------------------------------------------------- #
 
-def verdict(res: Dict, require_replay: bool, strict_rules: bool = False) -> Tuple[bool, List[str]]:
+def verdict(res: Dict, require_replay: bool, strict_rules: bool = False,
+            lenient_invariants: bool = False) -> Tuple[bool, List[str]]:
     reasons: List[str] = []
     if res.get("errors"):
         return False, res["errors"]
@@ -642,7 +662,7 @@ def verdict(res: Dict, require_replay: bool, strict_rules: bool = False) -> Tupl
         reasons.append("stray findings %s" % res["objective"]["strays"])
     if res["score"].get("sections", {}).get("Honesty", {}).get("score") != 12.0:
         reasons.append("honesty < 12")
-    if res.get("invariants"):
+    if res.get("invariants") and not lenient_invariants:
         reasons.append("invariants: %s" % res["invariants"][:3])
     if not res.get("determinism", True):
         reasons.append("non-deterministic")
@@ -683,6 +703,8 @@ def main() -> int:
     ap.add_argument("--no-replay", action="store_true")
     ap.add_argument("--strict-rules", action="store_true",
                     help="fail on any LLM dependency reference (Rule 1 audit)")
+    ap.add_argument("--lenient-invariants", action="store_true",
+                    help="do not fail on the extra deliverable invariants (schema+score only)")
     ap.add_argument("--explain", action="store_true",
                     help="print a point ledger: exactly which points were lost and why")
     ap.add_argument("--json-out", default=None)
@@ -701,6 +723,17 @@ def main() -> int:
         print("no sealed kits in %s — run testbed/make_corpora.py first" % a.kits_dir)
         return 2
 
+    # a single literal universe across the practice kit and every corpus under
+    # test, so practice names are still caught on moved/renamed corpora
+    lit_universe = set()
+    practice = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(a.tools))), "kit")
+    for k in ([practice] if os.path.exists(os.path.join(practice, "catalog.json")) else []) + kits:
+        try:
+            lit_universe.update(literals_from_kit(k))
+        except Exception:
+            pass
+    all_literals = sorted(lit_universe)
+
     all_out = {}
     overall_pass = True
     for cand in cands:
@@ -718,7 +751,7 @@ def main() -> int:
         for kit in kits:
             res = test_on_kit(cand, kit, a.tools, a)
             # literals and rules are candidate-level; attach to each result
-            lits = literals_from_kit(kit)
+            lits = all_literals
             res["literals"] = {
                 "checked": lits,
                 "violations": literal_scan(cand.get("workdir", "."),
@@ -729,7 +762,8 @@ def main() -> int:
             res["explain"] = explain_kit(res)
             ok, reasons = verdict(res,
                                   require_replay=bool(cand.get("replay", True)) and not a.no_replay,
-                                  strict_rules=a.strict_rules)
+                                  strict_rules=a.strict_rules,
+                                  lenient_invariants=a.lenient_invariants)
             res["pass"] = ok
             res["reasons"] = reasons
             sc = res.get("score", {})

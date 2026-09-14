@@ -12,6 +12,13 @@ from __future__ import annotations
 import json
 from typing import Any, List
 
+try:  # full draft-07 validation when available; otherwise a built-in subset
+    import jsonschema as _jsonschema  # type: ignore
+    BACKEND = "jsonschema"
+except ImportError:  # pragma: no cover
+    _jsonschema = None
+    BACKEND = "builtin"
+
 _TYPES = {
     "object": dict, "array": list, "string": str, "boolean": bool, "null": type(None),
 }
@@ -23,11 +30,9 @@ def load(path: str) -> dict:
 
 
 def problems(report: dict, schema: dict) -> List[str]:
-    try:
-        import jsonschema  # type: ignore
-    except ImportError:
+    if _jsonschema is None:
         return _check(report, schema, "$")
-    v = jsonschema.Draft7Validator(schema)
+    v = _jsonschema.Draft7Validator(schema)
     return [
         "%s: %s" % ("$" + "".join("[%r]" % p for p in e.absolute_path), e.message)
         for e in sorted(v.iter_errors(report), key=lambda e: list(e.absolute_path))
