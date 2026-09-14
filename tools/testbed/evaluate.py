@@ -32,6 +32,7 @@ import importlib.util
 import json
 import os
 import re
+import shutil
 import socket
 import subprocess
 import sys
@@ -82,6 +83,19 @@ def free_port() -> int:
     port = s.getsockname()[1]
     s.close()
     return port
+
+
+def sanitized_kit(kit: str, dest: str) -> str:
+    """A copy of the kit for the candidate with the sealed answer keys removed.
+
+    The candidate must not be able to read `ground_truth*`; a real copy (not
+    symlinks) keeps the path self-contained, so `realpath` cannot walk back to
+    the key either. The key is passed only to the scorer."""
+    if os.path.isdir(dest):
+        return dest
+    shutil.copytree(kit, dest,
+                    ignore=shutil.ignore_patterns("ground_truth", "ground_truth_SEALED"))
+    return dest
 
 
 def run(cmd: str, cwd: str, timeout: int, env=None) -> Tuple[int, str, float]:
@@ -472,6 +486,8 @@ def test_on_kit(cand: dict, kit: str, tools: str, args) -> Dict:
     outdir = os.path.join(args.out_root, name, os.path.basename(kit))
     os.makedirs(outdir, exist_ok=True)
     result: Dict = {"kit": os.path.basename(kit), "runs": [], "errors": []}
+    # the candidate never sees the sealed answer key
+    run_kit = sanitized_kit(kit, os.path.join(outdir, "candidate-kit"))
 
     replay_url = ""
     replay_proc = None
@@ -494,7 +510,7 @@ def test_on_kit(cand: dict, kit: str, tools: str, args) -> Dict:
             sub = os.path.join(outdir, "run%d" % (i + 1))
             os.makedirs(sub, exist_ok=True)
             out = os.path.join(sub, "loop-report.json")
-            cmd = cand["run"].format(kit=kit, team="%s-%s" % (name, os.path.basename(kit)),
+            cmd = cand["run"].format(kit=run_kit, team="%s-%s" % (name, os.path.basename(kit)),
                                      out=out, outdir=sub, replay_url=replay_url,
                                      port=free_port())
             rc, log, secs = run(cmd, workdir, args.timeout, env=os.environ.copy())
@@ -509,17 +525,37 @@ def test_on_kit(cand: dict, kit: str, tools: str, args) -> Dict:
         result["report_path"] = os.path.join(outdir, "run1", "loop-report.json")
 
         # replay provenance: every reported run id must have been issued by the
-        # service during this candidate's run (no fabricated evidence)
-        logged = set()
+        # service during this candidate's run, and the reported verdict/before/
+        # after must match what the service actually logged (no fabricated evidence)
+        logged: Dict[str, dict] = {}
         if replay_url:
             log = fetch_json(replay_url + "/log")
             if log:
-                logged = {r.get("run_id") for r in log.get("runs", [])}
+                logged = {r.get("run_id"): r for r in log.get("runs", [])}
         result["replay_log_ids"] = len(logged)
-        foreign = [v.get("replay_run_id") for v in (report.get("verifications") or [])
-                   if str(v.get("replay_run_id", "")).startswith("rp_")
-                   and v.get("replay_run_id") not in logged]
+        foreign, mismatch = [], []
+        pids = {p.get("id") for p in (report.get("prescriptions") or [])}
+        for v in (report.get("verifications") or []):
+            rid = str(v.get("replay_run_id", ""))
+            if not rid.startswith("rp_"):
+                continue
+            if rid not in logged:
+                foreign.append(rid)
+                continue
+            row = logged[rid]
+            for fld in ("verdict", "before", "after"):
+                rv, lv = v.get(fld), row.get(fld)
+                if rv is None or lv is None:
+                    continue
+                if isinstance(rv, (int, float)) and isinstance(lv, (int, float)):
+                    if abs(float(rv) - float(lv)) > 1e-6:
+                        mismatch.append("%s.%s reported=%s logged=%s" % (rid, fld, rv, lv))
+                elif rv != lv:
+                    mismatch.append("%s.%s reported=%r logged=%r" % (rid, fld, rv, lv))
+            if v.get("prescription_id") not in pids:
+                mismatch.append("%s.prescription_id %r is not a prescription" % (rid, v.get("prescription_id")))
         result["foreign_replay_ids"] = foreign
+        result["replay_mismatches"] = mismatch
 
         # schema + score
         schema = schema_check.load(os.path.join(tools, "schema", "loop-report.schema.json"))
@@ -620,6 +656,9 @@ def verdict(res: Dict, require_replay: bool, strict_rules: bool = False) -> Tupl
         reasons.append("Rule 1 audit: LLM dependency referenced: %s" % rules["llm_deps"][:3])
     if res.get("foreign_replay_ids"):
         reasons.append("replay evidence not issued by the service: %s" % res["foreign_replay_ids"])
+    if res.get("replay_mismatches"):
+        reasons.append("replay evidence does not match the service log: %s"
+                       % res["replay_mismatches"][:3])
     if require_replay and not res.get("replay", {}).get("ok"):
         reasons.append("no improved replay verification")
     if res.get("screen") and res["screen"].get("started"):

@@ -424,12 +424,21 @@ protected artifact (`catalog.json`, `ground_truth`, `loop-report.schema`,
 
 ### Evidence provenance
 
+The candidate never sees the sealed answer key: it is run against a copy of the
+kit with `ground_truth*` removed, and the key is passed only to `score.py`.
+(Reading `{kit}/ground_truth_SEALED/ground_truth.json` now fails.)
+
 When a replay URL is provided, the testbed fetches the replay service's own
-`GET /log` after the run and requires every `verifications[].replay_run_id` in
-the report to have been issued by that service during this candidate's run.
-Report ids that never appear in the log are flagged as
-`foreign_replay_ids` and fail the candidate — a solution cannot invent replay
-evidence.
+`GET /log` after the run and reconciles every `verifications[]` entry against it:
+
+- the `replay_run_id` must have been issued by that service during this
+  candidate's run (`foreign_replay_ids` otherwise); and
+- the reported `verdict`, `before` and `after` must match the logged row, and the
+  `prescription_id` must reference a real prescription (`replay_mismatches`
+  otherwise).
+
+Both fail the candidate, so invented run ids and runs obtained with a wrong fix
+(but reported as `improved`) are caught.
 
 ### Network scope
 
