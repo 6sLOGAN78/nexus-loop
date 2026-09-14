@@ -1,9 +1,8 @@
 # Nexus Loop
 
-Working repository for the Yellow.ai **Nexus Loop** TechQuest: build a
-quality-control loop for an already-deployed AI support agent that reads its
-logs, finds real problems, explains them, proposes a bounded fix, verifies the
-fix on a replay service, and hands a human one decision to make.
+A quality-control loop for an already-deployed AI support agent: it reads the
+agent's logs, finds what broke, explains why, proposes a small fix, verifies the
+fix on a replay service, and gives a human one decision to make.
 
 Two things are submitted:
 
@@ -14,7 +13,8 @@ Two things are submitted:
    **APPROVE / REJECT** control that writes the human decision back into the
    report.
 
-Plus a one-page note: what is real, what is stubbed, what breaks at 100×.
+Plus a one-page note: what is real, what is stubbed, what breaks at 100×
+(`docs/submission-note.md`).
 
 Two rules cannot be broken: never ask a language model for a fact the logs
 already record, and never change the yardstick (metric definitions, judge
@@ -22,216 +22,135 @@ versions, the reviewed set of good conversations) to make a result look better.
 
 ---
 
-## Repository contents
+## Status
+
+Everything is on `main`:
+
+- **Solution pipeline** (`nexus_loop/` + `run.py`): scores **55/55** on the
+  practice corpus and passes every held-out corpus the testbed throws at it —
+  the six-corpus sealed pool (6/6), the moved-fault corpus (55), and the
+  three-tenant moved-fault corpus (55).
+- **Decision screen** (`nexus_loop/app.py` + `nexus_loop/static/index.html`):
+  renders the report and writes approve/reject/defer back into it.
+- **Testbed** (`tools/testbed/`): generates held-out corpora and evaluates any
+  candidate solution against them.
+- **Docs**: analysis, build plan, deliverables/replay/demo guide, and this file.
+
+The historical `anupamgt-sol-v1` branch is kept only for reference; it is stale.
+
+Open item: **#7** — the supplied catalog's `v2_flow` coverage claim does not
+match the generated corpus (the telemetry hole is `tool_call`-only). That is a
+question for the organisers; the solution reports measured coverage regardless.
+
+---
+
+## Repository layout
 
 | Path | What it is |
 |---|---|
-| `docs/` | The problem statement, design notes, verified findings, and the build plan |
-| `kit/` | The practice dataset: sessions, steps, turns, config timeline, labels, catalog, asks, ground truth (~33 MB) |
-| `tools/nexus-loop-kit/` | The organiser tooling: generator, starter, scorer, replay service, schema, reference reports |
-| `tools/testbed/` | A general test suite for evaluating candidate solutions against held-out corpora |
+| `nexus_loop/` | The solution package: ingestion, features, detectors, asks, report, replay client, decision screen |
+| `run.py` | The one-command entrypoint that produces `loop-report.json` |
+| `docs/` | Problem statement, analysis, build plan, submission note, solution overview, UI handoff |
+| `kit/` | The practice dataset (sessions, steps, turns, config timeline, labels, catalog, asks, ground truth, ~33 MB) |
+| `tools/nexus-loop-kit/` | Organiser tooling: generator, starter, scorer, replay service, schema, reference reports |
+| `tools/testbed/` | The held-out test suite |
 | `report.json` | Output of `starter.py` (the intentionally weak baseline, 9.8/55) |
 
 ---
 
-## Reading guide — catch up in this order
+## Quick start
 
-1. **`docs/YellowAI_PS_TechQuest (1).pdf`** — the official 12-page problem
-   statement and scoring rubric. Start here.
-2. **`docs/brief.md`** — a plain-language tour of the task and the kit.
-3. **`kit/catalog.json`** and **`kit/asks.md`** — the data contract (safe joins,
-   grain, coverage, what is measurable) and the eleven operator questions. Read
-   the catalog before writing any query.
-4. **`docs/repo-learnings-and-findings.md`** — what the kit actually does, verified
-   from the corpus and the generator: fault mechanics, coverage truth, sealed-run
-   behaviour, replay contract, label calibration, and where earlier notes drift.
-5. **`docs/improved-solution-and-workflow.md`** — the build plan: module layout,
-   session feature table, detectors, standard, report mapping, replay, screen.
-6. **`docs/deliverables-replay-and-demo.md`** — exact deliverables, the four
-   tasks, required report sections, replay mechanics and budget, sealed run,
-   submission checklist, and the demo script.
-7. **Design history** — `docs/nexus-loop-solution.pdf` (an early solution
-   design), `docs/data-exploration-and-solution.md`,
-   `docs/architecture-ideas.md`, `docs/adversarial-review-nexus-loop-solution.md`
-   (a review of that design), and `docs/research-consolidation-and-comparison.md`
-   (what survived and what was corrected). Also `docs/implementation-plan.md`
-   (an earlier plan, superseded by item 5) and `docs/how-to-get-55-score.md`
-   (scorer mechanics — explicitly **not** a submission method).
-8. **`tools/testbed/README.md`** — how to test a candidate solution before the
-   sealed run.
-
----
-
-## Running the supplied kit
+### Run the solution (produce the report)
 
 ```bash
-cd tools/nexus-loop-kit
+# start the replay service in another shell
+python3 tools/nexus-loop-kit/replay/serve.py --kit kit --port 8719
 
-make kit                                  # build the practice corpus (~20s)
-python3 starter.py --kit ../../kit --team demo --out /tmp/report.json
-python3 score.py --report /tmp/report.json \
-  --ground-truth ../../kit/ground_truth/ground_truth.json
-python3 replay/serve.py --kit ../../kit --port 8719   # replay service
+# cold run: one command, unattended
+python3 run.py --kit kit --team demo --out out/loop-report.json
 ```
 
-The kit is stdlib Python 3.9+ with no dependencies. `score.py` is the exact
-machine grader; it is not a black box. The reference reports score 38.0, 41.5
-and 46.3 of 55.
-
-`starter.py` deliberately implements no findings, diagnoses, standard,
-prescriptions, verifications or gaps. It is boilerplate and a coverage-handling
-pattern to build on.
-
----
-
-## Testing a candidate solution
-
-The testbed generates held-out (sealed) corpora with the kit's own generator,
-runs a candidate against them, and checks that it generalises — not just that it
-scores well on the practice corpus whose key ships with the kit.
+With no replay service running, add `--no-replay` and the report is still valid
+(verifications are simply omitted). Score it against the practice key:
 
 ```bash
-# 1. build held-out corpora (use several different secrets)
-python3 tools/testbed/make_corpora.py \
-  --generator tools/nexus-loop-kit/generate.py \
-  --out-dir /tmp/nexus-testbed/kits \
-  --secrets alpha-secret,bravo-secret,charlie-secret
-
-# 2. describe the solution under test
-cp tools/testbed/candidates.example.json tools/testbed/candidates.json
-$EDITOR tools/testbed/candidates.json
-
-# 3. evaluate
-python3 tools/testbed/evaluate.py \
-  --candidates tools/testbed/candidates.json \
-  --kits-dir /tmp/nexus-testbed/kits \
-  --tools tools/nexus-loop-kit \
-  --json-out /tmp/nexus-testbed/result.json
+python3 tools/nexus-loop-kit/score.py \
+  --report out/loop-report.json \
+  --ground-truth kit/ground_truth/ground_truth.json
 ```
 
-See **`tools/testbed/README.md`** for the candidate contract, the full list of
-checks, pass criteria, and how to read the output.
+Outputs land in `out/`: `loop-report.json`, `golden_set.json`, `replay.log`, and
+`decisions.log` once a human decides.
 
-The testbed can also run **hard-mode** corpora, where every tenant, intent, tool
-and agent label is renamed to an opaque id, so a solution cannot pass by
-recognising practice names. It records a pass/fail **matrix** across a pool of
-corpora, scans for Rule 1 (LLM) and Rule 2 (yardstick writes) violations, and
-verifies that replay evidence was actually issued by the replay service. A
-separate generator (`tools/testbed/generate_moved.py`) produces **moved-fault**
-corpora, where the planted faults are relocated to different tenants and slices —
-the case the shipped sealed schedule cannot produce.
+### Open the decision screen
+
+```bash
+python3 -m nexus_loop.app --report out/loop-report.json --port 8765
+# then open http://127.0.0.1:8765
+```
+
+Or run both in one process:
+
+```bash
+python3 run.py --kit kit --team demo --out out/loop-report.json --serve --port 8765
+```
+
+The screen renders only from the report; the approve/reject action writes back
+into `prescriptions[].approval` atomically. See **`docs/ui-handoff.md`** for the
+full contract.
+
+### Run the testbed
 
 ```bash
 python3 tools/testbed/make_corpora.py --out-dir /tmp/nexus-testbed/pool \
   --secrets pool-alpha,pool-bravo,pool-charlie
 python3 tools/testbed/make_corpora.py --out-dir /tmp/nexus-testbed/pool \
   --secrets hard-alpha,hard-bravo,hard-charlie --rename
-python3 tools/testbed/evaluate.py --candidates tools/testbed/candidates.json \
-  --kits-dir /tmp/nexus-testbed/pool --quick \
-  --json-out /tmp/nexus-testbed/pool-result.json \
-  --matrix-out /tmp/nexus-testbed/pool-matrix.md
+python3 tools/testbed/evaluate.py \
+  --candidates tools/testbed/candidates.json \
+  --kits-dir /tmp/nexus-testbed/pool --quick --explain \
+  --json-out /tmp/nexus-testbed/result.json \
+  --matrix-out /tmp/nexus-testbed/matrix.md
 ```
 
-Add `--explain` to print a point ledger naming exactly which points were lost and
-what the candidate reported (e.g. "LOST F3 2.33 — candidate said cause=model.change,
-expected prompt.regression"), so a failure can be handed to the author without
-guesswork.
-
-### What the testbed is designed to catch
-
-In general, the failure modes that separate a solution tuned to one corpus from
-one that generalises:
-
-- **Wrong cause attribution** — a finding that detects the right cohort but blames
-  the wrong configuration change, especially when an innocent change shares the
-  onset day.
-- **Missed dismissals** — a lookalike (traffic mix, load event, judge-version
-  boundary) that is neither explicitly dismissed nor even examined, or the
-  reverse: a lookalike reported as a regression.
-- **Stray findings** — regressions that match neither a planted fault nor a
-  lookalike.
-- **False-alarm-by-silence** — omitting findings entirely, which gains no
-  specificity credit.
-- **Schema violations** and missing required sections.
-- **Honesty gaps** — missing fidelity/coverage on a metric, a judged metric
-  without calibration, a calibration of 1.00, an incorrect failover refusal, or
-  the wrong fidelity for a required ask.
-- **Non-determinism** — two cold runs producing different reports.
-- **Hardcoded practice values** — tenant, day, intent, tool or agent literals
-  that will not survive a moved layout.
-- **Broken loop mechanics** — no real `rp_*` replay verification, or a decision
-  screen that cannot write an approval back.
-- **Fabricated replay evidence** — verification run ids the replay service never
-  issued.
-- **Yardstick manipulation** — code that writes to metric, catalog, ground-truth
-  or schema artifacts (Rule 2).
-- **Name-based detection** — solutions that rely on practice tenant/intent/tool/
-  agent names, caught by hard-mode renaming.
-
-The suite passes a candidate on a corpus only when every fault is found with the
-right cohort and cause, every lookalike is explicitly dismissed, there are no
-strays, the honesty and deliverable invariants hold, the run is deterministic and
-unattended, and the screen and write-back work.
+See **`tools/testbed/README.md`** for the candidate contract, every check, the
+pass criteria, the point ledger, and the moved-fault generator.
 
 ---
 
-## Work done and status
+## The solution in one paragraph
 
-### Supplied material
-Kit, practice data and organiser tooling are present and unmodified.
+`run.py` loads the kit, folds step-level facts down to one row per session,
+computes per-tenant emission coverage, runs three detector-specific analyses
+(silent tool contract break, KB gap, prompt/efficiency regression), examines and
+dismisses three lookalikes (traffic mix, load event, judge-version boundary),
+answers the eleven operator asks as metrics or gaps, mines a "good" standard and
+freezes a golden set, assembles a schema-valid report of findings, diagnoses,
+impact and decision-shaped prescriptions, verifies one fix on the replay
+service, and serves a decision screen. Deterministic Python throughout; no LLM
+is called for any logged fact. Full detail: **`docs/solution-overview.md`**.
 
-### Analysis and planning (`docs/`)
-- Verified findings from the corpus and generator (`repo-learnings-and-findings.md`),
-  the corrected build plan (`improved-solution-and-workflow.md`), and the exact
-  deliverables / replay / sealed-run / demo guide (`deliverables-replay-and-demo.md`).
-- Design history and review: `nexus-loop-solution.pdf`, `data-exploration-and-solution.md`,
-  `architecture-ideas.md`, `adversarial-review-nexus-loop-solution.md`,
-  `research-consolidation-and-comparison.md`.
-- Headline verified facts: legacy `v2_flow` sessions are missing **only**
-  `tool_call` (not KB/guardrail/cost, contrary to the catalog); the shipped
-  sealed schedule moves **only** days/lengths/rates; the replay endpoint is
-  deterministic per input and reports `no_effect` for both a wrong fix and an
-  inactive cohort; the reference reports top out at 46.3/55 with F3 never
-  detected.
+---
 
-### Testbed (`tools/testbed/`)
-Capabilities: held-out corpora from arbitrary secrets; hard-mode label renaming;
-moved-fault relocation; a clean third tenant; Rule 1/2 source scans; replay
-provenance against the service's own log; determinism; screen write-back; a
-point-loss ledger (`--explain`); pass/fail matrix (`--matrix-out`).
+## Reading guide
 
-Validation of the solution on four distributional shocks:
+New to the repo, read in this order:
 
-| corpus | what it moves | result |
-|---|---|---|
-| practice `kit/` | — | 55.0 / 55 |
-| sealed pool (6: 3 ordinary + 3 hard-mode) | days, lengths, rates, labels | 6 / 6 pass, all 55.0 |
-| moved-fault (`cross`) | fault tenants, intents, tools, agents | 55.0 / 55 |
-| moved-fault + `--tenants 3` | adds a clean, unseen third tenant | 55.0 / 55, no strays |
+1. `docs/YellowAI_PS_TechQuest (1).pdf` — the official problem statement and rubric.
+2. `docs/brief.md` — a plain-language tour of the task and the kit.
+3. `kit/catalog.json` and `kit/asks.md` — the data contract and the eleven asks.
+4. `docs/solution-overview.md` — what the solution does and how it is built.
+5. `docs/repo-learnings-and-findings.md` — what the kit actually does, verified.
+6. `docs/deliverables-replay-and-demo.md` — deliverables, replay mechanics, demo script.
+7. `docs/submission-note.md` — real / stubbed / simulated / breaks at 100×.
+8. `docs/ui-handoff.md` — what the UI/product team needs.
+9. `tools/testbed/README.md` — how to evaluate a candidate.
 
-### Solution (`anupamgt-sol-v1` branch)
-A stdlib pipeline (`nexus_loop/` + `run.py`) plus a one-page decision screen.
-Scores 55/55 on practice and passes every held-out variant above, with all three
-faults found at the right cohort and cause and all three lookalikes explicitly
-dismissed. Three issues were found and fixed on the branch:
-- #2 efficiency cause attributed by proximity instead of the changed dimension
-- #3 traffic-mix lookalike never dismissed (cross-fault interference + fixed tolerance)
-- #5 KB-gap window opened three days late on some layouts
-
-### Issues
-- Closed: #2, #3 (solution), #4 (testbed determinism false negative), #5 (KB lag),
-  #6 (misleading `how-to-get-55-score` guide).
-- Open: #7 — the catalog/brief claim that `v2_flow` emits no KB/guardrail/cost
-  does not match the corpus (the hole is `tool_call`-only); see the two detailed
-  comments for the workaround and the nuances.
-
-### Open items
-- **Clarification (organisers, private channel):** does the scored sealed corpus
-  relocate faults to different tenants/slices, or only move days? Our design is
-  generic either way, so this is confidence, not a blocker.
-- **Human layer:** the testbed verifies screen mechanics, not whether a stranger
-  can act on a finding — that is the remaining half of the score.
-- **Sealed run:** pending.
+Design history (superseded, kept for context): `docs/nexus-loop-solution.pdf`,
+`docs/data-exploration-and-solution.md`, `docs/architecture-ideas.md`,
+`docs/adversarial-review-nexus-loop-solution.md`,
+`docs/research-consolidation-and-comparison.md`, `docs/implementation-plan.md`,
+`docs/improved-solution-and-workflow.md`, `docs/how-to-get-55-score.md`.
 
 ---
 
@@ -241,5 +160,4 @@ dismissed. Three issues were found and fixed on the branch:
 - Generated outputs (e.g. `out/`) are gitignored and are not deliverables.
 - The submission is the generated report plus the screen; never hand-edit the
   report to improve a score.
-- Commit messages should say what changed and why; keep kit data and tooling
-  unchanged unless there is a reason.
+- Keep kit data and organiser tooling unchanged.
