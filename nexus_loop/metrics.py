@@ -17,7 +17,7 @@ def metric(id: str, name: str, ask_id: str, grain: str, fidelity: str, value,
            denominator: str, breakdowns: Optional[List[str]] = None,
            excluded: Optional[List[str]] = None, alternatives: Optional[List[str]] = None,
            calibration: Optional[Dict] = None, value_note: Optional[str] = None,
-           breakdown: Optional[Dict] = None) -> dict:
+           breakdown: Optional[Dict] = None, coverage_extra: Optional[Dict] = None) -> dict:
     if fidelity not in FIDELITIES:
         raise ValueError("fidelity must be one of %s" % (FIDELITIES,))
     if fidelity == "judged" and not calibration:
@@ -46,6 +46,8 @@ def metric(id: str, name: str, ask_id: str, grain: str, fidelity: str, value,
     }
     if excluded:
         m["coverage"]["excluded"] = list(excluded)
+    if coverage_extra:
+        m["coverage"].update(coverage_extra)
     if alternatives:
         m["plan"]["alternatives_offered"] = list(alternatives)
     if value_note:

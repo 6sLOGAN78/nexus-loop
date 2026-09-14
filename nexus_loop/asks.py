@@ -22,18 +22,21 @@ def _short(tenant: str) -> str:
     return tenant.split("-")[0]
 
 
-def _cost_coverage(cov: Coverage, corpus: Corpus, tenant: str) -> Tuple[float, str]:
+def _cost_coverage(cov: Coverage, corpus: Corpus, tenant: str) -> Tuple[float, str, Optional[dict]]:
     rows = list(corpus.rows(tenant))
     with_cost = sum(1 for s in rows if s.get("cost_usd") is not None)
     v = rate(with_cost, len(rows)) or 0.0
     declared = (cov.corpus.kit.capability("cost_per_session").get("coverage") or {}).get(tenant)
     basis = ("share of %s sessions carrying a recorded cost_usd, measured from this corpus" % tenant)
+    extra = None
     if declared is not None and abs(declared - v) > 0.03:
-        basis += (". NOTE the catalog declares cost coverage %.2f for this tenant (cost on llm_call "
-                  "steps, said to be absent on v2_flow); in this corpus %.1f%% of sessions carry cost_usd, "
-                  "so the measured presence is reported and the agent_kind breakdown is given below"
-                  % (declared, 100 * v))
-    return round(v, 4), basis
+        why = ("catalog declares cost coverage %.2f for this tenant (on the stated basis that cost is absent "
+               "on v2_flow); in this corpus %.1f%% of sessions carry cost_usd, so the measured value is "
+               "reported and v2 is not excluded" % (declared, 100 * v))
+        basis += ". NOTE " + why
+        extra = {"observed_vs_declared": {"declared": round(float(declared), 4),
+                                          "observed": round(v, 4), "why": why}}
+    return round(v, 4), basis, extra
 
 
 def _window_confounds(tenant: str, x0: int, x1: int,
@@ -220,7 +223,7 @@ def build(corpus: Corpus, cov: Coverage, kit_catalog: dict,
 
     # ---------------------------------------------------------------- A03 / A08 --
     for t in tenants:
-        cval, cbasis = _cost_coverage(cov, corpus, t)
+        cval, cbasis, cextra = _cost_coverage(cov, corpus, t)
         rows = [s for s in corpus.rows(t) if s.get("cost_usd") is not None]
         by_intent = {}
         for it in sorted({s["intent"] for s in rows}):
@@ -239,7 +242,8 @@ def build(corpus: Corpus, cov: Coverage, kit_catalog: dict,
             "resolved sessions of the intent (sessions without recorded cost leave both numerator and denominator)",
             breakdowns=["intent", "agent_id", "agent_kind"],
             value_note="top five intents by cost per resolved conversation; full table in breakdown",
-            breakdown={"by_intent": by_intent, "cost_by_agent_kind": by_kind}))
+            breakdown={"by_intent": by_intent, "cost_by_agent_kind": by_kind},
+            coverage_extra=cextra))
         months = {}
         for m_i in range(0, D, half or D):
             r = [s for s in rows if m_i <= int(s["day"]) < m_i + half]
@@ -260,7 +264,8 @@ def build(corpus: Corpus, cov: Coverage, kit_catalog: dict,
             breakdowns=["intent", "agent_id", "model"],
             alternatives=["human handling cost is NOT included: no price constant exists in the corpus, so "
                           "handoffs are reported as counts, never as dollars"],
-            breakdown=months))
+            breakdown=months,
+            coverage_extra=cextra))
 
     # ---------------------------------------------------------------- A05 --
     journeys = kit_catalog.get("milestones") or {}
@@ -305,14 +310,25 @@ def build(corpus: Corpus, cov: Coverage, kit_catalog: dict,
                                  "kb_top_score_median": median([x for s in r for x in s["derived"]["kb_scores"]])}
         kb_by_t[t] = {"kb_hit_rate": r4(rate(hits, lookups)), "kb_top_score_median": median(scores),
                       "lookups": lookups, "by_intent": by_intent}
+    kb_cov = {t: cov.value("kb_lookup", t) for t in tenants}
+    kb_declared = (corpus.kit.capability("kb_fallthrough_rate").get("coverage") or {})
+    kb_basis = ("per tenant, share of sessions whose agent_kind emits kb_lookup: "
+                + ", ".join("%s=%.4f" % (t, kb_cov[t]) for t in tenants)
+                + ". The catalog declares kb_fallthrough_rate coverage "
+                + ", ".join("%s=%s" % (t, kb_declared.get(t, "n/a")) for t in tenants)
+                + " (v2 said to lack kb_lookup); v2 emits it in this corpus, so the measured presence is reported")
+    kb_extra = {"observed_vs_declared": {
+        "declared": kb_declared, "observed": kb_cov,
+        "why": "v2_flow emits kb_lookup rows in this corpus, so measured coverage exceeds the declared v3-only value"}}
     metrics.append(metric(
         "m_kb_hit_rate", "KB retrieval: confident hit rate and top score", "A06", "step", "measured",
         {t: {"kb_hit_rate": v["kb_hit_rate"], "kb_top_score_median": v["kb_top_score_median"]} for t, v in kb_by_t.items()},
-        min(cov.value("kb_lookup", t) for t in tenants), cov.basis("kb_lookup", tenants[0]),
+        min(kb_cov.values()) if kb_cov else 0.0, kb_basis,
         STEPS + " WHERE step_type = 'kb_lookup'", "kb_hit = true", "all kb_lookup steps per tenant",
         breakdowns=["intent", "kb_version", "agent_id"], excluded=cov.excluded_filter("kb_lookup"),
         alternatives=["'actually answering' has a judged reading — see m_quality_judged, segmented by judge_version"],
-        breakdown={t: v["by_intent"] for t, v in kb_by_t.items()}))
+        breakdown={t: v["by_intent"] for t, v in kb_by_t.items()},
+        coverage_extra=kb_extra))
 
     # judged quality with a real calibration against the kit's human rubric scores
     cal, cal_detail = _quality_calibration(corpus)
