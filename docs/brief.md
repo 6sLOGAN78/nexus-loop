@@ -57,7 +57,7 @@ That is the level of practical reasoning the problem wants.
 
 # What is in the supplied kit
 
-The kit is in `nexus-loop-day1/`. It has no external Python dependencies; Python 3.9+ is enough.
+The kit data is in `kit/` and the tooling in `tools/nexus-loop-kit/`. It has no external Python dependencies; Python 3.9+ is enough.
 
 ## Data size
 
@@ -338,7 +338,7 @@ The “product thinking” to add is only this: every number should end in a dec
 ## Useful commands
 
 ```bash
-cd nexus-loop-day1/tools/nexus-loop-kit
+cd tools/nexus-loop-kit
 make kit
 python3 starter.py --kit ../../kit --team demo --out /tmp/report.json
 python3 score.py --report /tmp/report.json --ground-truth ../../kit/ground_truth/ground_truth.json

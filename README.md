@@ -146,12 +146,6 @@ New to the repo, read in this order:
 8. `docs/ui-handoff.md` — what the UI/product team needs.
 9. `tools/testbed/README.md` — how to evaluate a candidate.
 
-Design history (superseded, kept for context): `docs/nexus-loop-solution.pdf`,
-`docs/data-exploration-and-solution.md`, `docs/architecture-ideas.md`,
-`docs/adversarial-review-nexus-loop-solution.md`,
-`docs/research-consolidation-and-comparison.md`, `docs/implementation-plan.md`,
-`docs/improved-solution-and-workflow.md`, `docs/how-to-get-55-score.md`.
-
 ---
 
 ## Conventions

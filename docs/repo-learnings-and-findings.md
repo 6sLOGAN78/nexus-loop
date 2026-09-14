@@ -1,12 +1,10 @@
 # Nexus Loop — kit learnings and findings
 
-This file records what was verified directly from the supplied kit and generator,
-and where the existing strategy notes (`brief.md`,
-`data-exploration-and-solution.md`, `architecture-ideas.md`,
-`adversarial-review-nexus-loop-solution.md`) are right, incomplete, or wrong.
+This file records what was verified directly from the supplied kit and generator
+in this repository.
 
-Everything below is reproducible from `nexus-loop-day1/` unless stated otherwise.
-Command references are to `nexus-loop-day1/tools/nexus-loop-kit/`.
+Everything below is reproducible from this repository; command references are to
+`tools/nexus-loop-kit/`.
 
 ---
 
