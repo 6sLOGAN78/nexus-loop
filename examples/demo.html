@@ -3,190 +3,348 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Nexus Loop &mdash; wireframe (lo-fi)</title>
+<title>Nexus Loop — decision screen (wireframe v2)</title>
 <style>
+
   :root {
-    --paper:#f1f0ec; --panel:#fff; --ink:#26262a; --muted:#7c7c7c;
-    --line:#c7c7c4; --fill:#eceae6; --ink-dark:#2c2c31;
+    --bg:#f3f4f6; --surface:#fff; --line:#e4e7ec; --line2:#eef1f5; --ink:#161b26;
+    --muted:#667085; --faint:#98a2b3; --brand:#4f46e5; --brand-weak:#eef0fe;
+    --good:#0f7a54; --good-weak:#e7f6ef; --warn:#b54708; --warn-weak:#fdf3e7;
+    --bad:#b42318; --bad-weak:#fdeceb; --radius:12px;
   }
   * { box-sizing:border-box; }
-  body { margin:0; background:var(--paper); color:var(--ink);
-    font:15px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
-  .wrap { max-width:1180px; margin:0 auto; padding:22px 18px 70px; }
-  .banner { background:#fffbe6; border:1px dashed #d9c98a; border-radius:8px;
-    padding:11px 14px; font-size:13px; color:#6b5d1f; }
-  .banner b { letter-spacing:.04em; text-transform:uppercase; font-size:11px; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+    font:15px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased; }
   code, .mono { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:12px; }
-  h1 { font-size:16px; margin:22px 0 4px; letter-spacing:.01em; }
-  h1 span { color:var(--muted); font-weight:400; }
-  .lede { color:var(--muted); font-size:13px; margin:0 0 6px; max-width:70ch; }
-  .mock { background:var(--panel); border:1px dashed var(--line); border-radius:12px;
-    margin-top:18px; overflow:hidden; box-shadow:0 1px 0 rgba(0,0,0,.03); }
-  .top { display:flex; justify-content:space-between; gap:16px; align-items:baseline;
-    padding:14px 18px; background:var(--ink-dark); color:#f2f2f0; flex-wrap:wrap; }
-  .top .brand { font-weight:600; font-size:15px; }
-  .top .ctx { font-family:ui-monospace,monospace; font-size:11.5px; opacity:.75; }
-  .cols { display:grid; grid-template-columns:1.65fr .95fr; }
-  @media (max-width:900px) { .cols { grid-template-columns:1fr; } .col+.col { border-left:0; border-top:1px dashed var(--line); } }
-  .col { padding:16px 18px; }
-  .col+.col { border-left:1px dashed var(--line); }
-  .region { position:relative; border:1px dashed var(--line); border-radius:9px;
-    padding:13px 15px 15px; margin-bottom:14px; background:#fdfdfc; }
-  .region.plain { background:#fff; }
-  .region .tag { font-family:ui-monospace,monospace; font-size:10px; letter-spacing:.16em;
-    text-transform:uppercase; color:#a2a2a2; margin:0 0 9px; }
-  .pin { position:absolute; top:-10px; right:10px; width:22px; height:22px; border-radius:50%;
-    background:#26262a; color:#fff; font:600 12px/22px ui-sans-serif,system-ui,sans-serif;
-    text-align:center; box-shadow:0 0 0 3px var(--paper); }
-  .pin.inline { position:static; display:inline-block; width:19px; height:19px; line-height:19px;
-    font-size:11px; box-shadow:none; margin-right:7px; vertical-align:middle; }
-  .mockfoot { display:flex; align-items:center; gap:8px; padding:10px 18px;
-    border-top:1px dashed var(--line); background:#fafaf8; color:#7a7a7a; font-size:12px; }
-  .chiprow { display:flex; flex-wrap:wrap; gap:5px; margin:6px 0 10px; }
-  .chip { font-size:11.5px; border:1px solid var(--line); border-radius:99px; padding:2px 8px;
-    background:var(--fill); color:#3a3a3a; }
-  .chip.sev-critical,.chip.sev-high { background:#f6ded9; border-color:#e7bdb4; color:#7d2318; }
-  .chip.sev-medium { background:#f7ecd2; border-color:#e6d3a3; color:#725512; }
-  .h2 { font-size:19px; line-height:1.28; margin:2px 0 2px; }
-  .kv-row { color:#4a4a4a; font-size:13.5px; margin:2px 0 12px; }
-  .kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
-  @media (max-width:700px) { .kpis { grid-template-columns:1fr 1fr; } }
-  .kpi { border:1px dashed var(--line); border-radius:7px; padding:8px 9px; background:#fafaf8; }
-  .kd { font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:#9a9a9a; }
-  .kv { font-size:19px; font-weight:600; font-variant-numeric:tabular-nums; margin-top:2px; }
-  h4 { font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:#8a8a8a;
-    margin:16px 0 5px; font-family:ui-monospace,monospace; }
-  ul { margin:4px 0 0; padding-left:18px; }
-  li { font-size:13.5px; margin-bottom:4px; color:#3d3d3d; }
-  .muted { color:var(--muted); }
-  .decisionbox { border:1px dashed var(--line); border-radius:8px; background:#f6f5f1;
-    padding:10px 12px; margin-top:8px; }
-  .decisionbox p { margin:4px 0; font-size:13px; }
-  .pill { display:inline-block; border:1px solid var(--line); border-radius:5px;
-    padding:1px 6px; background:var(--fill); }
-  .gate label { display:block; font-size:12.5px; color:#4a4a4a; margin:9px 0 3px; }
-  .radios { display:flex; gap:6px; flex-wrap:wrap; margin:6px 0 2px; }
-  .radio { font-size:12.5px; border:1px dashed var(--line); border-radius:99px; padding:3px 10px;
-    background:#fafaf8; color:#4a4a4a; }
-  .field { border:1px dashed var(--line); border-radius:6px; background:#fbfbf9;
-    padding:8px 9px; color:#9a9a9a; font-size:12.5px; }
-  .field.area { min-height:52px; }
-  .btn { width:100%; margin-top:11px; padding:9px; border-radius:7px; border:1px solid #26262a;
-    background:#26262a; color:#fff; font-size:13px; font-weight:600; text-align:center; }
-  .btn.note { background:#fbfbf9; color:#7a7a7a; border-style:dashed; font-weight:400; }
-  .obs { border-top:1px dashed var(--line); padding:9px 0; font-size:12.8px; color:#3d3d3d; }
-  .obs:first-child { border-top:0; }
-  .obs b { display:block; margin-bottom:2px; }
-  .obs.dismissed b { color:#6b6b6b; }
-  .obs.refused b { color:#8a4b12; }
-  .obs .mono { color:#8a8a8a; }
-  .notes { background:var(--panel); border:1px dashed var(--line); border-radius:12px;
-    margin-top:20px; padding:18px 20px; }
-  .notes h2 { font-size:15px; margin:0 0 4px; }
-  .notes ol { padding-left:20px; margin:10px 0 0; }
-  .notes li { font-size:13.5px; margin-bottom:8px; }
-  .notes li b { color:#26262a; }
-  details { background:var(--panel); border:1px dashed var(--line); border-radius:12px;
-    margin-top:20px; padding:12px 18px; }
-  details summary { cursor:pointer; font-size:13px; color:#4a4a4a; }
-  pre { background:#fafaf8; border:1px dashed var(--line); border-radius:8px; padding:12px;
-    overflow:auto; max-height:340px; font-size:11.5px; }
+  a { color:var(--brand); }
+  .appbar { display:flex; align-items:center; gap:14px; padding:12px 20px; background:#111827; color:#f3f4f6; }
+  .mark { width:26px; height:26px; border-radius:7px; background:linear-gradient(135deg,#6366f1,#22d3ee); }
+  .appbar .name { font-weight:650; letter-spacing:.01em; }
+  .appbar .crumb { color:#9ca3af; font-size:12.5px; }
+  .appbar .spacer { flex:1; }
+  .wip { font:600 10.5px/1 ui-sans-serif,system-ui,sans-serif; letter-spacing:.14em; text-transform:uppercase;
+    background:#fbbf24; color:#422006; padding:4px 8px; border-radius:99px; }
+  .ph { border:1px dashed #6b7280; border-radius:8px; padding:6px 10px; color:#9ca3af; font-size:12.5px;
+    display:inline-flex; align-items:center; gap:6px; }
+  .ribbon { background:#fffbeb; border-bottom:1px dashed #e6d28a; color:#6b5a1e;
+    padding:8px 20px; font-size:12.5px; }
+  .subbar { display:flex; align-items:center; gap:8px; padding:12px 20px 0; flex-wrap:wrap; }
+  .subbar .spacer { flex:1; }
+  .ctx { font-size:12.5px; color:var(--muted); }
+  .layout { display:grid; grid-template-columns:minmax(0,1fr) 348px; gap:18px;
+    max-width:1240px; margin:14px auto 80px; padding:0 20px; align-items:start; }
+  @media (max-width:1000px){ .layout { grid-template-columns:1fr; } .rail { position:static !important; } }
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:0 1px 2px rgba(16,24,40,.04); }
+  .card + .card, .stack > * + * { margin-top:14px; }
+  .pad { padding:16px 18px; }
+  .rail { position:sticky; top:16px; }
+  .chip { display:inline-flex; align-items:center; font-size:11.5px; color:#475467;
+    background:#f2f4f7; border:1px solid var(--line); border-radius:99px; padding:2px 9px; white-space:nowrap; }
+  .chip.solid { color:#fff; border:0; background:var(--muted); }
+  .chip.bad { background:var(--bad-weak); color:var(--bad); border-color:#f3c9c6; }
+  .chip.solid.bad { background:var(--bad); color:#fff; border:0; }
+  .chip.good { background:var(--good-weak); color:var(--good); border-color:#bfe6d3; }
+  .chip.warn { background:var(--warn-weak); color:var(--warn); border-color:#f0d6b4; }
+  .chip.muted { color:var(--muted); }
+  .pill { display:inline-block; font:600 11.5px/1 ui-sans-serif,system-ui,sans-serif;
+    border:1px solid var(--line); background:#f8fafc; color:#344054; border-radius:6px; padding:4px 8px; }
+  .pill.good { background:var(--good-weak); color:var(--good); border-color:#bfe6d3; }
+  .pill.bad { background:var(--bad-weak); color:var(--bad); border-color:#f3c9c6; }
+  /* finding header */
+  .finding { position:relative; overflow:hidden; }
+  .finding.sev-high::before, .finding.sev-critical::before { content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--bad); }
+  .finding.sev-medium::before { content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--warn); }
+  .finding.sev-low::before { content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--faint); }
+  .finding .kicker { font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint); margin:0 0 6px; }
+  h1.fh { font-size:23px; line-height:1.25; margin:2px 0 10px; letter-spacing:-.01em; }
+  .chiprow { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+  .kpigrid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  @media (max-width:640px){ .kpigrid { grid-template-columns:1fr 1fr; } }
+  .kpi { border:1px solid var(--line2); border-radius:10px; padding:10px 12px; background:#fcfcfd; }
+  .kt { font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--faint); }
+  .kv { font-size:21px; font-weight:650; font-variant-numeric:tabular-nums; margin-top:2px; letter-spacing:-.01em; }
+  .ks { font-size:11px; color:var(--faint); }
+  h4 { font-size:11.5px; letter-spacing:.06em; text-transform:uppercase; color:#667085;
+    margin:18px 0 8px; font-weight:650; }
+  h4:first-child { margin-top:0; }
+  .lead { font-size:14px; color:#344054; margin:0 0 4px; }
+  .fine { font-size:12px; color:var(--muted); margin:6px 0 0; }
+  .twocol { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  @media (max-width:720px){ .twocol { grid-template-columns:1fr; } }
+  /* bars */
+  .bars { margin:2px 0 4px; }
+  .barrow { display:grid; grid-template-columns:74px 1fr 74px; align-items:center; gap:8px; margin:6px 0; }
+  .bl { font-size:11.5px; color:var(--muted); text-align:right; }
+  .bv { font-size:12px; font-variant-numeric:tabular-nums; color:#344054; }
+  .bt { height:9px; background:#f0f2f5; border-radius:99px; overflow:hidden; }
+  .bf { display:block; height:100%; border-radius:99px; }
+  .bf.brand { background:var(--brand); } .bf.good { background:var(--good); }
+  .bf.bad { background:var(--bad); } .bf.muted { background:#cbd5e1; }
+  /* tabs */
+  .tabs { display:flex; gap:2px; border-bottom:1px solid var(--line); padding:6px 8px 0; overflow-x:auto; }
+  .tab { appearance:none; border:0; background:transparent; font:600 13px/1 inherit; color:var(--muted);
+    padding:11px 13px; border-bottom:2px solid transparent; cursor:pointer; white-space:nowrap; }
+  .tab.active { color:var(--brand); border-bottom-color:var(--brand); }
+  .panel { padding:18px; }
+  ul.ticks { list-style:none; margin:0; padding:0; }
+  ul.ticks li { position:relative; padding:7px 0 7px 22px; font-size:13.5px; color:#344054;
+    border-bottom:1px dashed var(--line2); }
+  ul.ticks li:last-child { border-bottom:0; }
+  ul.ticks li::before { content:"▹"; position:absolute; left:2px; color:var(--brand); }
+  .bigcause { font-size:20px; font-weight:650; margin:2px 0 8px; }
+  .fromto { color:var(--muted); }
+  .fixline { font-size:14px; margin:2px 0; }
+  .consequences { margin-top:6px; }
+  .consgrid { display:grid; grid-template-columns:repeat(2,1fr); gap:6px 18px; }
+  .consrow { display:flex; justify-content:space-between; border-bottom:1px dashed var(--line2);
+    padding:6px 0; font-size:13px; color:#344054; }
+  .consrow b { font-variant-numeric:tabular-nums; }
+  .meter { height:9px; background:#f0f2f5; border-radius:99px; overflow:hidden; margin:6px 0; }
+  .meter i { display:block; height:100%; background:linear-gradient(90deg,#6366f1,#22d3ee); }
+  .qrows { margin-top:6px; }
+  .qrow { display:grid; grid-template-columns:200px 1fr; gap:14px; padding:10px 0;
+    border-top:1px dashed var(--line2); font-size:13.5px; color:#344054; }
+  @media (max-width:640px){ .qrow { grid-template-columns:1fr; gap:2px; } }
+  .qk { color:var(--faint); font-size:11.5px; letter-spacing:.05em; text-transform:uppercase; padding-top:2px; }
+  /* accordion */
+  .acc { border-top:1px solid var(--line); }
+  .acc:first-of-type { border-top:0; }
+  .acchead { width:100%; display:flex; align-items:center; gap:8px; padding:12px 18px; background:none;
+    border:0; cursor:pointer; text-align:left; font:inherit; color:var(--ink); }
+  .acchead:hover { background:#fafbfc; }
+  .acctitle { flex:1; font-size:13.5px; font-weight:550; }
+  .accarrow { color:var(--faint); transition:transform .15s; }
+  .acc.open .accarrow { transform:rotate(180deg); }
+  .accbody { display:none; padding:0 18px 14px; font-size:13px; color:#475467; }
+  .acc.open .accbody { display:block; }
+  .accbody p { margin:0 0 8px; }
+  .need { border:1px solid var(--line2); background:#fafbfc; border-radius:8px; padding:8px 10px;
+    font-size:12.5px; margin-top:6px; }
+  .need.warn { background:var(--warn-weak); border-color:#f0d6b4; }
+  .need b { color:#344054; margin-right:4px; }
+  /* rail */
+  .seg { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin:10px 0; }
+  .seg button { appearance:none; border:1px solid var(--line); background:#fff; border-radius:9px;
+    padding:10px 6px; font:600 13px/1 inherit; color:#475467; cursor:pointer; }
+  .seg button.on { border-color:var(--brand); background:var(--brand-weak); color:var(--brand); }
+  .seg button.rej.on { border-color:var(--bad); background:var(--bad-weak); color:var(--bad); }
+  .seg button.def.on { border-color:var(--warn); background:var(--warn-weak); color:var(--warn); }
+  label.fl { display:block; font-size:11.5px; color:var(--faint); margin:12px 0 4px; }
+  .ta, .in { width:100%; border:1px solid var(--line); border-radius:9px; padding:9px 10px; font:inherit;
+    font-size:13px; color:var(--ink); background:#fff; }
+  .ta { min-height:74px; resize:vertical; }
+  .btn { width:100%; margin-top:12px; padding:11px; border-radius:9px; border:0; background:var(--brand);
+    color:#fff; font:600 13.5px/1 inherit; cursor:pointer; }
+  .btn.ghost { background:#fff; color:var(--faint); border:1px dashed var(--line); font-weight:500; }
+  .kvs { display:grid; gap:7px; }
+  .kvs div { display:flex; justify-content:space-between; gap:10px; font-size:12.5px; }
+  .kvs span { color:var(--muted); } .kvs b { font-weight:550; text-align:right; }
+  .recorded { background:var(--good-weak); border:1px solid #bfe6d3; border-radius:9px; padding:10px 12px;
+    font-size:12.5px; color:#14532d; margin-bottom:6px; }
+  .recorded .mono { color:#3f6212; margin-left:6px; }
+  .empty { border:1px dashed var(--line); border-radius:9px; padding:16px; color:var(--muted); font-size:13px;
+    text-align:center; }
+  .rail .card .pad h4:first-child { margin-top:0; }
+  footer.notes { max-width:1240px; margin:22px auto 60px; padding:0 20px; color:var(--muted); font-size:12.5px; }
+  details.raw { max-width:1240px; margin:0 auto 60px; padding:0 20px; }
+  details.raw pre { background:#0b1220; color:#cbd5e1; border-radius:10px; padding:14px; overflow:auto;
+    max-height:320px; font-size:11px; }
+  details.raw summary { cursor:pointer; color:var(--muted); font-size:12.5px; margin-bottom:8px; }
+
 </style>
 </head>
 <body>
-<div class="wrap">
-  <p class="banner"><b>Wireframe</b> &mdash; lo-fi layout for the operator decision screen.
-    Static mock: no server, no fetch. Populated with <code>examples/sample-report.json</code>
-    (the final solution's practice-kit run). The live screen is <code>nexus_loop/static/index.html</code>;
-    this file is the layout/ideology we want to react to first.</p>
+<header class="appbar">
+  <span class="mark"></span>
+  <span class="name">Nexus Loop</span>
+  <span class="wip">wireframe</span>
+  <span class="crumb" id="crumb"></span>
+  <span class="spacer"></span>
+  <span class="ph">&#128269; search...</span>
+  <span class="ph">&#9789; theme</span>
+  <span class="ph">&#8681; export</span>
+</header>
+<div class="ribbon"><b>In development</b> &mdash; static layout on a real report
+  (<code>examples/sample-report.json</code>). Dotted controls are not wired yet; the live, working screen is
+  <code>nexus_loop/static/index.html</code>.</div>
 
-  <h1>Nexus Loop &mdash; decision screen <span>(wireframe)</span></h1>
-  <p class="lede">Numbered pins map to the design read underneath. Everything visible is copied
-    straight from the report; the wireframe never computes a number.</p>
+<div class="subbar">
+  <span class="ctx">Corpus A &middot; team demo &middot; 2026-09-14T17:58:30Z &middot; northwind-retail + acme-bank</span>
+  <span class="spacer"></span>
+  <span class="chip bad">3 regressions</span> <span class="chip muted">3 dismissed</span> <span class="chip warn">3 refused asks</span> <span class="chip good">replay improved</span>
+</div>
 
-  <div class="mock">
-    <div class="top">
-      <div class="brand"><span class="pin inline">1</span>Nexus Loop &middot; one decision</div>
-      <div class="ctx">final &middot; corpus A &middot; 2026-09-14T12:31:26Z</div>
-    </div>
-    <div class="cols">
-      <div class="col">
-        <div class="region plain">
-          <span class="pin">2</span>
-          <p class="tag">Primary finding &middot; f01_tool_contract_northwind</p>
-          <p class="h2">Silent tool failure — HTTP 200 with nothing in the body</p>
-          <div class="chiprow"><span class="chip sev-high">high</span><span class="chip">tool.contract_break</span><span class="chip">northwind-retail</span><span class="chip">intent=order_status</span><span class="chip">tool=get_order_status</span><span class="chip">days 40&ndash;51</span></div>
-          <p class="kv-row">observed <b>0.7755</b> against baseline <b>0.8547</b> <span class="muted">this cohort&#x27;s own resolution over the 14 days before the break</span></p>
-          <h4><span class="pin inline">4</span>Impact</h4>
-          <div class="kpis"><div class="kpi"><div class="kd">Conversations</div><div class="kv">2,686</div></div><div class="kpi"><div class="kd">Share of tenant</div><div class="kv">29.0%</div></div><div class="kpi"><div class="kd">Days running</div><div class="kv">12</div></div><div class="kpi"><div class="kd">Recorded cost</div><div class="kv">$94.31</div></div><div class="kpi"><div class="kd">Would Have Resolved At Baseline</div><div class="kv">213</div></div><div class="kpi"><div class="kd">Unplanned Handoffs</div><div class="kv">404</div></div><div class="kpi"><div class="kd">Abandoned</div><div class="kv">147</div></div></div>
-          <h4>If nothing changes</h4>
-          <p style="font-size:13.5px;margin:2px 0;">At the observed rate about 18 conversations a day in this cohort fail that would have resolved, and 15% of the cohort reaches a human who was not meant to be involved. The tool reports itself healthy throughout, so nothing else will surface this.</p>
-          <h4><span class="pin inline">5</span>Why this baseline is fair</h4>
-          <p class="muted" style="font-size:12.5px;margin:2px 0;">2686 sessions matched the cohort on days 40-51 (12 days), 29.0% of northwind-retail&#x27;s 9265 sessions in the window. Observed resolution 0.7755 against a baseline of 0.8547 (this cohort&#x27;s own resolution over the 14 days before the break), so 213 conversations that would have resolved did not. 404 ended in a handoff the agent was not built to make; 147 were abandoned. cost_usd is the sum of recorded cost_usd over the 2686 cohort sessions that carry it; no human handling price is assumed.</p>
-          <h4>Evidence</h4>
-          <ul><li>get_order_status: 13.7% of outcome=&#x27;ok&#x27; calls returned status 200 with result_field_count = 0 on days 40-51, against 0.0% outside the window (z=21.0, 2779 calls in window)</li><li>declared tool_error_rate on get_order_status is flat across the break: 0.016 in window vs 0.021 outside — the fault is invisible to the error metric</li><li>same-tool retry (retry_count &gt; 0 on a second get_order_status call in the session) in 0.130 of affected sessions vs 0.000 before the window</li><li>cohort resolution_rate 0.7755 in window vs 0.8547 baseline (this cohort&#x27;s own resolution over the 14 days before the break)</li><li>config_timeline day 40: kind=tool target=get_order_status 3.2.0 -&gt; 3.3.0 &#x27;order service migration&#x27;</li></ul>
-          <h4><span class="pin inline">6</span>Diagnosis</h4>
-          <p style="font-size:13.5px;margin:2px 0;">tool.contract_break &middot; confidence 0.90 &middot; attributed: tool on day 40 (3.2.0 &rarr; 3.3.0)</p>
-          <ul><li>status_code 200, outcome &#x27;ok&#x27;, result_field_count 0: transport success, application failure — the agent received nothing to answer with</li><li>ordinary error_class taxonomy never fires, so alerting on tool_error_rate misses it</li><li>the runtime&#x27;s own same-tool retry inside the session corroborates the empty answer</li><li>onset aligns with the get_order_status 3.2.0 -&gt; 3.3.0 deploy on day 40</li></ul>
-          <h4><span class="pin inline">7</span>Proposed change</h4>
-          <p class="mono"><span class="pill">tool.validate</span> on get_order_status &middot; predicted resolution_rate 0.7755 &rarr; 0.8468</p><p>Validate the get_order_status response before handing it to the model: a 200 with result_field_count = 0 is treated as upstream.malformed_response, the existing fallback path is taken, and the empty answer is counted as a tool failure. 13.7% of &#x27;ok&#x27; calls were empty in the window.</p>
-          <div class="decisionbox"><p><b>Asking approval for.</b> Make get_order_status reject an empty HTTP 200 as a failure and take the existing fallback path, instead of letting the agent apologise with nothing to say.</p><p><b>Risk if the diagnosis is wrong.</b> Moderate. If some records legitimately return an empty payload (a brand-new order, a cancelled one), we would start treating a valid state as an error and route those users to a human unnecessarily. Confirm with the owning team that an empty 200 is never a valid state.</p><p><b>Would not ship if.</b> The upstream team confirms empty 200s are a valid state, or the empty-payload rate has already fallen after their own fix — then we would be patching a contract about to change again. Alternative: tool.fallback (route empties to a fallback copy path without changing failure accounting).</p></div>
-          <h4>Replay / verification</h4>
-          <p class="muted" style="font-size:12.5px;margin:2px 0;">No replay attached this run. The report is still the
-            decision record; verification can be attached later without changing the finding.</p>
-        </div>
-      </div>
-      <div class="col">
-        <div class="region plain gate">
-          <span class="pin">8</span>
-          <p class="tag">Approval gate &middot; p01_tool_contract_northwind</p>
-          <p style="font-size:14px;font-weight:600;margin:2px 0 6px;">Approve, reject, or defer</p>
-          <div class="radios">
-            <span class="radio">&#9675; Accept</span>
-            <span class="radio">&#9675; Reject</span>
-            <span class="radio">&#9675; Defer</span>
-          </div>
-          <label>Decided by</label>
-          <div class="field">operator</div>
-          <label>Reason (required)</label>
-          <div class="field area">Why this is the call for Monday morning.</div>
-          <div class="btn">Write decision into the report</div>
-          <div class="btn note">writes <code>prescriptions[3]</code> back into the report &middot; appends decisions.log</div>
-        </div>
-        <div class="region plain">
-          <span class="pin">9</span>
-          <p class="tag">Other observations</p>
-          <div class="obs"><b>Knowledge gap — retrieval never grounds the answer</b> <span class="mono">acme-bank &middot; kb.gap</span> &middot; 230 conversations</div><div class="obs"><b>Prompt regression — same outcomes, more turns and cost</b> <span class="mono">acme-bank &middot; prompt.regression</span> &middot; 1,224 conversations</div><div class="obs dismissed"><b>Dismissed &middot; load</b> volume runs at 3.5x normal for 4 day(s) (2696 vs 768 sessions/day); tool p95 latency 1338 -&gt; 3152 ms and timeouts 0.0061 -&gt; 0.0158 per call. Resolution is flat (0.7896 -&gt; 0.7769), so this is a reliability event for the platform owner, not a quality regression, and it self-corrects when volume reverts.</div><div class="obs dismissed"><b>Dismissed &middot; traffic_mix</b> aggregate containment moves +1.9pt on days 22-31 only because branch_locator&#x27;s share of traffic goes from 13% to 44%. Every per-intent resolution rate is flat within 5pt. This is a mix shift, not a quality change in either direction.</div><div class="obs dismissed"><b>Dismissed &middot; judge_change</b> judged quality_score drops 3.89 -&gt; 3.29 on day 28 simultaneously on every tenant (acme-bank 3.91-&gt;3.31; northwind-retail 3.88-&gt;3.27) and every intent, exactly where judge_version flips v1 -&gt; v2 (config_timeline day 28: judge quality_rubric v1 -&gt; v2). We measured the rubric, not the agent. quality_score is only compared within one judge_version from here on.</div><div class="obs refused"><b>Refused &middot; A09 REQUIRES_NEW_JUDGE</b> session_end = &#x27;abandoned&#x27; is MEASURED and reported here: abandonment is acme-bank 5.92%, northwind-retail 5.73% of sessions. WHY a user abandoned — frustration versus having got what they needed — is a judgment about meaning. No versioned judge with a published calibration for that question exists in this deployment, and inferring the reason from the end cod&hellip;<br><span class="mono">required event: abandonment_reason_judgement at session grain &middot; owner quality-judging</span><br><span class="mono">nearest proxy: abandoned sessions with an unusually high turn count or a same-tool retry &mdash; it flags effort, not frustration; a user who leaves happy after two turns and one who rage-quits after two turns look identical in the logs</span></div><div class="obs refused"><b>Refused &middot; A11 NOT_MEASURABLE</b> No failover mechanism exists in the runtime, so no failover event is ever emitted: there is no primary/secondary path to observe. Nothing in the corpus records a primary model or tool failing and an alternate serving the user, because that choice is never made. Required event: failover at step grain with fields from_target, to_target, reason, recovered, owne&hellip;<br><span class="mono">required event: failover at step grain &middot; owner conversation-runtime</span><br><span class="mono">nearest proxy: llm_call rows with retry_count &gt; 0 (1956 in this corpus) &mdash; those are QUALITY retries — the same target re-issued after a provider error or malformed response, not a switch to an alternate target. Reporting them as failover would show a small non-zero rate that reads as &#x27;failover is working&#x27; when failover does not exist; a chart here would be worse than no chart.</span></div><div class="obs refused"><b>Refused &middot; A02 CARDINALITY_REFUSED</b> a per-customer breakdown (custom_dims.customer_ref) was considered for the cohort drill-down and refused: 80252 distinct values against the catalog&#x27;s declared cardinality budget of 200 for session.custom_dims.customer_ref. The field is near-unique per session; grouping by it is a planner error, not a cohort. session_id is the only declared join key; customer&hellip;<br><span class="mono">nearest proxy: custom_dims.segment (closed set, budget 50) &mdash; segment groups customers into three bands; it answers &#x27;which kind of customer&#x27;, not &#x27;which customer&#x27;</span></div>
-        </div>
+<div class="layout">
+  <section class="stack">
+    <div class="card finding sev-high">
+      <div class="pad">
+        <p class="kicker">Primary finding &middot; f01_tool_contract_northwind</p>
+        <h1 class="fh">Silent tool failure — HTTP 200 with nothing in the body</h1>
+        <div class="chiprow"><span class="chip solid bad">HIGH</span><span class="chip ">tool.contract_break</span><span class="chip ">northwind-retail</span><span class="chip ">intent=order_status</span><span class="chip ">tool=get_order_status</span><span class="chip ">days 40&amp;ndash;51</span></div>
+        <div class="kpigrid"><div class="kpi"><div class="kt">Conversations</div><div class="kv">2,686</div><div class="ks">affected in window</div></div><div class="kpi"><div class="kt">Share of traffic</div><div class="kv">29.0%</div><div class="ks">of the tenant</div></div><div class="kpi"><div class="kt">Days running</div><div class="kv">12</div><div class="ks">still live</div></div><div class="kpi"><div class="kt">Recorded cost</div><div class="kv">$94.31</div><div class="ks">so far</div></div></div>
       </div>
     </div>
-    <div class="mockfoot"><span class="pin inline">3</span>Every number on this screen is copied from the report &mdash; the screen never recomputes. Changing a verdict rewrites <code>prescriptions[].approval</code> and appends <code>decisions.log</code>.</div>
+    
+<div class="card">
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-tab="summary">Summary</button>
+    <button class="tab" data-tab="evidence">Evidence</button>
+    <button class="tab" data-tab="diagnosis">Diagnosis</button>
+    <button class="tab" data-tab="fix">Proposed fix</button>
+    <button class="tab" data-tab="replay">Replay</button>
   </div>
 
-  <div class="notes">
-    <h2>Design read &mdash; what felt right, and why</h2>
-    <p class="lede">This is the "ideology" bit. It is a decision surface, not an analytics dashboard.</p>
-    <ol>
-      <li><b>One decision at a time (1).</b> The screen opens on a single, already-diagnosed finding. A list of eleven charts makes an operator triage; a single call makes them decide.</li>
-      <li><b>Primary finding first, everything else secondary (2, 9).</b> The regressions that matter are promoted; load spikes, mix shifts, judge changes and refusals sit in a quiet column so the eye lands on what needs a signature.</li>
-      <li><b>Every number is copied, never computed (3).</b> The report is the source of truth. If the screen and the report ever disagree, the screen is wrong.</li>
-      <li><b>Impact in the operator's units (4).</b> Conversations, share of tenant, days running, and a real cost &mdash; not just the model metric. "resolution_rate 0.7755" means nothing to a duty manager; "2,686 conversations, 12 days, $94.31" does.</li>
-      <li><b>Pre-empt "compared to what?" (5).</b> The fairness of the baseline is shown inline, in plain words, because that is the first objection any real reviewer raises.</li>
-      <li><b>Diagnosis before prescription (6).</b> The cause class, its confidence, and the attributed change appear before the proposed fix, so the fix is never read without its reasoning.</li>
-      <li><b>The proposal forces three questions (7).</b> What am I approving, what breaks if the diagnosis is wrong, and when would we <i>not</i> ship. If those can't be answered, there is no proposal worth a gate.</li>
-      <li><b>The gate is the product (8).</b> Accept / reject / defer needs a written reason and writes back into <code>prescriptions[].approval</code> &mdash; an auditable record, not a button that logs a click. Approve is the only confident action.</li>
-      <li><b>Refusal is a first-class result (9).</b> A09/A11/A02 render as "refused &mdash; here is the required event, here is the tempting proxy, and here is why it lies." Showing a number we cannot stand behind is worse than showing none.</li>
-      <li><b>Verification is attachable, not mandatory.</b> Replay is shown as an attached artifact and may be absent; its removal must not change the finding. The decision record stands on its own.</li>
-    </ol>
+  <div class="panel" data-panel="summary">
+    <p class="lead">At the observed rate about 18 conversations a day in this cohort fail that would have resolved, and 15% of the cohort reaches a human who was not meant to be involved. The tool reports itself healthy throughout, so nothing else will surface this.</p>
+    <div class="twocol">
+      <div>
+        <h4>What the data shows</h4>
+        <div class="bars"><div class="barrow"><span class="bl">observed</span><span class="bt"><i class="bf bad" style="width:91%"></i></span><span class="bv">0.7755</span></div><div class="barrow"><span class="bl">baseline</span><span class="bt"><i class="bf good" style="width:100%"></i></span><span class="bv">0.8547</span></div></div>
+        <p class="fine">Observed <b>0.7755</b> vs a fair baseline of <b>0.8547</b> on <code>resolution_rate</code>.
+          this cohort&#x27;s own resolution over the 14 days before the break</p>
+      </div>
+      <div>
+        <h4>What we would do</h4>
+        <p class="fixline"><span class="pill">tool.validate</span>
+          on <code>get_order_status</code></p>
+        <div class="bars"><div class="barrow"><span class="bl">today</span><span class="bt"><i class="bf muted" style="width:92%"></i></span><span class="bv">0.7755</span></div><div class="barrow"><span class="bl">after fix</span><span class="bt"><i class="bf good" style="width:100%"></i></span><span class="bv">0.8468</span></div></div>
+        <p class="fine">Guardrails: <span class="chip good">replay improved</span> · confidence
+          <b>0.90</b> · owner sees this as a high-severity call.</p>
+      </div>
+    </div>
+    <div class="consequences">
+      <h4>Cost of waiting</h4>
+      <div class="consgrid"><div class="consrow"><span>Would Have Resolved At Baseline</span><b>213</b></div><div class="consrow"><span>Unplanned Handoffs</span><b>404</b></div><div class="consrow"><span>Abandoned</span><b>147</b></div></div>
+    </div>
   </div>
 
-  <details>
-    <summary>Embedded sample report &mdash; examples/sample-report.json (the data behind this wireframe)</summary>
-    <pre>{
-  &quot;team&quot;: &quot;final&quot;,
+  <div class="panel" data-panel="evidence" hidden>
+    <h4>Signal against baseline</h4>
+    <div class="bars"><div class="barrow"><span class="bl">observed</span><span class="bt"><i class="bf bad" style="width:91%"></i></span><span class="bv">0.7755</span></div><div class="barrow"><span class="bl">baseline</span><span class="bt"><i class="bf good" style="width:100%"></i></span><span class="bv">0.8547</span></div></div>
+    <h4>What the logs show</h4>
+    <ul class="ticks"><li>get_order_status: 13.7% of outcome=&#x27;ok&#x27; calls returned status 200 with result_field_count = 0 on days 40-51, against 0.0% outside the window (z=21.0, 2779 calls in window)</li><li>declared tool_error_rate on get_order_status is flat across the break: 0.016 in window vs 0.021 outside — the fault is invisible to the error metric</li><li>same-tool retry (retry_count &gt; 0 on a second get_order_status call in the session) in 0.130 of affected sessions vs 0.000 before the window</li><li>cohort resolution_rate 0.7755 in window vs 0.8547 baseline (this cohort&#x27;s own resolution over the 14 days before the break)</li><li>config_timeline day 40: kind=tool target=get_order_status 3.2.0 -&gt; 3.3.0 &#x27;order service migration&#x27;</li></ul>
+  </div>
+
+  <div class="panel" data-panel="diagnosis" hidden>
+    <div class="twocol">
+      <div>
+        <h4>Cause</h4>
+        <p class="bigcause">tool.contract_break</p>
+        <div class="meter"><i style="width:90%"></i></div>
+        <p class="fine">confidence 0.90</p>
+      </div>
+      <div>
+        <h4>Attributed change</h4>
+        <p class="fixline">day 40 &middot; get_order_status <span class="fromto">3.2.0 &rarr; 3.3.0</span></p>
+        <p class="fine">Cross-checks: same-tenant peers, sibling agents, and per-intent strata are used to rule
+          out load, mix, and model-wide effects before this cause is named.</p>
+      </div>
+    </div>
+    <h4>Why we believe it</h4>
+    <ul class="ticks"><li>status_code 200, outcome &#x27;ok&#x27;, result_field_count 0: transport success, application failure — the agent received nothing to answer with</li><li>ordinary error_class taxonomy never fires, so alerting on tool_error_rate misses it</li><li>the runtime&#x27;s own same-tool retry inside the session corroborates the empty answer</li><li>onset aligns with the get_order_status 3.2.0 -&gt; 3.3.0 deploy on day 40</li></ul>
+  </div>
+
+  <div class="panel" data-panel="fix" hidden>
+    <p class="fixline"><span class="pill">tool.validate</span>
+      on <code>get_order_status</code></p>
+    <div class="bars"><div class="barrow"><span class="bl">today</span><span class="bt"><i class="bf muted" style="width:92%"></i></span><span class="bv">0.7755</span></div><div class="barrow"><span class="bl">after fix</span><span class="bt"><i class="bf good" style="width:100%"></i></span><span class="bv">0.8468</span></div></div>
+    <p class="lead">Validate the get_order_status response before handing it to the model: a 200 with result_field_count = 0 is treated as upstream.malformed_response, the existing fallback path is taken, and the empty answer is counted as a tool failure. 13.7% of &#x27;ok&#x27; calls were empty in the window.</p>
+    <div class="qrows">
+      <div class="qrow"><span class="qk">Asking approval for</span><span>Make get_order_status reject an empty HTTP 200 as a failure and take the existing fallback path, instead of letting the agent apologise with nothing to say.</span></div>
+      <div class="qrow"><span class="qk">Risk if the diagnosis is wrong</span><span>Moderate. If some records legitimately return an empty payload (a brand-new order, a cancelled one), we would start treating a valid state as an error and route those users to a human unnecessarily. Confirm with the owning team that an empty 200 is never a valid state.</span></div>
+      <div class="qrow"><span class="qk">Would not ship if</span><span>The upstream team confirms empty 200s are a valid state, or the empty-payload rate has already fallen after their own fix — then we would be patching a contract about to change again. Alternative: tool.fallback (route empties to a fallback copy path without changing failure accounting).</span></div>
+    </div>
+  </div>
+
+  <div class="panel" data-panel="replay" hidden>
+    
+      <div class="vhead"><span class="pill good">improved</span>
+        <span class="chip good">golden set pass</span>
+        <span class="chip ">30 replayed · 0 regressed</span></div>
+      <div class="bars">
+        <div class="barrow"><span class="bl">before</span><span class="bt"><i class="bf muted" style="width:90%"></i></span><span class="bv">0.7741</span></div>
+        <div class="barrow"><span class="bl">after</span><span class="bt"><i class="bf good" style="width:100%"></i></span><span class="bv">0.8574</span></div>
+      </div>
+      <div class="kvrows">
+        <div><span>metric</span><b>resolution_rate</b></div>
+        <div><span>prediction error</span><b>-0.0120</b></div>
+        <div><span>sessions replayed</span><b>302</b></div>
+        <div><span>run id</span><b class="mono">rp_7d753011</b></div>
+      </div>
+      <p class="fine">replay &#x27;before&#x27; is the endpoint&#x27;s own simulated baseline, not this system&#x27;s corpus measurement; prediction_error compares the predicted delta with the replayed delta</p>
+  </div>
+</div>
+
+    <div class="card">
+      <div class="acc "><button class="acchead"><span class="chip bad">regression</span><span class="acctitle">Knowledge gap — retrieval never grounds the answer</span><span class="accarrow">&#9662;</span></button><div class="accbody"><p>At the observed rate about 8 conversations a day in this cohort fail that would have resolved, and 63% of the cohort reaches a human who was not meant to be involved. The cohort is new, so these are first impressions of it.</p></div></div><div class="acc "><button class="acchead"><span class="chip bad">regression</span><span class="acctitle">Prompt regression — same outcomes, more turns and cost</span><span class="accarrow">&#9662;</span></button><div class="accbody"><p>Every day this runs costs roughly 245 extra user turns and about 4.39 USD a day of excess model spend on this agent, with no change in how often it resolves — the users pay in time, the tenant pays in tokens, and no outcome alert will ever fire.</p></div></div><div class="acc dismissed"><button class="acchead"><span class="chip muted">dismissed</span><span class="chip ">load</span><span class="acctitle">Load spike, not a quality regression</span><span class="accarrow">&#9662;</span></button><div class="accbody"><p>volume runs at 3.5x normal for 4 day(s) (2696 vs 768 sessions/day); tool p95 latency 1338 -&gt; 3152 ms and timeouts 0.0061 -&gt; 0.0158 per call. Resolution is flat (0.7896 -&gt; 0.7769), so this is a reliability event for the platform owner, not a quality regression, and it self-corrects when volume reverts.</p></div></div><div class="acc dismissed"><button class="acchead"><span class="chip muted">dismissed</span><span class="chip ">traffic_mix</span><span class="acctitle">Traffic mix shift, not a quality change</span><span class="accarrow">&#9662;</span></button><div class="accbody"><p>aggregate containment moves +1.9pt on days 22-31 only because branch_locator&#x27;s share of traffic goes from 13% to 44%. Every per-intent resolution rate is flat within 5pt. This is a mix shift, not a quality change in either direction.</p></div></div><div class="acc dismissed"><button class="acchead"><span class="chip muted">dismissed</span><span class="chip ">judge_change</span><span class="acctitle">Judge-version boundary, not an agent regression</span><span class="accarrow">&#9662;</span></button><div class="accbody"><p>judged quality_score drops 3.89 -&gt; 3.29 on day 28 simultaneously on every tenant (acme-bank 3.91-&gt;3.31; northwind-retail 3.88-&gt;3.27) and every intent, exactly where judge_version flips v1 -&gt; v2 (config_timeline day 28: judge quality_rubric v1 -&gt; v2). We measured the rubric, not the agent. quality_score is only compared within one judge_version from here on.</p></div></div><div class="acc refused"><button class="acchead"><span class="chip warn">refused</span><span class="acctitle">A09 &middot; REQUIRES_NEW_JUDGE</span><span class="accarrow">&#9662;</span></button><div class="accbody"><p>session_end = &#x27;abandoned&#x27; is MEASURED and reported here: abandonment is acme-bank 5.92%, northwind-retail 5.73% of sessions. WHY a user abandoned — frustration versus having got what they needed — is a judgment about meaning. No versioned judge with a published calibration for that question exists in this deployment, and inferring the reason from the end code would be a Rule 1 violation dressed up as an aggregate. This system publishes no such number.</p><div class="need"><b>Required event</b> abandonment_reason_judgement at <code>session</code> grain · fields <code>judge_version, reason_class, confidence, calibration_set_id</code> · owner <code>quality-judging</code></div><div class="need warn"><b>Tempting proxy</b> abandoned sessions with an unusually high turn count or a same-tool retry &mdash; it flags effort, not frustration; a user who leaves happy after two turns and one who rage-quits after two turns look identical in the logs</div></div></div><div class="acc refused"><button class="acchead"><span class="chip warn">refused</span><span class="acctitle">A11 &middot; NOT_MEASURABLE</span><span class="accarrow">&#9662;</span></button><div class="accbody"><p>No failover mechanism exists in the runtime, so no failover event is ever emitted: there is no primary/secondary path to observe. Nothing in the corpus records a primary model or tool failing and an alternate serving the user, because that choice is never made. Required event: failover at step grain with fields from_target, to_target, reason, recovered, owner conversation-runtime.</p><div class="need"><b>Required event</b> failover at <code>step</code> grain · fields <code>from_target, to_target, reason, recovered</code> · owner <code>conversation-runtime</code></div><div class="need warn"><b>Tempting proxy</b> llm_call rows with retry_count &gt; 0 (1956 in this corpus) &mdash; those are QUALITY retries — the same target re-issued after a provider error or malformed response, not a switch to an alternate target. Reporting them as failover would show a small non-zero rate that reads as &#x27;failover is working&#x27; when failover does not exist; a chart here would be worse than no chart.</div></div></div><div class="acc refused"><button class="acchead"><span class="chip warn">refused</span><span class="acctitle">A02 &middot; CARDINALITY_REFUSED</span><span class="accarrow">&#9662;</span></button><div class="accbody"><p>a per-customer breakdown (custom_dims.customer_ref) was considered for the cohort drill-down and refused: 80252 distinct values against the catalog&#x27;s declared cardinality budget of 200 for session.custom_dims.customer_ref. The field is near-unique per session; grouping by it is a planner error, not a cohort. session_id is the only declared join key; customer_ref is not one.</p><div class="need warn"><b>Tempting proxy</b> custom_dims.segment (closed set, budget 50) &mdash; segment groups customers into three bands; it answers &#x27;which kind of customer&#x27;, not &#x27;which customer&#x27;</div></div></div>
+    </div>
+    <div class="card">
+      <div class="pad" style="padding-bottom:4px"><h4>What is real, stubbed, or simulated</h4></div>
+      <div class="acc "><button class="acchead"><span class="chip good">real</span><span class="acctitle">Real</span><span class="accarrow">&#9662;</span></button><div class="accbody"><p>session-grain feature table from sessions.jsonl.gz + agent_steps.jsonl.gz; coverage computed per tenant from which agent_kinds emit each step type in THIS corpus (tool_call coverage acme-bank=0.721, northwind-retail=0.931); 11 asks answered with a metric or a structured gap; three detector-specific analyses (tool contract / KB gap with same-tenant peers / prompt efficiency with sibling-agent control); three explicit decoy dismissals; A11 refused with required event failover {from_target,to_target,reason,recovered} owner conversation-runtime; cost is the sum of recorded cost_usd or null; cardinality refusal cites the catalog&#x27;s fixed budget of 200 on session.custom_dims.customer_ref; golden-set IDs frozen to out/golden_set.json before any prescription; decision screen renders this report and writes approval back into it.</p></div></div><div class="acc "><button class="acchead"><span class="chip warn">stubbed</span><span class="acctitle">Stubbed</span><span class="accarrow">&#9662;</span></button><div class="accbody"><p>no LLM is called anywhere. A09 (why a user abandoned) is a REQUIRES_NEW_JUDGE gap rather than a trained frustration classifier. Quality calibration uses the kit&#x27;s human rubric labels against the corpus&#x27;s own judge, not a judge we trained.</p></div></div><div class="acc "><button class="acchead"><span class="chip warn">simulated</span><span class="acctitle">Simulated</span><span class="accarrow">&#9662;</span></button><div class="accbody"><p>the replay endpoint (replay/serve.py) is a hypothesis verifier with a seeded effect model. Its &#x27;before&#x27; is not this system&#x27;s corpus measurement. We send at most a few high-confidence runs on the exact detected cohort; no_effect is recorded honestly. Replay this run: replay p01_tool_contract_northwind: tool.validate get_order_status on {&quot;from_day&quot;: 40, &quot;intent&quot;: &quot;order_status&quot;, &quot;to_day&quot;: 51, &quot;tool&quot;: &quot;get_order_status&quot;} -&gt; improved (run rp_7d753011, before 0.7741 after 0.8574, golden True)</p></div></div><div class="acc "><button class="acchead"><span class="chip muted">breaks at 100x</span><span class="acctitle">Breaks At 100X</span><span class="accarrow">&#9662;</span></button><div class="accbody"><p>the session map is in-memory (~80k sessions, ~900k steps is comfortable; tens of millions of sessions would need an on-disk grain and a streaming window scan). The decision screen writes the report file atomically — that is not a multi-user store. Detector thresholds are relative/statistical, not practice literals, but a sealed corpus with a different empty-success base rate still has to clear the same lift/z bars.
+
+This file is generated by run.py from the kit corpus; no hand-edited or reference report is read or copied.
+
+Findings this run: 3 regressions, 3 explicit non-regressions.</p></div></div>
+    </div>
+  </section>
+
+  <aside class="rail stack">
+    <div class="card">
+      <div class="pad">
+        <p class="kicker">Approval gate &middot; p01_tool_contract_northwind</p>
+        <div style="font-size:14px;font-weight:600;margin:2px 0 2px">Approve, reject, or defer</div>
+        <p class="fine">A written reason is required. The verdict is written into the report and logged.</p>
+        
+        <div class="seg">
+          <button class="on">Accept</button><button class="rej">Reject</button><button class="def">Defer</button>
+        </div>
+        <label class="fl">Decided by</label>
+        <input class="in" value="operator">
+        <label class="fl">Reason</label>
+        <textarea class="ta" placeholder="Why this is the call for Monday morning."></textarea>
+        <button class="btn">Write decision into the report</button>
+        <div class="phantom" style="margin-top:8px;font-size:11.5px;color:var(--faint);text-align:center">
+          demo only &mdash; static file, nothing is written</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="pad">
+        <h4>Confidence &amp; guardrails</h4>
+        <div class="kvs">
+          <div><span>Diagnosis confidence</span><b>0.90 (90%)</b></div>
+          <div><span>Verification</span><b>improved</b></div>
+          <div><span>Golden set</span><b>30/30 pass</b></div>
+          <div><span>Rules</span><b>no LLM facts &middot; yardstick fixed</b></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="pad">
+        <h4>Run context</h4>
+        <div class="kvs">
+          <div><span>Team</span><b>demo</b></div>
+          <div><span>Corpus</span><b>A</b></div>
+          <div><span>Generated</span><b>2026-09-14T17:58:30Z</b></div>
+          <div><span>Tool coverage</span><b>acme-bank=0.721, northwind-retail=0.931)</b></div>
+        </div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<footer class="notes">Every number on this screen is copied from the report; the screen never recomputes.
+  In the live app, the decision writes <code>prescriptions[].approval</code> back into the report and appends
+  <code>out/decisions.log</code>.</footer>
+
+<details class="raw">
+  <summary>Embedded sample report &mdash; examples/sample-report.json</summary>
+  <pre>{
+  &quot;team&quot;: &quot;demo&quot;,
   &quot;corpus&quot;: &quot;A&quot;,
-  &quot;generated_at&quot;: &quot;2026-09-14T12:31:26Z&quot;,
-  &quot;system_notes&quot;: &quot;REAL: session-grain feature table from sessions.jsonl.gz + agent_steps.jsonl.gz; coverage computed per tenant from which agent_kinds emit each step type in THIS corpus (tool_call coverage acme-bank=0.721, northwind-retail=0.931); 11 asks answered with a metric or a structured gap; three detector-specific analyses (tool contract / KB gap with same-tenant peers / prompt efficiency with sibling-agent control); three explicit decoy dismissals; A11 refused with required event failover {from_target,to_target,reason,recovered} owner conversation-runtime; cost is the sum of recorded cost_usd or null; cardinality refusal cites the catalog&#x27;s fixed budget of 200 on session.custom_dims.customer_ref; golden-set IDs frozen to out/golden_set.json before any prescription; decision screen renders this report and writes approval back into it.\n\nSTUBBED: no LLM is called anywhere. A09 (why a user abandoned) is a REQUIRES_NEW_JUDGE gap rather than a trained frustration classifier. Quality calibration uses the kit&#x27;s human rubric labels against the corpus&#x27;s own judge, not a judge we trained.\n\nSIMULATED: the replay endpoint (replay/serve.py) is a hypothesis verifier with a seeded effect model. Its &#x27;before&#x27; is not this system&#x27;s corpus measurement. We send at most a few high-confidence runs on the exact detected cohort; no_effect is recorded honestly. Replay this run: replay skipped (--no-replay)\n\nBREAKS AT 100x: the session map is in-memory (~80k sessions, ~900k steps is comfortable; tens of millions of sessions would need an on-disk grain and a streaming window scan). The decision screen writes the report file atomically \u2014 that is not a multi-user store. Detector thresholds are relative/statistical, not practice literals, but a sealed corpus with a different empty-success base rate still has to clear the same lift/z bars.\n\nThis file is generated by run.py from the kit corpus; no hand-edited or reference report is read or copied.\n\nFindings this run: 3 regressions, 3 explicit non-regressions.&quot;,
+  &quot;generated_at&quot;: &quot;2026-09-14T17:58:30Z&quot;,
+  &quot;system_notes&quot;: &quot;REAL: session-grain feature table from sessions.jsonl.gz + agent_steps.jsonl.gz; coverage computed per tenant from which agent_kinds emit each step type in THIS corpus (tool_call coverage acme-bank=0.721, northwind-retail=0.931); 11 asks answered with a metric or a structured gap; three detector-specific analyses (tool contract / KB gap with same-tenant peers / prompt efficiency with sibling-agent control); three explicit decoy dismissals; A11 refused with required event failover {from_target,to_target,reason,recovered} owner conversation-runtime; cost is the sum of recorded cost_usd or null; cardinality refusal cites the catalog&#x27;s fixed budget of 200 on session.custom_dims.customer_ref; golden-set IDs frozen to out/golden_set.json before any prescription; decision screen renders this report and writes approval back into it.\n\nSTUBBED: no LLM is called anywhere. A09 (why a user abandoned) is a REQUIRES_NEW_JUDGE gap rather than a trained frustration classifier. Quality calibration uses the kit&#x27;s human rubric labels against the corpus&#x27;s own judge, not a judge we trained.\n\nSIMULATED: the replay endpoint (replay/serve.py) is a hypothesis verifier with a seeded effect model. Its &#x27;before&#x27; is not this system&#x27;s corpus measurement. We send at most a few high-confidence runs on the exact detected cohort; no_effect is recorded honestly. Replay this run: replay p01_tool_contract_northwind: tool.validate get_order_status on {\&quot;from_day\&quot;: 40, \&quot;intent\&quot;: \&quot;order_status\&quot;, \&quot;to_day\&quot;: 51, \&quot;tool\&quot;: \&quot;get_order_status\&quot;} -&gt; improved (run rp_7d753011, before 0.7741 after 0.8574, golden True)\n\nBREAKS AT 100x: the session map is in-memory (~80k sessions, ~900k steps is comfortable; tens of millions of sessions would need an on-disk grain and a streaming window scan). The decision screen writes the report file atomically \u2014 that is not a multi-user store. Detector thresholds are relative/statistical, not practice literals, but a sealed corpus with a different empty-success base rate still has to clear the same lift/z bars.\n\nThis file is generated by run.py from the kit corpus; no hand-edited or reference report is read or copied.\n\nFindings this run: 3 regressions, 3 explicit non-regressions.&quot;,
   &quot;metrics&quot;: [
     {
       &quot;id&quot;: &quot;m_containment&quot;,
@@ -2584,7 +2742,24 @@
       ]
     }
   ],
-  &quot;verifications&quot;: [],
+  &quot;verifications&quot;: [
+    {
+      &quot;prescription_id&quot;: &quot;p01_tool_contract_northwind&quot;,
+      &quot;replay_run_id&quot;: &quot;rp_7d753011&quot;,
+      &quot;metric&quot;: &quot;resolution_rate&quot;,
+      &quot;before&quot;: 0.7741,
+      &quot;after&quot;: 0.8574,
+      &quot;golden_set_pass&quot;: true,
+      &quot;verdict&quot;: &quot;improved&quot;,
+      &quot;prediction_error&quot;: -0.012,
+      &quot;golden_set_replayed&quot;: 30,
+      &quot;golden_set_regressed&quot;: 0,
+      &quot;sessions_replayed&quot;: 302,
+      &quot;runs_used&quot;: 1,
+      &quot;run_budget&quot;: 40,
+      &quot;note&quot;: &quot;replay &#x27;before&#x27; is the endpoint&#x27;s own simulated baseline, not this system&#x27;s corpus measurement; prediction_error compares the predicted delta with the replayed delta&quot;
+    }
+  ],
   &quot;gaps&quot;: [
     {
       &quot;ask_id&quot;: &quot;A09&quot;,
@@ -2631,14 +2806,37 @@
     }
   ],
   &quot;self_assessment&quot;: {
-    &quot;cycles&quot;: 0,
-    &quot;prescription_accuracy&quot;: {},
+    &quot;cycles&quot;: 1,
+    &quot;prescription_accuracy&quot;: {
+      &quot;tool.validate&quot;: {
+        &quot;n&quot;: 1,
+        &quot;hit_rate&quot;: 1.0,
+        &quot;mean_prediction_error&quot;: -0.012
+      }
+    },
     &quot;downweighted&quot;: [],
-    &quot;notes&quot;: &quot;No replay cycle this run: the endpoint was unreachable or --no-replay was set. Priors are empty and nothing is de-weighted.&quot;
+    &quot;notes&quot;: &quot;Only 1 replay cycle(s), so these priors carry no weight yet. With n&lt;3 per change class we report the numbers and decline to act on them \u2014 a hit rate from a single observation is not evidence. Depth was spent on one high-confidence tool.validate rather than burning budget on probes.&quot;
   }
 }
 </pre>
-  </details>
-</div>
+</details>
+
+<script>
+  document.querySelectorAll('.tab').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var box = b.closest('.card');
+      box.querySelectorAll('.tab').forEach(function (x) { x.classList.toggle('active', x === b); });
+      box.querySelectorAll('.panel').forEach(function (p) { p.hidden = p.dataset.panel !== b.dataset.tab; });
+    });
+  });
+  document.querySelectorAll('.acchead').forEach(function (h) {
+    h.addEventListener('click', function () { h.parentElement.classList.toggle('open'); });
+  });
+  document.querySelectorAll('.seg button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      b.parentElement.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
+    });
+  });
+</script>
 </body>
 </html>
