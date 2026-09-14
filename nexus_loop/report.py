@@ -38,7 +38,7 @@ def _jsonable(x):
     if isinstance(x, Counter):
         return {str(k): _jsonable(v) for k, v in x.items()}
     if isinstance(x, float):
-        return round(x, 6) if x == x else None
+        return round(x, 6) if x == x and x not in (float("inf"), float("-inf")) else None
     return x
 
 

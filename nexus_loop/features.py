@@ -33,7 +33,6 @@ def new_derived() -> dict:
         "n_llm_calls": 0,
         "n_llm_errors": 0,
         "n_llm_retries": 0,
-        "llm_cost_usd": 0.0,
         "n_guardrail_blocks": 0,
         "n_handoff_steps": 0,
         "handoff_by_design_step": None,
@@ -116,8 +115,6 @@ class Corpus:
                 d["n_llm_errors"] += 1
             if (st.get("retry_count") or 0) > 0:
                 d["n_llm_retries"] += 1
-            if st.get("cost_usd") is not None:
-                d["llm_cost_usd"] += float(st["cost_usd"])
         elif t == "guardrail":
             if st.get("outcome") == "blocked":
                 d["n_guardrail_blocks"] += 1
@@ -152,7 +149,12 @@ class Corpus:
                        before: int = 3, after: int = 2) -> Optional[dict]:
         """The config change of one of ``kinds`` closest to ``day`` inside
         [day-before, day+after]; None when nothing aligns. Attribution is
-        evidence, never a gate on whether a regression is reported."""
+        evidence, never a gate on whether a regression is reported.
+
+        On an exact tie the earlier change in timeline order wins. Callers that
+        need mechanism-awareness (e.g. prompt versus model on the same day)
+        should choose by the dimension that actually changed in the data, not
+        rely on this tie-break."""
         best = None
         for c in self.changes:
             if c.get("tenant") not in (tenant, "*") or c.get("kind") not in kinds:

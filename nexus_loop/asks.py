@@ -19,7 +19,8 @@ STEPS = "corpus/agent_steps.jsonl.gz"
 
 
 def _short(tenant: str) -> str:
-    return tenant.split("-")[0]
+    # the full key, sanitised, so two tenants sharing a prefix cannot collide
+    return "".join(ch if ch.isalnum() else "_" for ch in tenant)
 
 
 def _cost_coverage(cov: Coverage, corpus: Corpus, tenant: str) -> Tuple[float, str, Optional[dict]]:
@@ -104,7 +105,7 @@ def build(corpus: Corpus, cov: Coverage, kit_catalog: dict,
             "m_tool_failure_" + _short(t), "Tool failure rate — " + t, "A04", "step", "measured",
             r4(rate(errs, calls)), cov.value("tool_call", t), cov.basis("tool_call", t),
             STEPS + " WHERE step_type = 'tool_call'",
-            "outcome IN ('error','timeout') AND tenant = '%s'" % t,
+            "outcome <> 'ok' AND tenant = '%s'" % t,
             "all tool_call steps for this tenant on agent_kinds that emit tool_call",
             breakdowns=["error_class", "tool_name", "channel", "agent_id"],
             excluded=cov.excluded_filter("tool_call"),
@@ -284,14 +285,18 @@ def build(corpus: Corpus, cov: Coverage, kit_catalog: dict,
             dropoff[t + "/" + it] = {"milestones": steps, "reach_rate": reach, "n": len(rows),
                                      "largest_drop_before": worst[0] if worst else None,
                                      "largest_drop": r4(worst[1]) if worst else None}
-            if "return" in it and headline is None:
+            if headline is None and any("return" in (m or "").lower().split("_") for m in steps):
                 headline = dropoff[t + "/" + it]
+    if headline is None and dropoff:
+        # no returns-like journey found (e.g. renamed slices): fall back to the
+        # journey with the largest drop-off so A05 still answers
+        headline = max(dropoff.values(), key=lambda v: (v.get("largest_drop") if v.get("largest_drop") is not None else -1.0))
     metrics.append(metric(
         "m_returns_dropoff", "Milestone drop-off in the returns journey", "A05", "session", "measured",
         headline, 1.0, "milestones_reached is present on every session; journeys come from catalog.milestones",
         SESSIONS, "intent whose catalog journey is the returns journey; share of sessions reaching each milestone in order",
         "all sessions of the intent", breakdowns=["milestone", "channel", "agent_id"],
-        value_note="journey chosen by matching the ask ('returns') against catalog.milestones keys; all journeys in breakdown",
+        value_note="returns journey selected structurally by a returns-like milestone; falls back to the largest drop-off; all journeys in breakdown",
         breakdown=dropoff))
 
     # ---------------------------------------------------------------- A06 --
@@ -459,6 +464,9 @@ def build(corpus: Corpus, cov: Coverage, kit_catalog: dict,
                         "owner": req["owner"]}))
 
     # ---------------------------------------------------------------- C2 --
+    # Cardinality refusal is not one of the eleven asks; it is the catalog's
+    # denominator trap. It is filed under A02 because that is the cohort
+    # drill-down whose per-customer grouping was considered and refused.
     field = "session.custom_dims.customer_ref"
     budget = corpus.kit.cardinality_budget(field)
     distinct = len({(s.get("custom_dims") or {}).get("customer_ref") for s in all_rows
@@ -507,6 +515,11 @@ def _quality_calibration(corpus: Corpus):
         agreement = detail["within_half_point"]
         detail["note"] = "within-1 agreement was >= 0.995, which the label set's human disagreement rules out; " \
                          "the half-point agreement is published instead"
+        if agreement >= 0.995:
+            return None, {"note": "within-1 and half-point agreement are both >= 0.995, which the label set's "
+                                  "human disagreement rules out; no calibration is published rather than a "
+                                  "suspiciously perfect one",
+                          "n": len(pairs), "mae": detail["mae"]}
     versions = sorted(detail["by_judge_version"])
     return {"agreement": agreement, "n": len(pairs),
             "judge_version": "+".join(versions) if versions else "unknown"}, detail

@@ -92,6 +92,7 @@ def golden_candidates(obs: dict, cov: Coverage, n: int = GOLDEN_N) -> List[str]:
 def freeze_golden_sets(observations: List[dict], cov: Coverage, path: str, corpus_variant: str) -> dict:
     """Load the frozen golden sets for this corpus if present; otherwise select
     them now and persist before any prescription exists."""
+    fingerprint = "%d/%s/%d" % (len(cov.corpus.sessions), ",".join(cov.corpus.tenants), cov.corpus.days)
     existing = None
     if os.path.exists(path):
         try:
@@ -99,7 +100,8 @@ def freeze_golden_sets(observations: List[dict], cov: Coverage, path: str, corpu
                 existing = json.load(fh)
         except (OSError, ValueError):
             existing = None
-        if existing and existing.get("corpus") != corpus_variant:
+        if existing and (existing.get("corpus") != corpus_variant
+                         or existing.get("fingerprint") != fingerprint):
             existing = None
     sets = (existing or {}).get("sets") or {}
     changed = False
@@ -120,7 +122,7 @@ def freeze_golden_sets(observations: List[dict], cov: Coverage, path: str, corpu
         obs["golden_set"] = ids
         obs["golden_frozen_at"] = sets[key]["frozen_at"]
         changed = True
-    doc = {"corpus": corpus_variant, "version": GOLDEN_VERSION, "sets": sets}
+    doc = {"corpus": corpus_variant, "fingerprint": fingerprint, "version": GOLDEN_VERSION, "sets": sets}
     if changed or not existing:
         os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
         tmp = path + ".tmp"
