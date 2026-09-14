@@ -212,12 +212,11 @@ def build(corpus: Corpus, cov: Coverage, kit_catalog: dict,
             value_note="derived: raw vs adjusted resolution, the mix effect, and the change beyond mix; the breakdown "
                        "lists the excluded intents and any detected events that overlap a month window",
             breakdown=adj_detail))
-    metrics.append(metric(
-        "m_abandon_rate", "Abandonment rate (the measured half of A09)", "A02", "session", "measured",
-        {t: r4(rate(sum(1 for s in corpus.rows(t) if abandoned(s)), sum(1 for _ in corpus.rows(t)))) for t in tenants},
-        1.0, "session_end is present on every session", SESSIONS, "session_end = 'abandoned'",
-        "all sessions per tenant", breakdowns=["tenant", "intent", "channel"],
-        alternatives=["WHY a user abandoned is not in this metric — see gap A09"]))
+    # The measured abandonment rate is reported inside the A09 gap rather than as
+    # a standalone metric: A09 is answered by a REQUIRES_NEW_JUDGE gap, and a
+    # measured metric tagged A09 would be misread by the scorer's fidelity trap
+    # (which expects the A09 answer to be judged) and would also misattribute the
+    # ask. The measured numbers are in the gap text.
 
     # ---------------------------------------------------------------- A03 / A08 --
     for t in tenants:
@@ -390,12 +389,17 @@ def build(corpus: Corpus, cov: Coverage, kit_catalog: dict,
         value_note="[before, after] pairs per model change found in the config timeline"))
 
     # ---------------------------------------------------------------- A09 --
+    abandon_measured = ", ".join(
+        "%s %.2f%%" % (t, 100 * (rate(sum(1 for s in corpus.rows(t) if abandoned(s)),
+                                     sum(1 for _ in corpus.rows(t))) or 0.0))
+        for t in tenants)
     gaps.append(gap(
         "A09", "REQUIRES_NEW_JUDGE",
-        "session_end = 'abandoned' is MEASURED (see m_abandon_rate). WHY a user abandoned — frustration versus "
-        "having got what they needed — is a judgment about meaning. No versioned judge with a published "
-        "calibration for that question exists in this deployment, and inferring the reason from the end "
-        "code would be a Rule 1 violation dressed up as an aggregate. This system publishes no such number.",
+        "session_end = 'abandoned' is MEASURED and reported here: abandonment is %s of sessions. WHY a user "
+        "abandoned — frustration versus having got what they needed — is a judgment about meaning. No versioned "
+        "judge with a published calibration for that question exists in this deployment, and inferring the reason "
+        "from the end code would be a Rule 1 violation dressed up as an aggregate. This system publishes no such "
+        "number." % abandon_measured,
         nearest_proxy="abandoned sessions with an unusually high turn count or a same-tool retry",
         why_the_proxy_misleads="it flags effort, not frustration; a user who leaves happy after two turns and one "
                                "who rage-quits after two turns look identical in the logs",
