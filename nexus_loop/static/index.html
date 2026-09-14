@@ -46,7 +46,7 @@
       --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.05);
       --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
       --duration-fast: 150ms;
-      --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+      --font-serif: Georgia, "Iowan Old Style", "Palatino Linotype", Palatino, serif;
       --font-sans: ui-sans-serif, system-ui, sans-serif;
       --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
       --font-size-2xs: 0.6875rem; /* kicker / overline */
@@ -185,14 +185,20 @@
       opacity: 0.85;
     }
     .honesty {
-      display: flex; flex-wrap: wrap; gap: var(--space-2);
+      display: flex; flex-direction: column; align-items: flex-start;
+      gap: var(--space-2);
       margin-top: var(--space-3);
+      max-width: 72rem;
     }
+    .honesty .chips { margin: 0; }
     .honesty .note {
       font-family: var(--font-caption);
       font-size: var(--font-size-xs);
       opacity: 0.9;
-      max-width: 72ch;
+      max-width: 100%;
+      min-width: 0;
+      margin: 0;
+      line-height: var(--leading-normal);
     }
     main {
       max-width: 1280px;
@@ -207,7 +213,7 @@
     }
     @media (max-width: 1100px) {
       .shell { grid-template-columns: 1fr minmax(240px, 300px); }
-      .rail { grid-column: 1 / -1; }
+      .rail { grid-column: 1 / -1; position: static; max-height: none; overflow: visible; }
     }
     @media (max-width: 900px) {
       .shell { grid-template-columns: 1fr; }
@@ -240,6 +246,30 @@
       margin: var(--space-5) 0 var(--space-2);
     }
     p, li { color: var(--color-foreground); }
+    header.app-header p,
+    header.app-header .note,
+    header.app-header .meta {
+      color: inherit;
+    }
+    /* Honesty chips sit on inverse navy: keep labels readable (never color-only). */
+    header.app-header .badge {
+      background: var(--color-primary-hover);
+      color: var(--color-primary-foreground);
+      border-color: transparent;
+    }
+    header.app-header .badge.success {
+      background: var(--color-success);
+      color: var(--color-success-foreground);
+    }
+    header.app-header .badge.warning {
+      background: var(--color-warning);
+      color: var(--color-warning-foreground);
+    }
+    header.app-header .badge.outline {
+      background: transparent;
+      color: var(--color-primary-foreground);
+      border-color: var(--color-primary-foreground);
+    }
     .body { font-family: var(--font-body); font-size: var(--font-size-sm); }
     .muted { color: var(--color-muted-foreground); }
     code {
@@ -286,10 +316,14 @@
     .rail-item strong { display: block; margin-bottom: var(--space-1); font-weight: var(--font-weight-semibold); }
     .rail-scroll { display: flex; flex-direction: column; }
     @media (max-width: 1100px) {
-      .rail-scroll { flex-direction: row; gap: var(--space-2); overflow-x: auto; padding-bottom: var(--space-2); }
-      .rail-item { min-width: 220px; margin: 0; }
+      .rail-scroll { overflow-x: auto; padding-bottom: var(--space-2); }
     }
-    .gate-col { position: sticky; top: var(--space-4); }
+    .rail {
+      position: sticky;
+      top: var(--space-4);
+      max-height: calc(100vh - var(--space-8));
+      overflow-y: auto;
+    }
 
     .badge {
       display: inline-flex; align-items: center;
@@ -564,23 +598,53 @@
       return `<span class="badge ${fidelityClass(fid)}" title="${esc((m.coverage && m.coverage.basis) || "")}">${esc(m.ask_id || m.id)} · ${esc(fid)} · coverage ${esc(cov)}</span>`;
     }
 
+    function shortNotes(notes) {
+      const text = typeof notes === "string" ? notes : JSON.stringify(notes || "");
+      const labels = ["REAL", "STUBBED", "SIMULATED"];
+      const bits = [];
+      labels.forEach((label) => {
+        const re = new RegExp(label + ":\\s*([\\s\\S]*?)(?=REAL:|STUBBED:|SIMULATED:|BREAKS AT|$)");
+        const m = text.match(re);
+        if (!m) return;
+        let s = m[1].replace(/\s+/g, " ").trim();
+        if (s.length > 180) s = s.slice(0, 177) + "…";
+        bits.push(`<p class="note"><strong>${label}.</strong> ${esc(s)}</p>`);
+      });
+      if (bits.length) return bits.join("");
+      const cut = text.replace(/\s+/g, " ").trim();
+      return `<p class="note">${esc(cut.length > 240 ? cut.slice(0, 237) + "…" : cut)}</p>`;
+    }
     function renderHonesty(rep) {
       const metrics = rep.metrics || [];
       const pick = ["A01", "A04"].map((id) => metrics.find((m) => m.ask_id === id)).filter(Boolean);
       const judged = metrics.find((m) => m.fidelity === "judged");
       if (judged && !pick.includes(judged)) pick.push(judged);
-      const chipsHtml = pick.map(metricChip).join("");
-      const notes = typeof rep.system_notes === "string" ? rep.system_notes : JSON.stringify(rep.system_notes || "");
-      $("honesty").innerHTML = `${chipsHtml}<span class="note">${esc(notes)}</span>`;
+      const chipsHtml = `<div class="chips">${pick.map(metricChip).join("")}</div>`;
+      $("honesty").innerHTML = `${chipsHtml}${shortNotes(rep.system_notes)}`;
     }
 
     function renderRail(rep, pack) {
       const { byFid } = indexes(rep);
       const sel = selectedKey;
       const parts = [];
-      parts.push(`<p class="kicker">On this desk</p>`);
       const regs = (rep.findings || []).filter((f) => f.is_regression);
       const dismissed = (rep.findings || []).filter((f) => !f.is_regression);
+      const gaps = rep.gaps || [];
+      const a11 = gaps.filter((g) => g.ask_id === "A11");
+      const rest = gaps.filter((g) => g.ask_id !== "A11");
+      const gapBtn = (g) => {
+        const key = "gap:" + g.ask_id;
+        const on = sel === key ? " is-selected" : "";
+        return `<button type="button" class="rail-item${on}" data-key="${esc(key)}" aria-current="${on ? "true" : "false"}">
+            <strong>Refused · ${esc(g.ask_id)} ${esc(g.verdict || "")}</strong>
+            <span class="muted">${esc((g.why || "").slice(0, 140))}${(g.why || "").length > 140 ? "…" : ""}</span>
+          </button>`;
+      };
+      if (a11.length) {
+        parts.push(`<p class="kicker">Refused to invent</p>`);
+        a11.forEach((g) => parts.push(gapBtn(g)));
+      }
+      parts.push(`<p class="kicker${a11.length ? " spaced" : ""}">On this desk</p>`);
       regs.forEach((f) => {
         const d = byFid[f.id] || {};
         const on = sel === f.id ? " is-selected" : "";
@@ -596,23 +660,13 @@
           const on = sel === f.id ? " is-selected" : "";
           parts.push(`<button type="button" class="rail-item${on}" data-key="${esc(f.id)}">
             <strong>Dismissed · ${esc(d.cause_class || f.metric || f.id)}</strong>
-            <span class="muted">${esc((f.not_a_regression_because || "").slice(0, 140))}${(f.not_a_regression_because || "").length > 140 ? "…" : ""}</span>
+            <span class="muted">${esc((f.not_a_regression_because || "").slice(0, 90))}${(f.not_a_regression_because || "").length > 90 ? "…" : ""}</span>
           </button>`);
         });
       }
-      const gaps = rep.gaps || [];
-      const a11 = gaps.filter((g) => g.ask_id === "A11");
-      const rest = gaps.filter((g) => g.ask_id !== "A11");
-      if (gaps.length) {
-        parts.push(`<p class="kicker spaced">Refused to invent</p>`);
-        [...a11, ...rest].forEach((g) => {
-          const key = "gap:" + g.ask_id;
-          const on = sel === key ? " is-selected" : "";
-          parts.push(`<button type="button" class="rail-item${on}" data-key="${esc(key)}">
-            <strong>Refused · ${esc(g.ask_id)} ${esc(g.verdict || "")}</strong>
-            <span class="muted">${esc((g.why || "").slice(0, 140))}${(g.why || "").length > 140 ? "…" : ""}</span>
-          </button>`);
-        });
+      if (rest.length) {
+        parts.push(`<p class="kicker spaced">Other refusals</p>`);
+        rest.forEach((g) => parts.push(gapBtn(g)));
       }
       $("rail").innerHTML = `<div class="rail-scroll">${parts.join("")}</div>`;
       $("rail").querySelectorAll("[data-key]").forEach((btn) => {
@@ -621,6 +675,8 @@
           render(rep);
         });
       });
+      const selected = $("rail").querySelector(".rail-item.is-selected");
+      if (selected) selected.scrollIntoView({ block: "nearest" });
     }
 
     function renderWorkspace(rep, pack) {
@@ -721,7 +777,8 @@
       const p = pack.p;
       const dec = p.decision || {};
       const a = p.approval || {};
-      const recorded = a.verdict ? `<div class="alert success compact">
+      const recCls = a.verdict === "accepted" ? "success" : a.verdict === "deferred" ? "warning" : "";
+      const recorded = a.verdict ? `<div class="alert ${recCls} compact">
         <p><strong>Recorded ${esc(a.verdict)}</strong> by ${esc(a.decided_by || "operator")} at ${esc(a.at || "")}.</p>
         <p>${esc(a.reason || "")}</p></div>` : "";
       $("gate").innerHTML = `
