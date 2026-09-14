@@ -558,7 +558,7 @@
 
     function tabLabel(f, d) {
       if (!f) return "";
-      if (!f.is_regression) return (d && d.cause_class) || f.metric || f.id;
+      if (!f.is_regression) return ((d && d.cause_class) || f.metric || f.id).replace(/_/g, " ");
       const h = (f.headline || f.metric || f.id).split("—")[0].trim();
       return h.length > 28 ? h.slice(0, 27) + "…" : h;
     }
@@ -652,6 +652,7 @@
       if (pack.kind === "gap") {
         const g = pack.gap || {};
         const ev = g.required_event || {};
+        const why = (g.why || "—").replace(/\s*Required event:[\s\S]*$/i, "").trim() || (g.why || "—");
         const retry = g.ask_id === "A11" && g.why_the_proxy_misleads
           ? `<div class="block"><h3>Why retry is not failover</h3><p class="lede">${esc(g.why_the_proxy_misleads)}</p>
              ${g.nearest_proxy ? `<p class="muted body">Nearest proxy: <code>${esc(g.nearest_proxy)}</code></p>` : ""}</div>`
@@ -659,7 +660,7 @@
         $("workspace").innerHTML = `
           <p class="eyebrow">We will not invent this number</p>
           <h2 class="claim">${esc(g.ask_id)} is ${esc(g.verdict || "not measurable")}</h2>
-          <p class="lede">${esc(g.why || "—")}</p>
+          <p class="lede">${esc(why)}</p>
           ${retry}
           <div class="alert spec">
             <p><strong>Required event</strong> <code>${esc(ev.name || "—")}</code> at <code>${esc(ev.grain || "—")}</code> grain.</p>
@@ -718,7 +719,7 @@
             <div><strong>${fmt(down.unplanned_handoffs, 0)}</strong><span>unplanned handoffs</span></div>
           </div>
           <p>${esc(f.if_nothing_changes || "—")}</p>
-          <p class="muted body">${esc(who)} must act. ${esc(extra.join(" · "))}.</p>
+          <p class="muted body">${esc(who)} must act.</p>
         </div>
         <div class="block">
           <h3>Why</h3>
@@ -733,7 +734,7 @@
           <h3>Replay</h3>
           ${replay}
         </div>
-        ${details("Evidence and why this baseline is fair", `<p class="muted body">${esc(imp.derivation || "—")}</p>${evInner}`)}`;
+        ${details("Evidence and why this baseline is fair", `<p class="muted body">${esc(extra.join(" · "))}. ${esc(imp.derivation || "—")}</p>${evInner}`)}`;
     }
 
     function renderGate(pack) {
