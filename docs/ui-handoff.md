@@ -36,7 +36,7 @@ For a zero-setup look without running anything, open `examples/demo.html` — a
 standalone lo-fi **wireframe** populated with `examples/sample-report.json` (the
 final solution's practice-kit run). It is one static file (no server, no fetch),
 annotated with the numbered design rationale. Use it to align on layout and the
-"why"; the live screen is still `nexus_loop/static/index.html`.
+"why"; the scored operator screen is still `nexus_loop/static/index.html`.
 
 ---
 
@@ -91,6 +91,24 @@ rejected with a 400. **A rejection or deferral is a first-class, correct outcome
 
 If you change the API, keep this contract: a decision must persist into the
 report, and the report must stay schema-valid.
+
+The operator screen is **one page, not a dashboard**. It exists so a reviewer can
+answer the eight questions from the report without recomputing anything in the
+browser.
+
+**Regions (live screen):**
+
+| Region | Role |
+|--------|------|
+| Honesty strip (header) | Coverage/fidelity chips from `metrics[]` plus a one-line `system_notes` split (real / stubbed / simulated). Framing 12 lives here, not in a footer. |
+| Rail | Switchable list: regressions, dismissed lookalikes, refusals (A11 first). Selecting a row loads the workspace. Default selection is the verification’s prescription, else `tool.contract_break`. |
+| Workspace | The eight questions in order, using the field map below. Impact, `audience`, and `if_nothing_changes` sit together. |
+| Gate (sticky) | Asking-approval-for, risk, no-ship, Accept / Reject / Defer, required reason, write-back. Reject and defer are first-class. After save, the page re-fetches `/report.json`. |
+
+**Styles:** CSS follows the ui-ux-pro-max **design-system skill** (primitive →
+semantic → component tokens; Button / Card / Badge / Input / Alert specs and
+states). Hex exists only in the primitive layer. Numbers still come **only**
+from the report — tokens do not invent charts or metrics.
 
 ---
 
@@ -163,19 +181,20 @@ demo show the refusal, state coverage out loud, and admit what is faked?
 
 ---
 
-## 7. What is already implemented (so you know the baseline)
+## 7. Presentation choices (already implemented)
 
-The current screen already shows: the primary finding (headline, chips, impact
-grid, "if nothing changes", the baseline derivation, evidence, diagnosis with the
-config change, the proposed change with risk/no-ship, and the replay result); an
-approval gate with mandatory reason; and an "other observations" column with the
-dismissed lookalikes and the A11/A09 refusals (including the required-event spec).
+These were presentation, not detector work. The loop still produces the data;
+the screen only maps it.
 
-**Open for the UI team** (deliberately not done): visual polish and layout,
-charts/sparklines, responsive/mobile, accessibility, navigating multiple
-findings, and surfacing each number's fidelity/coverage/calibration as a chip or
-tooltip. None of these need backend changes; they are presentation over the same
-report.
+- One finding at a time in the workspace; the rail lists regressions, dismissed
+  lookalikes, and refusals.
+- A11 is a first-class rail card (muted “refused” treatment, monospace event
+  spec) so the demo beat is not buried.
+- `coverage` / `fidelity` are chips in the honesty strip
+  (`measured` / `derived` / `judged`), not a metrics dashboard.
+- Paper + navy tokens (not a dark dashboard): the page should read as a brief
+  to sign on Monday morning. Accept is primary; Reject is destructive (a valid
+  outcome); a recorded accept is success.
 
 **Do not**: recompute metrics client-side, invent values, change the report shape
 (ask the backend owner first), or let the screen and report diverge.

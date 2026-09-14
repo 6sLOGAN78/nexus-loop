@@ -3,149 +3,541 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Nexus Loop — decision</title>
+  <title>Nexus Loop — one decision</title>
   <style>
+    /*
+      Design rationale (operator screen, not a dashboard)
+      Paper + navy = a brief to sign on Monday morning, not Grafana.
+      Three-layer tokens (design-system skill): hex only in primitives;
+      semantic meaning; component hover/disabled without new hex.
+      Accept = primary (commit). Reject = destructive (valid outcome).
+      Impact is a metric grid + derivation so every figure is traceable.
+      Sticky gate keeps questions 6–7 in view. A11 lives in the rail.
+      Serif = the claim; sans = evidence. No webfonts (sealed run).
+    */
+
+    /* === PRIMITIVES — raw values, change rarely === */
     :root {
-      --ink: #1a1f2b;
-      --muted: #5c6578;
-      --line: #d8deea;
-      --paper: #f6f4ef;
-      --card: #fff;
-      --accent: #1f4e79;
-      --good: #1b7f4e;
-      --warn: #9a6700;
-      --bad: #b42318;
-      --chip: #e8eef6;
+      --color-navy-900: #1a1f2b;   /* ink, header */
+      --color-navy-800: #173a5c;   /* primary hover/active */
+      --color-navy-700: #1f4e79;   /* brand primary */
+      --color-navy-100: #e8eef6;   /* badge / chip fill */
+      --color-paper-50: #f6f4ef;   /* page background */
+      --color-white: #ffffff;
+      --color-green-600: #1b7f4e;
+      --color-green-100: #e3f6ea;
+      --color-amber-600: #9a6700;
+      --color-amber-100: #fff4d6;
+      --color-red-800: #8a1c14;   /* destructive hover/active */
+      --color-red-600: #b42318;
+      --color-red-100: #fde8e6;
+      --color-slate-500: #5c6578;  /* muted text, ≥4.5:1 on paper */
+      --color-slate-200: #d8deea;  /* borders */
+      --space-1: 0.25rem;   /* 4px */
+      --space-2: 0.5rem;
+      --space-3: 0.75rem;
+      --space-4: 1rem;
+      --space-5: 1.25rem;
+      --space-6: 1.5rem;
+      --space-8: 2rem;
+      --radius-md: 0.375rem;
+      --radius-lg: 0.5rem;
+      --radius-full: 9999px;
+      --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --duration-fast: 150ms;
+      --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+      --font-sans: ui-sans-serif, system-ui, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+      --font-size-2xs: 0.6875rem; /* kicker / overline */
+      --font-size-xs: 0.75rem;
+      --font-size-sm: 0.875rem;
+      --font-size-base: 1rem;
+      --font-size-lg: 1.125rem;
+      --font-size-xl: 1.35rem;
+      --leading-tight: 1.25;
+      --leading-normal: 1.45;
+      --font-weight-medium: 500;
+      --font-weight-semibold: 600;
+      --opacity-disabled: 0.5;
+      --ring-width: 2px;
+      --ring-offset: 2px;
     }
+
+    /* === SEMANTIC — purpose aliases (themeable meaning, no hex) === */
+    :root {
+      --color-background: var(--color-paper-50);           /* page canvas */
+      --color-foreground: var(--color-navy-900);           /* body ink */
+      --color-primary: var(--color-navy-700);              /* commit / Accept */
+      --color-primary-hover: var(--color-navy-800);
+      --color-primary-active: var(--color-navy-900);
+      --color-primary-foreground: var(--color-white);
+      --color-destructive: var(--color-red-600);           /* Reject is a valid outcome */
+      --color-destructive-hover: var(--color-red-800);
+      --color-destructive-foreground: var(--color-white);
+      --color-success: var(--color-green-600);             /* recorded accepted */
+      --color-success-foreground: var(--color-white);
+      --color-warning: var(--color-amber-600);             /* risk / no-ship */
+      --color-warning-foreground: var(--color-navy-900);
+      --color-muted: var(--color-navy-100);                /* chips, A11 surface */
+      --color-muted-foreground: var(--color-slate-500);
+      --color-border: var(--color-slate-200);
+      --color-ring: var(--color-navy-700);                 /* focus-visible */
+      --color-card: var(--color-white);
+      --color-card-foreground: var(--color-foreground);
+      --font-heading: var(--font-serif);                   /* the claim */
+      --font-body: var(--font-sans);                       /* evidence */
+      --font-caption: var(--font-sans);                    /* chips, labels, gate */
+    }
+
+    /* === COMPONENTS — never hex here; hover/disabled without new hex === */
+    :root {
+      /* Button: default=Accept (commit), destructive=Reject, outline=Defer */
+      --button-bg: var(--color-primary);
+      --button-fg: var(--color-primary-foreground);
+      --button-hover-bg: var(--color-primary-hover);
+      --button-active-bg: var(--color-primary-active);
+      --button-destructive-bg: var(--color-destructive);
+      --button-destructive-fg: var(--color-destructive-foreground);
+      --button-destructive-hover-bg: var(--color-destructive-hover);
+      --button-outline-bg: var(--color-card);
+      --button-outline-border: var(--color-border);
+      --button-outline-fg: var(--color-foreground);
+      --button-outline-hover-bg: var(--color-muted);
+      --button-padding-x: var(--space-4);
+      --button-padding-y: var(--space-2);
+      --button-radius: var(--radius-md);
+      --button-font-size: var(--font-size-sm);
+      --button-font-weight: var(--font-weight-semibold);
+      /* Card: workspace, rail items, gate. Padding space-6, radius-lg */
+      --card-bg: var(--color-card);
+      --card-fg: var(--color-card-foreground);
+      --card-border: var(--color-border);
+      --card-shadow: var(--shadow-sm);
+      --card-shadow-hover: var(--shadow-md);
+      --card-padding: var(--space-6);
+      --card-radius: var(--radius-lg);
+      /* Badge: severity, cause, tenant, coverage measured|derived|judged */
+      --badge-bg: var(--color-muted);
+      --badge-fg: var(--color-foreground);
+      --badge-secondary-bg: var(--color-card);
+      --badge-secondary-fg: var(--color-muted-foreground);
+      --badge-destructive-bg: var(--color-red-100);
+      --badge-destructive-fg: var(--color-destructive);
+      --badge-success-bg: var(--color-green-100);
+      --badge-success-fg: var(--color-success);
+      --badge-warning-bg: var(--color-amber-100);
+      --badge-warning-fg: var(--color-warning);
+      --badge-outline-border: var(--color-border);
+      --badge-padding-x: var(--space-2);
+      --badge-padding-y: var(--space-1);
+      --badge-radius: var(--radius-full);
+      --badge-font-size: var(--font-size-xs);
+      --input-bg: var(--color-card);
+      --input-border: var(--color-border);
+      --input-fg: var(--color-foreground);
+      --input-focus-border: var(--color-ring);
+      --input-error-border: var(--color-destructive);
+      --input-padding-x: var(--space-3);
+      --input-padding-y: var(--space-2);
+      --input-radius: var(--radius-md);
+      /* Alert: A11 default/muted; recorded approval=success; risk=warning */
+      --alert-bg: var(--color-muted);
+      --alert-fg: var(--color-foreground);
+      --alert-border: var(--color-border);
+      --alert-success-bg: var(--color-green-100);
+      --alert-success-border: var(--color-success);
+      --alert-warning-bg: var(--color-amber-100);
+      --alert-warning-border: var(--color-warning);
+      --alert-padding: var(--space-4);
+      --alert-radius: var(--radius-md);
+    }
+
     * { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
-      font: 16px/1.45 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif; }
-    header {
-      background: var(--ink); color: #f3efe6; padding: 1.1rem 1.5rem 1.2rem;
-      display: flex; justify-content: space-between; gap: 1rem; align-items: baseline;
-      flex-wrap: wrap;
+    html, body {
+      margin: 0; padding: 0;
+      background: var(--color-background);
+      color: var(--color-foreground);
+      font-family: var(--font-heading);
+      font-size: var(--font-size-base);
+      line-height: var(--leading-normal);
     }
-    header h1 { font-size: 1.15rem; font-weight: 600; margin: 0; letter-spacing: .02em; }
-    header .meta { font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; opacity: .8; }
-    main { max-width: 1100px; margin: 0 auto; padding: 1.25rem 1.25rem 6rem; }
-    .grid { display: grid; grid-template-columns: 1.6fr .9fr; gap: 1.1rem; }
-    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
-    .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px;
-      padding: 1.1rem 1.2rem 1.2rem; box-shadow: 0 1px 0 rgba(26,31,43,.04); }
-    .kicker { font: 11px/1 ui-sans-serif, system-ui, sans-serif; letter-spacing: .14em;
-      text-transform: uppercase; color: var(--muted); margin: 0 0 .35rem; }
-    h2 { font-size: 1.45rem; line-height: 1.25; margin: 0 0 .6rem; }
-    h3 { font: 600 13px/1.3 ui-sans-serif, system-ui, sans-serif; margin: 1rem 0 .4rem;
-      letter-spacing: .04em; text-transform: uppercase; color: var(--accent); }
-    .chips { display: flex; flex-wrap: wrap; gap: .35rem; margin: 0 0 .8rem; }
-    .chip { font: 12px/1.2 ui-sans-serif, system-ui, sans-serif; background: var(--chip);
-      border-radius: 99px; padding: .25rem .6rem; color: var(--ink); }
-    .chip.sev-critical, .chip.sev-high { background: #fde8e6; color: var(--bad); }
-    .chip.sev-medium { background: #fff4d6; color: var(--warn); }
-    .chip.ok { background: #e3f6ea; color: var(--good); }
-    .chip.warn { background: #fff4d6; color: var(--warn); }
-    dl.impact { display: grid; grid-template-columns: repeat(4, 1fr); gap: .6rem .8rem; margin: 0; }
+    .skip {
+      position: absolute; left: -999px; top: 0;
+      background: var(--color-primary); color: var(--color-primary-foreground);
+      padding: var(--space-2) var(--space-3);
+    }
+    .skip:focus { left: var(--space-2); top: var(--space-2); z-index: 10; }
+    header.app-header {
+      background: var(--color-foreground);
+      color: var(--color-primary-foreground);
+      padding: var(--space-4) var(--space-6);
+    }
+    header.app-header h1 {
+      font-size: var(--font-size-lg);
+      font-weight: var(--font-weight-semibold);
+      margin: 0 0 var(--space-1);
+      letter-spacing: 0.02em;
+    }
+    header.app-header .meta {
+      font-family: var(--font-caption);
+      font-size: var(--font-size-xs);
+      opacity: 0.85;
+    }
+    .honesty {
+      display: flex; flex-wrap: wrap; gap: var(--space-2);
+      margin-top: var(--space-3);
+    }
+    .honesty .note {
+      font-family: var(--font-caption);
+      font-size: var(--font-size-xs);
+      opacity: 0.9;
+      max-width: 72ch;
+    }
+    main {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: var(--space-5) var(--space-5) var(--space-8);
+    }
+    .shell {
+      display: grid;
+      grid-template-columns: minmax(200px, 240px) minmax(0, 1fr) minmax(260px, 320px);
+      gap: var(--space-4);
+      align-items: start;
+    }
+    @media (max-width: 1100px) {
+      .shell { grid-template-columns: 1fr minmax(240px, 300px); }
+      .rail { grid-column: 1 / -1; }
+    }
+    @media (max-width: 900px) {
+      .shell { grid-template-columns: 1fr; }
+      .gate-col { position: static; }
+    }
+    .kicker {
+      font-family: var(--font-caption);
+      font-size: var(--font-size-2xs);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--color-muted-foreground);
+      margin: 0 0 var(--space-2);
+    }
+    .kicker.spaced { margin-top: var(--space-4); }
+    h2.claim {
+      font-family: var(--font-heading);
+      font-size: var(--font-size-xl);
+      line-height: var(--leading-tight);
+      margin: 0 0 var(--space-3);
+      font-weight: var(--font-weight-semibold);
+    }
+    h2.claim.gate-title { font-size: var(--font-size-lg); }
+    h3.section {
+      font-family: var(--font-caption);
+      font-size: var(--font-size-xs);
+      font-weight: var(--font-weight-semibold);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--color-primary);
+      margin: var(--space-5) 0 var(--space-2);
+    }
+    p, li { color: var(--color-foreground); }
+    .body { font-family: var(--font-body); font-size: var(--font-size-sm); }
+    .muted { color: var(--color-muted-foreground); }
+    code {
+      font-family: var(--font-mono);
+      font-size: var(--font-size-xs);
+    }
+
+    .card {
+      background: var(--card-bg);
+      color: var(--card-fg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--card-radius);
+      padding: var(--card-padding);
+      box-shadow: var(--card-shadow);
+    }
+    .card.outline { box-shadow: none; }
+    .rail-item {
+      display: block; width: 100%; text-align: left;
+      background: var(--card-bg);
+      color: var(--card-fg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--card-radius);
+      padding: var(--space-3);
+      margin: 0 0 var(--space-2);
+      cursor: pointer;
+      font-family: var(--font-body);
+      font-size: var(--font-size-sm);
+      box-shadow: var(--card-shadow);
+      transition: background var(--duration-fast), box-shadow var(--duration-fast), border-color var(--duration-fast);
+    }
+    .rail-item:hover {
+      box-shadow: var(--card-shadow-hover);
+      background: var(--color-muted);
+    }
+    .rail-item.is-selected {
+      border-color: var(--color-primary);
+      box-shadow: var(--card-shadow-hover);
+    }
+    .rail-item:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 var(--ring-offset) var(--color-background),
+                  0 0 0 calc(var(--ring-offset) + var(--ring-width)) var(--color-ring);
+    }
+    .rail-item strong { display: block; margin-bottom: var(--space-1); font-weight: var(--font-weight-semibold); }
+    .rail-scroll { display: flex; flex-direction: column; }
+    @media (max-width: 1100px) {
+      .rail-scroll { flex-direction: row; gap: var(--space-2); overflow-x: auto; padding-bottom: var(--space-2); }
+      .rail-item { min-width: 220px; margin: 0; }
+    }
+    .gate-col { position: sticky; top: var(--space-4); }
+
+    .badge {
+      display: inline-flex; align-items: center;
+      font-family: var(--font-caption);
+      font-size: var(--badge-font-size);
+      line-height: 1.2;
+      background: var(--badge-bg);
+      color: var(--badge-fg);
+      border-radius: var(--badge-radius);
+      padding: var(--badge-padding-y) var(--badge-padding-x);
+      border: 1px solid transparent;
+    }
+    .badge.secondary { background: var(--badge-secondary-bg); color: var(--badge-secondary-fg); border-color: var(--badge-outline-border); }
+    .badge.destructive { background: var(--badge-destructive-bg); color: var(--badge-destructive-fg); }
+    .badge.success { background: var(--badge-success-bg); color: var(--badge-success-fg); }
+    .badge.warning { background: var(--badge-warning-bg); color: var(--badge-warning-fg); }
+    .badge.outline { background: transparent; border-color: var(--badge-outline-border); }
+    .chips { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: 0 0 var(--space-4); }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 100%;
+      background: var(--button-bg);
+      color: var(--button-fg);
+      border: 1px solid transparent;
+      border-radius: var(--button-radius);
+      padding: var(--button-padding-y) var(--button-padding-x);
+      font-family: var(--font-caption);
+      font-size: var(--button-font-size);
+      font-weight: var(--button-font-weight);
+      cursor: pointer;
+      transition: background var(--duration-fast), box-shadow var(--duration-fast);
+    }
+    .btn:hover { background: var(--button-hover-bg); }
+    .btn:active { background: var(--button-active-bg); }
+    .btn:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 var(--ring-offset) var(--color-background),
+                  0 0 0 calc(var(--ring-offset) + var(--ring-width)) var(--color-ring);
+    }
+    .btn:disabled, .btn.is-loading {
+      opacity: var(--opacity-disabled);
+      pointer-events: none;
+      cursor: not-allowed;
+    }
+    .btn-destructive {
+      background: var(--button-destructive-bg);
+      color: var(--button-destructive-fg);
+    }
+    .btn-destructive:hover, .btn-destructive:active {
+      background: var(--button-destructive-hover-bg);
+    }
+    .btn-outline {
+      background: var(--button-outline-bg);
+      color: var(--button-outline-fg);
+      border-color: var(--button-outline-border);
+    }
+    .btn-outline:hover { background: var(--button-outline-hover-bg); }
+    .btn-outline:active { background: var(--color-muted); }
+    .btn-row { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-4); }
+
+    .input, textarea.input {
+      width: 100%;
+      background: var(--input-bg);
+      color: var(--input-fg);
+      border: 1px solid var(--input-border);
+      border-radius: var(--input-radius);
+      padding: var(--input-padding-y) var(--input-padding-x);
+      font-family: var(--font-body);
+      font-size: var(--font-size-sm);
+    }
+    .input:hover { border-color: var(--color-muted-foreground); }
+    .input:focus, .input:focus-visible {
+      outline: none;
+      border-color: var(--input-focus-border);
+      box-shadow: 0 0 0 var(--ring-offset) var(--color-background),
+                  0 0 0 calc(var(--ring-offset) + var(--ring-width)) var(--color-ring);
+    }
+    .input[aria-invalid="true"] { border-color: var(--input-error-border); }
+    textarea.input { min-height: 5rem; resize: vertical; }
+    label.field {
+      display: block;
+      font-family: var(--font-caption);
+      font-size: var(--font-size-xs);
+      margin: var(--space-3) 0 var(--space-1);
+    }
+
+    .alert {
+      background: var(--alert-bg);
+      color: var(--alert-fg);
+      border: 1px solid var(--alert-border);
+      border-radius: var(--alert-radius);
+      padding: var(--alert-padding);
+      font-family: var(--font-body);
+      font-size: var(--font-size-sm);
+    }
+    .alert.success { background: var(--alert-success-bg); border-color: var(--alert-success-border); }
+    .alert.warning { background: var(--alert-warning-bg); border-color: var(--alert-warning-border); }
+    .alert p { margin: var(--space-1) 0; }
+    .alert.spaced { margin-top: var(--space-4); }
+    .alert.compact { margin-bottom: var(--space-4); }
+
+    dl.impact {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-3) var(--space-3);
+      margin: 0;
+    }
     @media (max-width: 700px) { dl.impact { grid-template-columns: 1fr 1fr; } }
-    dl.impact dt { font: 11px/1 ui-sans-serif, system-ui, sans-serif; color: var(--muted);
-      text-transform: uppercase; letter-spacing: .08em; }
-    dl.impact dd { margin: .2rem 0 0; font-size: 1.25rem; font-weight: 600; font-variant-numeric: tabular-nums; }
-    p, li { color: var(--ink); }
-    .muted { color: var(--muted); }
-    .derivation, .evidence li, .obs { font: 14px/1.45 ui-sans-serif, system-ui, sans-serif; }
-    .evidence { margin: 0; padding-left: 1.1rem; }
-    .evidence li { margin: 0 0 .35rem; }
-    .decision { background: #f3efe6; border: 1px solid var(--line); border-radius: 8px; padding: .85rem 1rem; }
-    .decision p { margin: .35rem 0; font: 14px/1.45 ui-sans-serif, system-ui, sans-serif; }
-    label { display: block; font: 12px/1.2 ui-sans-serif, system-ui, sans-serif; margin: .5rem 0 .2rem; }
-    input[type=text], textarea, select {
-      width: 100%; font: 14px/1.4 ui-sans-serif, system-ui, sans-serif; padding: .45rem .55rem;
-      border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--ink);
+    dl.impact dt {
+      font-family: var(--font-caption);
+      font-size: var(--font-size-xs);
+      color: var(--color-muted-foreground);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
     }
-    textarea { min-height: 4.5rem; resize: vertical; }
-    .verdicts { display: flex; gap: .5rem; flex-wrap: wrap; margin: .4rem 0; }
-    .verdicts label { display: flex; gap: .35rem; align-items: center; margin: 0;
-      font: 13px/1 ui-sans-serif, system-ui, sans-serif; background: #fff; border: 1px solid var(--line);
-      border-radius: 99px; padding: .35rem .7rem; cursor: pointer; }
-    button {
-      font: 600 14px/1 ui-sans-serif, system-ui, sans-serif; background: var(--accent); color: #fff;
-      border: 0; border-radius: 6px; padding: .7rem 1rem; cursor: pointer; width: 100%; margin-top: .6rem;
+    dl.impact dd {
+      margin: var(--space-1) 0 0;
+      font-size: var(--font-size-lg);
+      font-weight: var(--font-weight-semibold);
+      font-variant-numeric: tabular-nums;
+      font-family: var(--font-body);
     }
-    button:disabled { opacity: .5; cursor: not-allowed; }
-    .flash { font: 13px/1.4 ui-sans-serif, system-ui, sans-serif; margin-top: .5rem; }
-    .flash.err { color: var(--bad); }
-    .flash.ok { color: var(--good); }
-    .obs { border-top: 1px solid var(--line); padding: .7rem 0; }
-    .obs:first-child { border-top: 0; padding-top: 0; }
-    .obs strong { display: block; margin-bottom: .2rem; }
-    footer { font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; color: var(--muted);
-      margin-top: 1rem; }
-    .recorded { background: #e3f6ea; border-color: #b7e0c5; }
-    code { font: 12px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .evidence { margin: 0; padding-left: var(--space-5); font-family: var(--font-body); font-size: var(--font-size-sm); }
+    .evidence li { margin: 0 0 var(--space-2); }
+    .compare {
+      display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);
+      font-family: var(--font-body); font-size: var(--font-size-sm);
+      margin: var(--space-3) 0;
+    }
+    .compare .n { font-variant-numeric: tabular-nums; font-weight: var(--font-weight-semibold); font-size: var(--font-size-lg); }
+    .meter {
+      height: 0.5rem; background: var(--color-muted); border-radius: var(--radius-full);
+      overflow: hidden; margin-top: var(--space-2);
+    }
+    .meter > span {
+      display: block; height: 100%; background: var(--color-primary);
+      max-width: 100%;
+    }
+    footer.foot {
+      font-family: var(--font-caption);
+      font-size: var(--font-size-xs);
+      color: var(--color-muted-foreground);
+      margin-top: var(--space-4);
+    }
+    .flash { font-family: var(--font-caption); font-size: var(--font-size-sm); margin-top: var(--space-2); }
+    .flash.err { color: var(--color-destructive); }
+    .flash.ok { color: var(--color-success); }
+    .q { font-family: var(--font-caption); font-size: var(--font-size-xs); color: var(--color-muted-foreground); margin: 0 0 var(--space-1); }
   </style>
 </head>
 <body>
-  <header>
+  <a class="skip" href="#workspace">Skip to finding</a>
+  <header class="app-header">
     <h1>Nexus Loop · one decision</h1>
     <div class="meta" id="hdr">loading report…</div>
+    <div class="honesty" id="honesty"></div>
   </header>
   <main>
-    <div class="grid">
-      <section class="card" id="primary">
-        <p class="kicker">Primary finding</p>
-        <p class="muted">Waiting for <code>out/loop-report.json</code>.</p>
+    <div class="shell">
+      <nav class="rail" id="rail" aria-label="Findings, lookalikes, refusals"></nav>
+      <section class="card" id="workspace">
+        <p class="kicker">Workspace</p>
+        <p class="muted body">Waiting for <code>loop-report.json</code>.</p>
       </section>
-      <aside>
+      <aside class="gate-col">
         <section class="card" id="gate">
           <p class="kicker">Approval gate</p>
-          <p class="muted">A reason is required. The verdict is written back into the report.</p>
-        </section>
-        <section class="card" style="margin-top:1.1rem" id="other">
-          <p class="kicker">Other observations</p>
+          <p class="muted body">A reason is required. The verdict is written back into the report.</p>
         </section>
       </aside>
     </div>
-    <footer id="foot"></footer>
+    <footer class="foot" id="foot"></footer>
   </main>
   <script>
     const $ = (id) => document.getElementById(id);
-    const fmt = (n, d=2) => (n === null || n === undefined) ? "—" : Number(n).toLocaleString(undefined, {maximumFractionDigits: d});
+    const esc = (s) => {
+      if (s === null || s === undefined) return "";
+      return String(s).replace(/[&<>"']/g, (c) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[c]));
+    };
+    const fmt = (n, d = 2) => (n === null || n === undefined) ? "—" : Number(n).toLocaleString(undefined, { maximumFractionDigits: d });
     const pct = (n) => (n === null || n === undefined) ? "—" : (100 * n).toFixed(1) + "%";
 
-    function primaryOf(rep) {
-      const findings = rep.findings || [];
-      const diags = Object.fromEntries((rep.diagnoses || []).map(d => [d.id, d]));
-      const byFid = Object.fromEntries((rep.diagnoses || []).map(d => [d.finding_id, d]));
+    let selectedKey = null;
+
+    function indexes(rep) {
+      const diags = Object.fromEntries((rep.diagnoses || []).map((d) => [d.id, d]));
+      const byFid = Object.fromEntries((rep.diagnoses || []).map((d) => [d.finding_id, d]));
       const pres = rep.prescriptions || [];
       const vers = rep.verifications || [];
+      const byDiag = {};
+      pres.forEach((p) => { byDiag[p.diagnosis_id] = p; });
+      return { diags, byFid, pres, vers, byDiag };
+    }
+
+    function packForFinding(rep, f) {
+      const { byFid, byDiag, vers } = indexes(rep);
+      const d = f ? byFid[f.id] : null;
+      const p = d ? (byDiag[d.id] || null) : null;
+      const v = (p && vers.find((x) => x.prescription_id === p.id)) || null;
+      return { kind: f && f.is_regression ? "regression" : "dismissed", f, d, p, v };
+    }
+
+    function defaultFinding(rep) {
+      const { diags, byFid, pres, vers } = indexes(rep);
+      const findings = rep.findings || [];
       if (vers.length) {
-        const p = pres.find(x => x.id === vers[0].prescription_id);
+        const p = pres.find((x) => x.id === vers[0].prescription_id);
         const d = p && diags[p.diagnosis_id];
-        const f = d && findings.find(x => x.id === d.finding_id);
-        if (f) return {f, d, p, v: vers[0]};
+        const f = d && findings.find((x) => x.id === d.finding_id);
+        if (f) return f;
       }
-      const regs = findings.filter(x => x.is_regression);
-      const prefer = regs.find(x => (byFid[x.id] || {}).cause_class === "tool.contract_break") || regs[0];
-      if (!prefer) return {f: findings[0], d: byFid[(findings[0] || {}).id], p: null, v: null};
-      const d = byFid[prefer.id];
-      const p = pres.find(x => x.diagnosis_id === (d || {}).id);
-      const v = (vers.find(x => x.prescription_id === (p || {}).id)) || null;
-      return {f: prefer, d, p, v};
+      const regs = findings.filter((x) => x.is_regression);
+      return regs.find((x) => (byFid[x.id] || {}).cause_class === "tool.contract_break") || regs[0] || findings[0] || null;
+    }
+
+    function currentPack(rep) {
+      if (selectedKey && selectedKey.startsWith("gap:")) {
+        const ask = selectedKey.slice(4);
+        const gap = (rep.gaps || []).find((g) => g.ask_id === ask);
+        return { kind: "gap", gap };
+      }
+      const findings = rep.findings || [];
+      const f = findings.find((x) => x.id === selectedKey) || defaultFinding(rep);
+      if (f && !selectedKey) selectedKey = f.id;
+      return packForFinding(rep, f);
+    }
+
+    function badgeSev(sev) {
+      const s = sev || "medium";
+      const cls = (s === "critical" || s === "high") ? "destructive" : (s === "low" ? "outline" : "warning");
+      return `<span class="badge ${cls}">severity ${esc(s)}</span>`;
     }
 
     function chips(f, d) {
-      const c = [];
-      c.push(`<span class="chip sev-${f.severity || "medium"}">${f.severity || "n/a"}</span>`);
-      if (d && d.cause_class) c.push(`<span class="chip">${d.cause_class}</span>`);
-      c.push(`<span class="chip">${f.tenant}</span>`);
-      const coh = f.cohort || {};
-      Object.keys(coh).forEach(k => c.push(`<span class="chip">${k}=${coh[k]}</span>`));
-      if (f.window) c.push(`<span class="chip">days ${f.window.from_day}–${f.window.to_day}</span>`);
-      (f.audience || []).forEach(a => c.push(`<span class="chip">${a}</span>`));
+      const c = [badgeSev(f.severity)];
+      if (d && d.cause_class) c.push(`<span class="badge">${esc(d.cause_class)}</span>`);
+      if (f.tenant) c.push(`<span class="badge secondary">${esc(f.tenant)}</span>`);
+      Object.keys(f.cohort || {}).forEach((k) => c.push(`<span class="badge outline">${esc(k)}=${esc(f.cohort[k])}</span>`));
+      if (f.window) c.push(`<span class="badge outline">days ${esc(f.window.from_day)}–${esc(f.window.to_day)}</span>`);
+      (f.audience || []).forEach((a) => c.push(`<span class="badge">${esc(a)}</span>`));
       return c.join("");
     }
 
     function impactDl(imp) {
-      if (!imp) return "";
+      if (!imp) return "<p class='muted body'>No impact block on this finding.</p>";
       const down = imp.downstream || {};
       return `<dl class="impact">
         <div><dt>Conversations</dt><dd>${fmt(imp.conversations_affected, 0)}</dd></div>
@@ -159,149 +551,256 @@
       </dl>`;
     }
 
-    function renderPrimary(rep, pack) {
-      const {f, d, p, v} = pack;
-      if (!f) { $("primary").innerHTML = "<p>No findings in this report.</p>"; return; }
-      const ev = (f.evidence || []).map(e => `<li>${e}</li>`).join("");
-      const ac = (d && d.attributed_change) ? `${d.attributed_change.kind} on day ${d.attributed_change.day}` : "none attributed";
-      const dec = (p && p.decision) || {};
-      const pd = (p && p.predicted_delta) || {};
-      const replay = v ? `<p><strong>${v.verdict}</strong> · run <code>${v.replay_run_id}</code> ·
-        ${v.metric} ${fmt(v.before, 4)} → ${fmt(v.after, 4)} · golden set ${v.golden_set_pass === true ? "pass" : v.golden_set_pass === false ? "FAILED" : "n/a"}
-        ${v.prediction_error == null ? "" : " · prediction error " + fmt(v.prediction_error, 4)}
-        <br><span class="muted">Replay 'before' is the endpoint's simulated baseline, not this system's corpus number.</span></p>`
-        : `<p class="muted">No replay this run. The report is still the decision record; verification can be attached later.</p>`;
-      $("primary").innerHTML = `
-        <p class="kicker">Primary finding · ${f.id}</p>
-        <h2>${f.headline || f.metric}</h2>
-        <div class="chips">${chips(f, d)}</div>
-        <p><strong>Observed ${f.metric}</strong> ${fmt(f.observed, 4)} against baseline ${fmt(f.expected, 4)}.
-          ${f.baseline ? `<span class="muted">${f.baseline}</span>` : ""}</p>
-        ${impactDl(f.impact)}
-        <h3>If nothing changes</h3>
-        <p>${f.if_nothing_changes || "—"}</p>
-        <h3>Why this baseline is fair</h3>
-        <p class="derivation muted">${(f.impact && f.impact.derivation) || "—"}</p>
-        <h3>Evidence</h3>
-        <ul class="evidence">${ev}</ul>
-        <h3>Diagnosis</h3>
-        <p>${(d && d.cause_class) || "unknown"} · confidence ${d ? fmt(d.confidence, 2) : "—"} · attributed change: ${ac}</p>
-        <ul class="evidence">${((d && d.evidence) || []).map(e => `<li>${e}</li>`).join("")}</ul>
-        <h3>Proposed change</h3>
-        ${p ? `<p><code>${p.change_type}</code> on <code>${p.target}</code> · predicted ${pd.metric} ${fmt(pd.from, 4)} → ${fmt(pd.to, 4)}</p>
-               <p>${p.description || ""}</p>
-               <div class="decision">
-                 <p><strong>Asking approval for.</strong> ${dec.asking_approval_for || ""}</p>
-                 <p><strong>Risk if the diagnosis is wrong.</strong> ${dec.risk_if_diagnosis_wrong || ""}</p>
-                 <p><strong>Would not ship if.</strong> ${dec.would_not_ship_if || ""}</p>
-               </div>` : `<p class="muted">No prescription on this finding.</p>`}
-        <h3>Replay</h3>
-        ${replay}
-      `;
-      renderGate(p);
+    function fidelityClass(fid) {
+      if (fid === "measured") return "success";
+      if (fid === "derived") return "warning";
+      if (fid === "judged") return "outline";
+      return "secondary";
+    }
+    function metricChip(m) {
+      if (!m) return "";
+      const cov = (m.coverage && m.coverage.value != null) ? pct(m.coverage.value) : "—";
+      const fid = m.fidelity || "unknown";
+      return `<span class="badge ${fidelityClass(fid)}" title="${esc((m.coverage && m.coverage.basis) || "")}">${esc(m.ask_id || m.id)} · ${esc(fid)} · coverage ${esc(cov)}</span>`;
     }
 
-    function renderGate(p) {
-      if (!p) {
-        $("gate").innerHTML = `<p class="kicker">Approval gate</p><p class="muted">Nothing to approve on the primary finding.</p>`;
+    function renderHonesty(rep) {
+      const metrics = rep.metrics || [];
+      const pick = ["A01", "A04"].map((id) => metrics.find((m) => m.ask_id === id)).filter(Boolean);
+      const judged = metrics.find((m) => m.fidelity === "judged");
+      if (judged && !pick.includes(judged)) pick.push(judged);
+      const chipsHtml = pick.map(metricChip).join("");
+      const notes = typeof rep.system_notes === "string" ? rep.system_notes : JSON.stringify(rep.system_notes || "");
+      $("honesty").innerHTML = `${chipsHtml}<span class="note">${esc(notes)}</span>`;
+    }
+
+    function renderRail(rep, pack) {
+      const { byFid } = indexes(rep);
+      const sel = selectedKey;
+      const parts = [];
+      parts.push(`<p class="kicker">On this desk</p>`);
+      const regs = (rep.findings || []).filter((f) => f.is_regression);
+      const dismissed = (rep.findings || []).filter((f) => !f.is_regression);
+      regs.forEach((f) => {
+        const d = byFid[f.id] || {};
+        const on = sel === f.id ? " is-selected" : "";
+        parts.push(`<button type="button" class="rail-item${on}" data-key="${esc(f.id)}" aria-current="${on ? "true" : "false"}">
+          <strong>${esc(f.headline || f.metric || f.id)}</strong>
+          <span class="muted">${esc(f.tenant || "")} · ${esc(d.cause_class || "regression")} · ${fmt((f.impact || {}).conversations_affected, 0)} conversations</span>
+        </button>`);
+      });
+      if (dismissed.length) {
+        parts.push(`<p class="kicker spaced">Lookalikes ignored</p>`);
+        dismissed.forEach((f) => {
+          const d = byFid[f.id] || {};
+          const on = sel === f.id ? " is-selected" : "";
+          parts.push(`<button type="button" class="rail-item${on}" data-key="${esc(f.id)}">
+            <strong>Dismissed · ${esc(d.cause_class || f.metric || f.id)}</strong>
+            <span class="muted">${esc((f.not_a_regression_because || "").slice(0, 140))}${(f.not_a_regression_because || "").length > 140 ? "…" : ""}</span>
+          </button>`);
+        });
+      }
+      const gaps = rep.gaps || [];
+      const a11 = gaps.filter((g) => g.ask_id === "A11");
+      const rest = gaps.filter((g) => g.ask_id !== "A11");
+      if (gaps.length) {
+        parts.push(`<p class="kicker spaced">Refused to invent</p>`);
+        [...a11, ...rest].forEach((g) => {
+          const key = "gap:" + g.ask_id;
+          const on = sel === key ? " is-selected" : "";
+          parts.push(`<button type="button" class="rail-item${on}" data-key="${esc(key)}">
+            <strong>Refused · ${esc(g.ask_id)} ${esc(g.verdict || "")}</strong>
+            <span class="muted">${esc((g.why || "").slice(0, 140))}${(g.why || "").length > 140 ? "…" : ""}</span>
+          </button>`);
+        });
+      }
+      $("rail").innerHTML = `<div class="rail-scroll">${parts.join("")}</div>`;
+      $("rail").querySelectorAll("[data-key]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          selectedKey = btn.getAttribute("data-key");
+          render(rep);
+        });
+      });
+    }
+
+    function renderWorkspace(rep, pack) {
+      if (pack.kind === "gap") {
+        const g = pack.gap || {};
+        const ev = g.required_event || {};
+        $("workspace").innerHTML = `
+          <p class="kicker">Refusal · ${esc(g.ask_id)}</p>
+          <p class="q">The system will not invent this number</p>
+          <h2 class="claim">${esc(g.ask_id)} is ${esc(g.verdict || "not measurable")}</h2>
+          <div class="chips"><span class="badge outline">${esc(g.verdict || "")}</span></div>
+          <h3 class="section">Why it refused</h3>
+          <p class="body">${esc(g.why || "—")}</p>
+          ${g.why_the_proxy_misleads ? `<h3 class="section">${g.ask_id === "A11" ? "Why retry is not failover" : "Why the nearest proxy misleads"}</h3>
+          <p class="body">${esc(g.why_the_proxy_misleads)}</p>
+          ${g.nearest_proxy ? `<p class="muted body">Nearest proxy: <code>${esc(g.nearest_proxy)}</code></p>` : ""}` : ""}
+          <div class="alert spaced">
+            <p><strong>Required event.</strong> <code>${esc(ev.name || "—")}</code> at <code>${esc(ev.grain || "—")}</code> grain.</p>
+            <p>Fields: <code>${esc((ev.fields || []).join(", ") || "—")}</code></p>
+            <p>Owner: <code>${esc(ev.owner || "—")}</code></p>
+          </div>`;
         return;
       }
-      const a = p.approval || {};
-      const recorded = a.verdict ? `<div class="decision recorded" style="margin-bottom:.8rem">
-        <p><strong>Recorded ${a.verdict}</strong> by ${a.decided_by || "operator"} at ${a.at || ""}.</p>
-        <p>${a.reason || ""}</p></div>` : "";
-      $("gate").innerHTML = `
-        <p class="kicker">Approval gate · ${p.id}</p>
-        <h2 style="font-size:1.1rem">Approve, reject, or defer</h2>
-        ${recorded}
-        <form id="decform">
-          <div class="verdicts">
-            <label><input type="radio" name="verdict" value="accepted" required> Accept</label>
-            <label><input type="radio" name="verdict" value="rejected"> Reject</label>
-            <label><input type="radio" name="verdict" value="deferred"> Defer</label>
+      const { f, d, p, v } = pack;
+      if (!f) {
+        $("workspace").innerHTML = `<p class="kicker">Workspace</p><p class="muted body">No findings in this report.</p>`;
+        return;
+      }
+      if (pack.kind === "dismissed") {
+        $("workspace").innerHTML = `
+          <p class="kicker">Lookalike · ${esc(f.id)}</p>
+          <p class="q">2. The lookalike you correctly ignored</p>
+          <h2 class="claim">${esc(f.headline || f.metric || f.id)}</h2>
+          <div class="chips">${chips(f, d)}</div>
+          <div class="alert">
+            <p><strong>Not a regression.</strong> ${esc(f.not_a_regression_because || "—")}</p>
           </div>
-          <label for="who">Decided by</label>
-          <input id="who" name="decided_by" type="text" value="operator" required>
-          <label for="why">Reason (required)</label>
-          <textarea id="why" name="reason" required placeholder="Why this is the call for Monday morning."></textarea>
-          <button type="submit">Write decision into the report</button>
+          <h3 class="section">Evidence</h3>
+          <ul class="evidence">${(f.evidence || []).map((e) => `<li>${esc(e)}</li>`).join("")}</ul>
+          <h3 class="section">Diagnosis</h3>
+          <p class="body">${esc((d && d.cause_class) || "unknown")} · attributed ${(d && d.attributed_change) ? esc(d.attributed_change.kind) + " on day " + esc(d.attributed_change.day) : "none"}</p>`;
+        return;
+      }
+      const ac = (d && d.attributed_change) ? `${d.attributed_change.kind} on day ${d.attributed_change.day}` : "none attributed";
+      const pd = (p && p.predicted_delta) || {};
+      const obs = f.observed;
+      const exp = f.expected;
+      const bar = (n) => (typeof n === "number" && n >= 0 && n <= 1) ? Math.min(100, Math.round(n * 1000) / 10) : null;
+      const obsBar = bar(obs);
+      const expBar = bar(exp);
+      const meters = (obsBar == null && expBar == null) ? "" : `<div class="compare">
+          ${obsBar == null ? "" : `<div><div class="muted">Observed (report)</div><div class="meter" aria-hidden="true"><span style="width:${obsBar}%"></span></div><p class="muted body">${fmt(obs, 4)}</p></div>`}
+          ${expBar == null ? "" : `<div><div class="muted">Expected (report)</div><div class="meter" aria-hidden="true"><span style="width:${expBar}%"></span></div><p class="muted body">${fmt(exp, 4)}</p></div>`}
+        </div><p class="muted body">Bar widths are the reported rates, not recomputed metrics.</p>`;
+      const replay = v ? `
+        <div class="compare">
+          <div><div class="muted">Replay before</div><div class="n">${fmt(v.before, 4)}</div></div>
+          <div><div class="muted">Replay after</div><div class="n">${fmt(v.after, 4)}</div></div>
+        </div>
+        <p class="body"><strong>${esc(v.verdict)}</strong> · run <code>${esc(v.replay_run_id)}</code> · ${esc(v.metric || "")}
+          · golden set ${v.golden_set_pass === true ? "pass" : v.golden_set_pass === false ? "FAILED" : "n/a"}
+          ${v.prediction_error == null ? "" : " · prediction error " + fmt(v.prediction_error, 4)}</p>
+        <p class="muted body">Replay 'before' is the endpoint's simulated baseline, not this system's corpus number.</p>`
+        : `<p class="muted body">No replay this run. The report is still the decision record; verification can be attached later.</p>`;
+      $("workspace").innerHTML = `
+        <p class="kicker">Finding · ${esc(f.id)}</p>
+        <p class="q">1. What broke?</p>
+        <h2 class="claim">${esc(f.headline || f.metric)}</h2>
+        <div class="chips">${chips(f, d)}</div>
+        <p class="body"><strong>Observed ${esc(f.metric)}</strong> ${fmt(f.observed, 4)} against baseline ${fmt(f.expected, 4)}.
+          ${f.baseline ? `<span class="muted">${esc(f.baseline)}</span>` : ""}</p>
+        ${meters}
+        <h3 class="section">2–3. Who was affected, and how bad</h3>
+        ${impactDl(f.impact)}
+        <h3 class="section">If nothing changes</h3>
+        <p class="body">${esc(f.if_nothing_changes || "—")}</p>
+        <h3 class="section">Why this baseline is fair</h3>
+        <p class="body muted">${esc((f.impact && f.impact.derivation) || "—")}</p>
+        <h3 class="section">Evidence</h3>
+        <ul class="evidence">${(f.evidence || []).map((e) => `<li>${esc(e)}</li>`).join("")}</ul>
+        <h3 class="section">4. Why we think it happened</h3>
+        <p class="body">${esc((d && d.cause_class) || "unknown")} · confidence ${d ? fmt(d.confidence, 2) : "—"} · attributed change: ${esc(ac)}</p>
+        <ul class="evidence">${((d && d.evidence) || []).map((e) => `<li>${esc(e)}</li>`).join("")}</ul>
+        <h3 class="section">5. Who needs to fix it</h3>
+        <p class="body">${(f.audience || []).map((a) => esc(a)).join(", ") || "—"}</p>
+        <h3 class="section">6. Proposed change</h3>
+        ${p ? `<p class="body"><code>${esc(p.change_type)}</code> on <code>${esc(p.target)}</code> · predicted ${esc(pd.metric || "")} ${fmt(pd.from, 4)} → ${fmt(pd.to, 4)}</p>
+               <p class="body">${esc(p.description || "")}</p>` : `<p class="muted body">No prescription on this finding.</p>`}
+        <h3 class="section">8. Did replay say the fix helped?</h3>
+        ${replay}`;
+    }
+
+    function renderGate(pack) {
+      if (pack.kind === "gap" || pack.kind === "dismissed" || !pack.p) {
+        $("gate").innerHTML = `<p class="kicker">Approval gate</p><p class="muted body">${pack.kind === "gap" ? "A refusal is not a change request." : pack.kind === "dismissed" ? "Nothing to ship on a dismissed lookalike." : "Nothing to approve on this finding."}</p>`;
+        return;
+      }
+      const p = pack.p;
+      const dec = p.decision || {};
+      const a = p.approval || {};
+      const recorded = a.verdict ? `<div class="alert success compact">
+        <p><strong>Recorded ${esc(a.verdict)}</strong> by ${esc(a.decided_by || "operator")} at ${esc(a.at || "")}.</p>
+        <p>${esc(a.reason || "")}</p></div>` : "";
+      $("gate").innerHTML = `
+        <p class="kicker">Approval gate · ${esc(p.id)}</p>
+        <h2 class="claim gate-title">Approve, reject, or defer</h2>
+        ${recorded}
+        <div class="alert warning">
+          <p><strong>Asking approval for.</strong> ${esc(dec.asking_approval_for || "")}</p>
+          <p><strong>Risk if the diagnosis is wrong.</strong> ${esc(dec.risk_if_diagnosis_wrong || "")}</p>
+          <p><strong>Would not ship if.</strong> ${esc(dec.would_not_ship_if || "")}</p>
+        </div>
+        <form id="decform">
+          <label class="field" for="who">Decided by</label>
+          <input class="input" id="who" name="decided_by" type="text" value="operator" required>
+          <label class="field" for="why">Reason (required)</label>
+          <textarea class="input" id="why" name="reason" required placeholder="Why this is the call for Monday morning."></textarea>
+          <div class="btn-row">
+            <button class="btn" type="submit" name="verdict" value="accepted">Accept</button>
+            <button class="btn btn-destructive" type="submit" name="verdict" value="rejected">Reject</button>
+            <button class="btn btn-outline" type="submit" name="verdict" value="deferred">Defer</button>
+          </div>
           <div class="flash" id="flash"></div>
         </form>`;
       $("decform").addEventListener("submit", async (ev) => {
         ev.preventDefault();
         const fd = new FormData(ev.target);
+        const verdict = (ev.submitter && ev.submitter.value) || fd.get("verdict");
+        const why = $("why");
+        if (!(fd.get("reason") || "").trim()) {
+          why.setAttribute("aria-invalid", "true");
+          $("flash").className = "flash err";
+          $("flash").textContent = "A reason is required.";
+          return;
+        }
+        why.setAttribute("aria-invalid", "false");
         const payload = {
           prescription_id: p.id,
-          verdict: fd.get("verdict"),
+          verdict,
           decided_by: fd.get("decided_by"),
           reason: fd.get("reason"),
         };
-        const btn = ev.target.querySelector("button");
-        btn.disabled = true;
+        const buttons = ev.target.querySelectorAll("button");
+        buttons.forEach((b) => { b.disabled = true; b.classList.add("is-loading"); });
         try {
           const res = await fetch("/decision", {
             method: "POST",
-            headers: {"Content-Type": "application/json"},
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
           });
           const body = await res.json();
           if (!res.ok) throw new Error(body.detail || body.error || res.statusText);
           $("flash").className = "flash ok";
           $("flash").textContent = "Saved " + body.approval.verdict + " at " + body.approval.at;
-          const rep = await (await fetch("/report.json")).json();
-          render(rep);
+          const next = await (await fetch("/report.json")).json();
+          render(next);
         } catch (e) {
           $("flash").className = "flash err";
           $("flash").textContent = String(e.message || e);
-          btn.disabled = false;
+          why.setAttribute("aria-invalid", "true");
+          buttons.forEach((b) => { b.disabled = false; b.classList.remove("is-loading"); });
         }
       });
-    }
-
-    function renderOther(rep, pack) {
-      const skip = pack.f && pack.f.id;
-      const diags = Object.fromEntries((rep.diagnoses || []).map(d => [d.finding_id, d]));
-      const items = [];
-      (rep.findings || []).forEach(f => {
-        if (f.id === skip) return;
-        const d = diags[f.id] || {};
-        if (f.is_regression) {
-          items.push(`<div class="obs"><strong>${f.headline || f.id}</strong>
-            ${f.tenant} · ${d.cause_class || ""} · days ${(f.window||{}).from_day}–${(f.window||{}).to_day}
-            · ${fmt((f.impact||{}).conversations_affected, 0)} conversations</div>`);
-        } else {
-          items.push(`<div class="obs"><strong>Dismissed · ${d.cause_class || f.metric}</strong>
-            ${f.not_a_regression_because || ""}</div>`);
-        }
-      });
-      const a11 = (rep.gaps || []).find(g => g.ask_id === "A11");
-      if (a11) {
-        const ev = a11.required_event || {};
-        items.push(`<div class="obs"><strong>Refused · ${a11.ask_id} ${a11.verdict}</strong>
-          ${a11.why}<br><span class="muted">Required event: ${ev.name} at ${ev.grain} grain,
-          fields ${(ev.fields||[]).join(", ")}, owner ${ev.owner}.
-          Proxy ${a11.nearest_proxy} misleads because ${a11.why_the_proxy_misleads}</span></div>`);
-      }
-      const a09 = (rep.gaps || []).find(g => g.ask_id === "A09");
-      if (a09) {
-        items.push(`<div class="obs"><strong>Refused · ${a09.ask_id} ${a09.verdict}</strong> ${a09.why}</div>`);
-      }
-      $("other").innerHTML = `<p class="kicker">Other observations</p>` + (items.join("") || "<p class='muted'>None.</p>");
     }
 
     function render(rep) {
-      $("hdr").textContent = `${rep.team} · corpus ${rep.corpus} · ${rep.generated_at || ""}`;
-      const pack = primaryOf(rep);
-      renderPrimary(rep, pack);
-      renderOther(rep, pack);
-      $("foot").textContent = "Every number on this screen is copied from the report. Changing a verdict updates prescriptions[].approval and appends out/decisions.log.";
+      $("hdr").textContent = `${rep.team || "—"} · corpus ${rep.corpus || "—"} · ${rep.generated_at || ""}`;
+      renderHonesty(rep);
+      const pack = currentPack(rep);
+      renderRail(rep, pack);
+      renderWorkspace(rep, pack);
+      renderGate(pack);
+      $("foot").textContent = "Every number on this screen is copied from the report. Changing a verdict updates prescriptions[].approval and appends out/decisions.log. Styles follow three-layer design tokens; numbers do not.";
     }
 
-    fetch("/report.json").then(r => {
+    fetch("/report.json").then((r) => {
       if (!r.ok) throw new Error("report missing — run python3 run.py first");
       return r.json();
-    }).then(render).catch(e => {
-      $("primary").innerHTML = `<p class="kicker">Report</p><p>${e.message}</p>`;
+    }).then(render).catch((e) => {
+      $("workspace").innerHTML = `<p class="kicker">Report</p><p class="body">${esc(e.message)}</p>`;
     });
   </script>
 </body>
