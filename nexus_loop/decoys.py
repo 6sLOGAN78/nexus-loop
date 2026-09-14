@@ -25,7 +25,7 @@ class T:
     MIX_MIN_SHARE_ABS = 0.10
     MIX_MIN_AGG_MOVE = 0.01
     MIX_FLAT_TOL = 0.05
-    MIX_FLAT_Z = 3.0               # two-proportion z bar, so small cohorts' noise is tolerated
+    MIX_FLAT_Z = 4.0               # two-proportion z bar; aligned with the resolution detector's RES_MIN_Z
     LOAD_MIN_VOLUME_RATIO = 2.0
     LOAD_HOLD_RATIO = 1.5
     LOAD_MAX_LEN = 7
@@ -48,10 +48,13 @@ def _out(rows, a, b):
     return [r for r in rows if not (a <= int(r["day"]) < b)]
 
 
-def _rate_moved(r_in, r_out, n_in, n_out, floor=T.MIX_FLAT_TOL, z=T.MIX_FLAT_Z) -> bool:
+def _rate_moved(r_in, r_out, n_in, n_out, floor=None, z=None) -> bool:
     """A rate only counts as moved when the gap clears a floor AND is
     statistically real for the cohort's size; otherwise small cohorts flag on
-    noise and block a legitimate mix-shift dismissal."""
+    noise and block a legitimate mix-shift dismissal. Thresholds are resolved at
+    call time (not bound as defaults) so tuning T takes effect."""
+    floor = T.MIX_FLAT_TOL if floor is None else floor
+    z = T.MIX_FLAT_Z if z is None else z
     diff = abs(r_in - r_out)
     if diff <= floor:
         return False
