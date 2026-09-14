@@ -32,6 +32,12 @@ The screen is `nexus_loop/static/index.html` (plain HTML/CSS/JS, no build step)
 served by `nexus_loop/app.py` (Python stdlib `http.server`). No API keys, no
 external network.
 
+For a zero-setup look without running anything, open `examples/demo.html` — a
+standalone lo-fi **wireframe** populated with `examples/sample-report.json` (the
+final solution's practice-kit run). It is one static file (no server, no fetch),
+annotated with the numbered design rationale. Use it to align on layout and the
+"why"; the live screen is still `nexus_loop/static/index.html`.
+
 ---
 
 ## 2. The report is the source of truth

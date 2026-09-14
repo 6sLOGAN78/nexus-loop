@@ -34,7 +34,12 @@ Everything is on `main`:
   renders the report and writes approve/reject/defer back into it.
 - **Testbed** (`tools/testbed/`): generates held-out corpora and evaluates any
   candidate solution against them.
-- **Docs**: analysis, build plan, deliverables/replay/demo guide, and this file.
+- **Docs**: problem statement, brief, verified kit findings,
+  deliverables/replay/demo guide, submission note, solution overview, and UI
+  handoff.
+- **Examples** (`examples/`): a sample `loop-report.json` from the final
+  solution's practice-kit run, and a standalone lo-fi `demo.html` wireframe
+  (no server) that renders it.
 
 The historical `anupamgt-sol-v1` branch is kept only for reference; it is stale.
 
@@ -50,7 +55,8 @@ question for the organisers; the solution reports measured coverage regardless.
 |---|---|
 | `nexus_loop/` | The solution package: ingestion, features, detectors, asks, report, replay client, decision screen |
 | `run.py` | The one-command entrypoint that produces `loop-report.json` |
-| `docs/` | Problem statement, analysis, build plan, submission note, solution overview, UI handoff |
+| `docs/` | Problem statement, brief, verified findings, deliverables/replay/demo guide, submission note, solution overview, UI handoff |
+| `examples/` | A sample `loop-report.json` (final solution, practice kit) and a standalone lo-fi `demo.html` wireframe |
 | `kit/` | The practice dataset (sessions, steps, turns, config timeline, labels, catalog, asks, ground truth, ~33 MB) |
 | `tools/nexus-loop-kit/` | Organiser tooling: generator, starter, scorer, replay service, schema, reference reports |
 | `tools/testbed/` | The held-out test suite |
@@ -144,7 +150,8 @@ New to the repo, read in this order:
 6. `docs/deliverables-replay-and-demo.md` — deliverables, replay mechanics, demo script.
 7. `docs/submission-note.md` — real / stubbed / simulated / breaks at 100×.
 8. `docs/ui-handoff.md` — what the UI/product team needs.
-9. `tools/testbed/README.md` — how to evaluate a candidate.
+9. `examples/demo.html` — the lo-fi wireframe + sample report (open the file directly, no server).
+10. `tools/testbed/README.md` — how to evaluate a candidate.
 
 ---
 
