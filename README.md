@@ -30,7 +30,6 @@ versions, the reviewed set of good conversations) to make a result look better.
 | `kit/` | The practice dataset: sessions, steps, turns, config timeline, labels, catalog, asks, ground truth (~33 MB) |
 | `tools/nexus-loop-kit/` | The organiser tooling: generator, starter, scorer, replay service, schema, reference reports |
 | `tools/testbed/` | A general test suite for evaluating candidate solutions against held-out corpora |
-| `experiments/` | Internal scratch artifacts. **Not deliverables.** |
 | `report.json` | Output of `starter.py` (the intentionally weak baseline, 9.8/55) |
 
 ---
@@ -238,8 +237,7 @@ dismissed. Three issues were found and fixed on the branch:
 
 ## Conventions
 
-- Documentation lives in `docs/`; tooling lives in `tools/`; throwaway work in
-  `experiments/`.
+- Documentation lives in `docs/`; tooling lives in `tools/`.
 - Generated outputs (e.g. `out/`) are gitignored and are not deliverables.
 - The submission is the generated report plus the screen; never hand-edit the
   report to improve a score.

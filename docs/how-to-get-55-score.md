@@ -9,9 +9,8 @@
 > `self_assessment.cycles` violates that rule and the honesty requirements, and
 > it will not survive the sealed run (which moves the faults to different days,
 > tenants and slices). See `docs/improved-solution-and-workflow.md` and the
-> `anupamgt-sol-v1` branch for the valid path. The earlier
-> `experiments/fix_report.py` / `experiments/loop-report.55.json` shortcut is a
-> shape reference only.
+> `anupamgt-sol-v1` branch for the valid path. (An earlier hand-patching
+> shortcut was removed; it was never a valid submission method.)
 
 The default `loop-report.level3.json` provided in the practice kit intentionally scores **46.3 / 55** when evaluated by `score.py`. To achieve a perfect **55.0 / 55** machine score, your output JSON must make specific additions and corrections to fill the intentional gaps left by the organizers.
 
