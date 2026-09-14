@@ -230,11 +230,6 @@ dismissed. Three issues were found and fixed on the branch:
 - **Clarification (organisers, private channel):** does the scored sealed corpus
   relocate faults to different tenants/slices, or only move days? Our design is
   generic either way, so this is confidence, not a blocker.
-- **Merge / ownership:** the working solution lives on `anupamgt-sol-v1`; decide
-  the canonical branch and get it into `master` (the branch and `master` now have
-  different `README.md` contents, a resolvable conflict).
-- **Deliverable packaging:** `out/` is gitignored — decide where the sealed
-  `loop-report.json` and the recorded decisions are submitted.
 - **Human layer:** the testbed verifies screen mechanics, not whether a stranger
   can act on a finding — that is the remaining half of the score.
 - **Sealed run:** pending.
