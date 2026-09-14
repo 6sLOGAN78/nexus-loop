@@ -156,10 +156,6 @@ def main(argv=None) -> int:
     print("  tool_call coverage: %s" %
           ", ".join("%s=%.3f" % (t, cov.value("tool_call", t)) for t in corpus.tenants))
 
-    print("asks …")
-    metrics, gaps, extras = build_asks(corpus, cov, kit.catalog)
-    print("  %d metrics, %d gaps" % (len(metrics), len(gaps)))
-
     print("detectors …")
     regressions = detect_faults(corpus, cov)
     decoys = detect_decoys(corpus, regressions)
@@ -169,6 +165,10 @@ def main(argv=None) -> int:
     print("  %d decoy(s): %s" % (
         len(decoys),
         ", ".join("%s/%s" % (o["kind"], o["tenant"]) for o in decoys) or "none"))
+
+    print("asks …")
+    metrics, gaps, extras = build_asks(corpus, cov, kit.catalog, regressions, decoys)
+    print("  %d metrics, %d gaps" % (len(metrics), len(gaps)))
 
     golden_path = os.path.join(os.path.dirname(os.path.abspath(a.out)), "golden_set.json")
     print("freezing golden sets → %s" % golden_path)

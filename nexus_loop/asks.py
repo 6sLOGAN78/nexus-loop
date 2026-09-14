@@ -36,9 +36,35 @@ def _cost_coverage(cov: Coverage, corpus: Corpus, tenant: str) -> Tuple[float, s
     return round(v, 4), basis
 
 
-def build(corpus: Corpus, cov: Coverage, kit_catalog: dict) -> Tuple[List[dict], List[dict], dict]:
+def _window_confounds(tenant: str, x0: int, x1: int,
+                      regressions, decoys) -> List[str]:
+    """Detected events (faults or decoys) whose window overlaps [x0, x1) for this
+    tenant. Judge-version events are excluded: quality is already guarded by the
+    judge-version check, so they are not a confound for the other measures."""
+    names: List[str] = []
+    for g in list(regressions or []) + list(decoys or []):
+        kind = str(g.get("kind") or "")
+        if kind.startswith("judge"):
+            continue
+        if g.get("tenant") not in (tenant, "*"):
+            continue
+        a, b = g.get("a"), g.get("b")
+        if a is None or b is None:
+            continue
+        if not (b <= x0 or a >= x1):
+            names.append("%s/%s" % (g.get("tenant"), kind or g.get("cause_class") or "event"))
+    return sorted(set(names))
+
+
+def build(corpus: Corpus, cov: Coverage, kit_catalog: dict,
+          regressions: Optional[List[dict]] = None,
+          decoys: Optional[List[dict]] = None) -> Tuple[List[dict], List[dict], dict]:
     """Returns (metrics, gaps, extras). ``extras`` carries derived facts the
-    report reuses (e.g. the review queue) so nothing is computed twice."""
+    report reuses (e.g. the review queue) so nothing is computed twice.
+
+    ``regressions``/``decoys`` are the detected fault/decoy candidates (dicts
+    with ``tenant``, ``a``, ``b``); they deconfound A07 from concurrent events.
+    """
     metrics: List[dict] = []
     gaps: List[dict] = []
     extras: Dict = {}
@@ -264,24 +290,40 @@ def build(corpus: Corpus, cov: Coverage, kit_catalog: dict) -> Tuple[List[dict],
         rows = [s for s in corpus.rows(t) if s["agent_id"] == agent]
         before = [s for s in rows if max(0, d - 7) <= int(s["day"]) < d]
         after = [s for s in rows if d <= int(s["day"]) < min(D, d + 7)]
-        jv_b = {s.get("judge_version") for s in before}
-        jv_a = {s.get("judge_version") for s in after}
-        same_judge = len(jv_b | jv_a) == 1
+        jv_all = ({s.get("judge_version") for s in before}
+                  | {s.get("judge_version") for s in after})
+        same_judge = len(jv_all) == 1 and None not in jv_all
+        have_quality = same_judge and all(s.get("quality_score") is not None for s in before + after)
         judge_near = corpus.nearest_change("*", d, {"judge"}, before=7, after=7)
+        # never claim a model effect when another detected event overlaps the window
+        confounds = _window_confounds(t, d - 7, d + 7, regressions, decoys)
+        if confounds:
+            resolution = turns = cost = quality = None
+            note = ("window overlaps detected event(s): %s — no model effect claimed"
+                    % ", ".join(confounds))
+        else:
+            resolution = [r4(rate(sum(1 for s in before if resolved(s)), len(before))),
+                          r4(rate(sum(1 for s in after if resolved(s)), len(after)))]
+            turns = [median([s["turns"] for s in before if resolved(s)]),
+                     median([s["turns"] for s in after if resolved(s)])]
+            cost = [r4(mean([float(s["cost_usd"]) for s in before if s.get("cost_usd") is not None])),
+                    r4(mean([float(s["cost_usd"]) for s in after if s.get("cost_usd") is not None]))]
+            quality = ([r4(mean([float(s["quality_score"]) for s in before])),
+                        r4(mean([float(s["quality_score"]) for s in after]))] if have_quality else None)
+            note = None
         entry = {
             "tenant": t, "agent_id": agent, "day": d, "from": c.get("from_value"), "to": c.get("to_value"),
             "n_before": len(before), "n_after": len(after),
-            "resolution": [r4(rate(sum(1 for s in before if resolved(s)), len(before))),
-                           r4(rate(sum(1 for s in after if resolved(s)), len(after)))],
-            "median_turns_to_resolve": [median([s["turns"] for s in before if resolved(s)]),
-                                        median([s["turns"] for s in after if resolved(s)])],
-            "cost_per_session": [r4(mean([float(s["cost_usd"]) for s in before if s.get("cost_usd") is not None])),
-                                 r4(mean([float(s["cost_usd"]) for s in after if s.get("cost_usd") is not None]))],
-            "quality": ([r4(mean([float(s["quality_score"]) for s in before])),
-                         r4(mean([float(s["quality_score"]) for s in after]))] if same_judge else None),
-            "quality_note": ("compared within judge_version %s" % list(jv_b)[0] if same_judge else
-                             "NOT compared: a judge_version boundary%s sits inside the comparison window"
-                             % (" (day %d)" % judge_near["day"] if judge_near else "")),
+            "resolution": resolution,
+            "median_turns_to_resolve": turns,
+            "cost_per_session": cost,
+            "quality": quality,
+            "confounded_by": confounds,
+            "quality_note": (("compared within judge_version %s" % next(iter(jv_all))) if have_quality
+                             else ("NOT compared: missing quality_score or an ambiguous judge_version "
+                                   "across the window"
+                                   + (" (judge boundary day %d)" % judge_near["day"] if judge_near else ""))),
+            "note": note,
         }
         upgrades.append(entry)
     metrics.append(metric(
@@ -290,7 +332,8 @@ def build(corpus: Corpus, cov: Coverage, kit_catalog: dict) -> Tuple[List[dict],
         SESSIONS + " JOIN corpus/config_timeline.csv WHERE kind = 'model'",
         "agent_id = change.target, 7 days before vs 7 days after change.day",
         "sessions of the upgraded agent in each 7-day window", breakdowns=["intent", "channel"],
-        alternatives=["judged quality is only included when both windows share one judge_version"],
+        alternatives=["judged quality is only included when both windows share one judge_version",
+                      "windows overlapping a detected fault or decoy are marked confounded and left null"],
         value_note="[before, after] pairs per model change found in the config timeline"))
 
     # ---------------------------------------------------------------- A09 --
