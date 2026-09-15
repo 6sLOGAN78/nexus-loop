@@ -149,9 +149,10 @@ New to the repo, read in this order:
 5. `docs/repo-learnings-and-findings.md` — what the kit actually does, verified.
 6. `docs/deliverables-replay-and-demo.md` — deliverables, replay mechanics, demo script.
 7. `docs/submission-note.md` — real / stubbed / simulated / breaks at 100×.
-8. `docs/ui-handoff.md` — what the UI/product team needs.
-9. `examples/demo.html` — the lo-fi wireframe + sample report (open the file directly, no server).
-10. `tools/testbed/README.md` — how to evaluate a candidate.
+8. `docs/edge-cases.md` — the non-obvious traps and how we handle them (judge Q&A).
+9. `docs/ui-handoff.md` — what the UI/product team needs.
+10. `examples/demo.html` — the lo-fi wireframe + sample report (open the file directly, no server).
+11. `tools/testbed/README.md` — how to evaluate a candidate.
 
 ---
 
