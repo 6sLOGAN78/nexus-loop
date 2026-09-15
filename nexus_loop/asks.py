@@ -225,10 +225,10 @@ def build(corpus: Corpus, cov: Coverage, kit_catalog: dict,
     # ---------------------------------------------------------------- A03 / A08 --
     for t in tenants:
         cval, cbasis, cextra = _cost_coverage(cov, corpus, t)
-        all_rows = list(corpus.rows(t))
-        rows = [s for s in all_rows if s.get("cost_usd") is not None]
+        t_rows = list(corpus.rows(t))
+        rows = [s for s in t_rows if s.get("cost_usd") is not None]
         by_intent_all = {}
-        for s in all_rows:
+        for s in t_rows:
             by_intent_all.setdefault(s["intent"], []).append(s)
         by_intent = {}
         unbounded = []
