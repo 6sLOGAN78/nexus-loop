@@ -19,6 +19,16 @@ screen is `python3 -m nexus_loop.app --report out/loop-report.json`.
   `from_target, to_target, reason, recovered`, owner `conversation-runtime`.
   `llm_call.retry_count > 0` is named as a proxy and rejected: those are quality
   retries, not failovers.
+- A02 is answered twice: a per-intent month-over-month table, and a **mix-adjusted**
+  rate that holds month-1 intent shares static and applies month-2 per-intent rates.
+  `mix_effect` and `change_beyond_mix` are reported separately, so a traffic-mix
+  change is not read as a quality change. Judged quality is never trended across the
+  judge-version boundary.
+- Cost (A03/A08): coverage is measured (if v2 lacks cost, those sessions leave both
+  numerator and denominator; missing cost is `null`, never `$0`). Escalation is
+  reported as counts and rates, never priced — no human-handling constant exists.
+  An intent that resolves nothing has **unbounded** unit cost: it is ranked first,
+  not last.
 - Cardinality: a `customer_ref` breakdown is refused against the catalog's
   **fixed budget of 200**. `session_id` is the only join key we use.
 - Three detector-specific analyses, no practice tenant/day/intent/tool/agent
