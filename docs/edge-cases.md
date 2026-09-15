@@ -122,11 +122,27 @@ Traffic-mix shift, load spike, and judge-version boundary are each examined and
 explicitly dismissed with the scorer's cause class and a written reason.
 > "We earn specificity by looking and being right, not by staying quiet."
 
-### 4.3 Mix shift (A02) — [handled]
-Aggregate month-over-month moves when the traffic mix moves. We stratify by
-intent and also report a **mix-adjusted** rate with the mix effect separated out.
-> "An aggregate move with flat per-intent rates is a mix shift, not a quality
-> change."
+### 4.3 Month-over-month is mix-adjusted (A02) — [handled]
+Aggregate month-over-month resolution moves when the *traffic mix* moves, even if
+every intent's own rate is unchanged: if a lower-rate intent grows from 13% to 44%
+of traffic, the average falls without any quality change.
+
+We answer A02 with **two** metrics, not one:
+- `m_mom_resolution` (measured) — per tenant, per intent: `[month_1, month_2]` for
+  resolution, containment and median turns, plus each intent's **share of traffic**
+  so the mix is visible in the same table.
+- `m_mom_resolution_adjusted` (derived) — hold **month-1 intent shares static**,
+  apply **month-2 per-intent rates** over the common intents (≥30 sessions in each
+  month, renormalised). It reports `raw`, `adjusted`, `mix_effect = raw − adjusted`,
+  and `change_beyond_mix = adjusted − month_1`. The `breakdown` lists the excluded
+  intents, the month-1 weights, and any detected event overlapping a month window.
+
+The idea is exactly the teammate's: freezing the fraction-of-people removes the mix
+from the comparison, so whatever is left is the agent. Quality is never trended
+month over month — the judge-version boundary (4.4) makes that a measurement of the
+rubric, not the agent.
+> "We hold last month's mix fixed and apply this month's per-intent rates. The gap
+> between raw and adjusted is the mix effect; the rest is the agent."
 
 ### 4.4 Judge-version boundary — [handled]
 Judged quality drops on every tenant on the day `judge_version` flips v1→v2.
@@ -200,3 +216,45 @@ our corpus number, and we say so.
 8. **Golden set frozen before the fix; replay is a verifier, not a search.**
 9. **No model for logged facts; deterministic and reproducible.**
 10. **Zero-resolved intent = infinite unit cost**, ranked first, not a blank.
+
+---
+
+## 9. Insight ledger (tracking for the write-up)
+
+One row per non-obvious insight, with where it lives and the report path that shows
+it. This is the working list for the end-term report — keep it in sync when a new
+trap is found or a `[queued]` item ships.
+
+| ID | Insight | Where handled | Report evidence | Status |
+|---|---|---|---|---|
+| GR1 | Step→session fan-out: aggregate steps to one row/session before any rate | `features.py` `_fold` → `s["derived"]` | drives every metric value | handled |
+| GR2 | Emission coverage: non-emitting agent kinds leave the denominator, not counted as zero | `coverage.py` | `metrics[].coverage.value/basis/excluded` | handled |
+| GR3 | Declared coverage ≠ observed: measure and publish both | `asks._cost_coverage`, coverage extras | `metrics[].coverage.observed_vs_declared` | handled |
+| CO1 | Cost coverage is measured, not read from the catalog (the v2 problem) | `asks._cost_coverage` | `metrics[m_cost_per_resolved_*].coverage` | handled |
+| CO2 | Missing cost is `null` and excluded from both sides — never `$0` | `asks` A03/A08, `impact._cost` | `metrics[].coverage.basis`, `findings[].impact.cost_usd` | handled |
+| CO3 | No invented handoff price — escalation as counts, never dollars | `asks` A08 alternatives, `impact` | `metrics[m_spend_*].plan.alternatives` | handled |
+| CO4 | Escalation is a hidden cost — pair it with cost per resolved | `asks` A03 | `metrics[m_cost_per_resolved_*].breakdown.by_intent[].escalation_rate` | handled |
+| CO5 | Zero-resolved intent = unbounded unit cost → ranked first, not last | `asks` A03 | `...breakdown.unbounded_intents`, `...cost_to_resolve` | handled |
+| MO1 | Stratify month-over-month by intent so a mix shift is visible | `asks` A02 | `metrics[m_mom_resolution].breakdown` | handled |
+| MO2 | Mix-adjusted MoM: freeze month-1 shares, apply month-2 per-intent rates | `asks` A02 | `metrics[m_mom_resolution_adjusted].value` (`mix_effect`, `change_beyond_mix`) | handled |
+| MO3 | Never trend judged quality across the judge-version boundary | `asks` A02 alternatives, §4.4 | `metrics[m_mom_resolution].plan.alternatives` | handled |
+| FI1 | Right fidelity: A04 measured, A09 judged | `asks`, `metrics.metric` guard | `metrics[].fidelity`, `gaps[A09]` | handled |
+| FI2 | Calibration published, rejected if suspiciously 1.00 | `asks._quality_calibration` | `metrics[m_quality_judged].calibration` | handled |
+| FI3 | A11 refused: name the required event, reject the proxy (retry ≠ failover) | `asks` A11 | `gaps[A11]` | handled |
+| FI4 | Cardinality refusal: cite the budget, don't group a near-unique field | `asks` A02 | `gaps[A02]` | handled |
+| DE1 | Observation vs attribution kept separate (no forced scapegoat) | `detect.py` | `diagnoses[].cause_class`, `.attributed_change` | handled |
+| DE2 | Lookalikes explicitly dismissed with a written reason | `decoys.py` | `findings[].not_a_regression_because` | handled |
+| DE3 | Load ≠ quality: require outcomes flat | `decoys.detect_load` | `diagnoses[].cause_class = load` | handled |
+| DE4 | Judge-version boundary moved the ruler, not the agent | `decoys.detect_judge_boundary` | `cause_class = judge_change` | handled |
+| DE5 | Born-broken cohort: peer baseline, window on first traffic (less lag) | `detect.detect_resolution_drops` | `findings[].baseline`, `findings[].window.from_day` | handled |
+| DE6 | Silent tool failure (empty 200) is invisible to the error metric | `detect.detect_tool_contract` | `findings[].evidence`, `...mechanism.empty_success_rate_in` | handled |
+| DE7 | Peer / sibling / strata controls shown, not just asserted | `detect.py`, `decoys.py` | `findings[].evidence`, `diagnoses[].evidence` | handled |
+| DE8 | Same-tool retry corroborates the empty answer | `features.n_same_tool_retry`, `detect` | `findings[].evidence` | handled |
+| VE1 | Golden set frozen before any fix (no hindsight) | `standards.freeze_golden_sets` | `prescriptions[].golden_set`, `out/golden_set.json` | handled |
+| VE2 | Replay is a verifier, not a search; `no_effect` honest | `replay.py` | `verifications[].verdict`, `.runs_used`, `.run_budget` | handled |
+| VE3 | Replay "before" is the endpoint's simulated baseline, stated | `replay.verification_from` | `verifications[].note`, `system_notes` SIMULATED | handled |
+| GE1 | Determinism: no LLM for logged facts; thresholds transfer | whole pipeline | `system_notes` REAL/STUBBED | handled |
+| GE2 | Baseline fairness stated in words on every impact | `impact.derivation`, `report.finding_from` | `findings[].impact.derivation`, `findings[].baseline` | handled |
+| GE3 | Deterministic scope, judged ordering (A10) | `asks._review_queue` | `metrics[m_review_queue]` | handled |
+| GE4 | Decision shaped before the gate: asking / risk / would-not-ship | `diagnose.prescription` | `prescriptions[].decision` | handled |
+| GE5 | Impact says who must act | `impact.AUDIENCE` | `findings[].audience` | handled |
