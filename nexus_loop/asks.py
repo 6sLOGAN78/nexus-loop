@@ -225,25 +225,66 @@ def build(corpus: Corpus, cov: Coverage, kit_catalog: dict,
     # ---------------------------------------------------------------- A03 / A08 --
     for t in tenants:
         cval, cbasis, cextra = _cost_coverage(cov, corpus, t)
-        rows = [s for s in corpus.rows(t) if s.get("cost_usd") is not None]
+        all_rows = list(corpus.rows(t))
+        rows = [s for s in all_rows if s.get("cost_usd") is not None]
+        by_intent_all = {}
+        for s in all_rows:
+            by_intent_all.setdefault(s["intent"], []).append(s)
         by_intent = {}
-        for it in sorted({s["intent"] for s in rows}):
-            r = [s for s in rows if s["intent"] == it]
-            n_res = sum(1 for s in r if resolved(s))
-            by_intent[it] = {"cost_usd": r4(sum(float(s["cost_usd"]) for s in r)),
-                             "resolved": n_res,
-                             "cost_per_resolved": r4(rate(sum(float(s["cost_usd"]) for s in r), n_res))}
-        ranked = sorted(by_intent.items(), key=lambda kv: -(kv[1]["cost_per_resolved"] or 0))
+        unbounded = []
+        for it in sorted(by_intent_all):
+            r = by_intent_all[it]
+            with_cost = [s for s in r if s.get("cost_usd") is not None]
+            cost = sum(float(s["cost_usd"]) for s in with_cost)
+            n_res_with_cost = sum(1 for s in with_cost if resolved(s))
+            hand = sum(1 for s in r if unplanned_handoff(s))
+            aband = sum(1 for s in r if abandoned(s))
+            cpr = r4(rate(cost, n_res_with_cost))
+            if cpr is None:
+                unbounded.append(it)
+            by_intent[it] = {
+                "sessions": len(r),
+                "sessions_with_cost": len(with_cost),
+                "cost_usd": r4(cost),
+                "resolved": sum(1 for s in r if resolved(s)),
+                "resolved_with_cost": n_res_with_cost,
+                "cost_per_resolved": cpr,
+                "cost_to_resolve": cpr if cpr is not None else "unbounded",
+                "unplanned_handoffs": hand,
+                "escalation_rate": r4(rate(hand, len(r))),
+                "abandoned": aband,
+                "abandon_rate": r4(rate(aband, len(r))),
+            }
+
+        def _unit_cost_order(kv):
+            # an intent that resolves nothing has unbounded unit cost: rank it first,
+            # by total spend, ahead of the merely expensive per-resolved intents.
+            v = kv[1]
+            if v["cost_per_resolved"] is None:
+                return (0, -(v["cost_usd"] or 0.0))
+            return (1, -v["cost_per_resolved"])
+
+        ranked = sorted(by_intent.items(), key=_unit_cost_order)
         by_kind = {k: r4(sum(float(s["cost_usd"]) for s in rows if s["agent_kind"] == k))
                    for k in sorted({s["agent_kind"] for s in rows})}
         metrics.append(metric(
             "m_cost_per_resolved_" + _short(t), "Cost per resolved conversation by intent — " + t, "A03",
-            "session", "measured", {k: v["cost_per_resolved"] for k, v in ranked[:5]},
+            "session", "measured",
+            {k: (v["cost_per_resolved"] if v["cost_per_resolved"] is not None else "unbounded")
+             for k, v in ranked[:5]},
             cval, cbasis, SESSIONS, "cost_usd IS NOT NULL AND tenant = '%s'" % t,
-            "resolved sessions of the intent (sessions without recorded cost leave both numerator and denominator)",
+            "resolved sessions of the intent that carry a recorded cost (sessions without recorded cost "
+            "leave both numerator and denominator)",
             breakdowns=["intent", "agent_id", "agent_kind"],
-            value_note="top five intents by cost per resolved conversation; full table in breakdown",
-            breakdown={"by_intent": by_intent, "cost_by_agent_kind": by_kind},
+            alternatives=[
+                "escalation is a hidden cost: unplanned handoffs and abandonment sit beside each intent as "
+                "counts and rates, never priced — no human-handling constant exists in the corpus",
+                "an intent with zero successful resolutions has unbounded cost per resolution; it is listed "
+                "as cost_to_resolve='unbounded' and ranked first by spend, not last"],
+            value_note="ranked by unit cost — 'unbounded' intents (zero successful resolutions) first by spend, "
+                       "then cost per resolved conversation; escalation_rate and abandon_rate are shown beside "
+                       "each intent so a cheap-looking intent that escalates is not read as cheap",
+            breakdown={"by_intent": by_intent, "unbounded_intents": unbounded, "cost_by_agent_kind": by_kind},
             coverage_extra=cextra))
         months = {}
         for m_i in range(0, D, half or D):
