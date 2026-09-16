@@ -61,10 +61,11 @@ A11 is `NOT_MEASURABLE`. The list title is the claim, not `A11`.
 | A02 | We will not break this down by customer |
 | any other gap | We will not invent this number |
 
-A11’s story also states **Why a retry is not failover** (from
-`why_the_proxy_misleads`) and **There is nothing to count**. The required
-event stays on the page. The decision pane is two mutually exclusive idle
-lines, chosen from the selected finding’s kind — never blended:
+A11’s story chip is **no number**. The span title is **A retry is not
+failover** (from `why_the_proxy_misleads`, first beat in the hint). **There
+is nothing to count** names the absence. The required event stays on the
+page under “To count it later:”. The decision pane is two mutually exclusive
+idle lines, chosen from the selected finding’s kind — never blended:
 
 | Selected kind | Idle gate |
 |---|---|
@@ -114,18 +115,20 @@ when the report has it. Judged chips show calibration, never a bare 100%.
 | `gaps[]` | No number |
 
 Only **To decide** is a work queue (Accept / Reject / Defer). **All clear**
-and **No number** need no decision. Tabs stay one line; the row list
-scrolls inside the pane so a long queue stays usable.
+and **No number** need no decision. Tabs stay one line and stick to the top
+of the list card; `.list-body` scrolls underneath so a long queue stays
+usable.
 
 Row copy (one line each; full title on hover):
 
 | Situation | Subtitle / stat |
 |---|---|
-| a gap | ask id (`A11`) under the claim |
-| a dismissal | **clear** |
-| a regression | conversation count (number only) |
+| a gap | ask id (`A11`) under the claim; no stat column |
+| a dismissal | tenant · days; stat **clear**; story chip **all clear** |
+| a regression | tenant · days; stat is conversation count (number only) |
 
-Arrow keys, Home, and End move the selection.
+ArrowUp, ArrowDown, Home, and End move the selection while the list has
+focus.
 
 ---
 
@@ -188,8 +191,9 @@ Each card is label / figure / caption. Tones match the live CSS:
 | a dismissal | Nothing to approve. This is all clear. |
 
 Codes (`cause_class`, `change_type`, metric id, `replay_run_id`, ask ids,
-gap verdicts) sit under **Technical names**. The prescription description
-and the ask stay in the open story and gate.
+gap verdicts) sit under **Technical names** in a `.tech-foot` footer pinned
+at the bottom of the story column (the open story scrolls above it). The
+prescription description and the ask stay in the open story and gate.
 
 ---
 

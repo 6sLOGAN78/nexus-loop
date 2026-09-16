@@ -57,11 +57,13 @@ So the screen is three regions with three jobs, and nothing else:
 
 | Region | Psychological job |
 |---|---|
-| List | **Orient.** Which problem is in front of me? To decide / All clear / No number. |
-| Story | **Understand.** What changed → why we think so → what we would change → did the test help. |
-| Your decision | **Commit.** The ask, the risk, the signature. |
+| List | **Orient.** Which problem is in front of me? To decide / All clear / No number. Sticky tabs; the row list scrolls underneath. |
+| Story | **Understand.** What changed → why we think so → what we would change → did the test help. Codes in a pinned **Technical names** footer. |
+| Your decision | **Commit.** The ask, the risk, the signature — or an idle line on All clear / No number. |
 
-Evidence, baseline working, honesty notes, and risk/no-ship sit under disclosures. That is **progressive disclosure** (Nielsen): experts can open them; strangers are not forced to parse a wall of logs before they know what broke. The first screen is claim, harm, owner, change, replay — the eight questions in spatial order, not a questionnaire.
+ArrowUp, ArrowDown, Home, and End move the list selection without mouse
+hunt (recognition over recall for keyboard-first reviewers). Evidence,
+baseline working, honesty notes, and risk/no-ship sit under disclosures. That is **progressive disclosure** (Nielsen): experts can open them; strangers are not forced to parse a wall of logs before they know what broke. The first screen is claim, harm, owner, change, replay — the eight questions in spatial order, not a questionnaire.
 
 We do not number the eight questions on the page. Numbered questionnaires trigger “fill this in” behaviour. The operator should *notice they can already answer them*, which is a stronger test of the layout than a labelled form.
 
