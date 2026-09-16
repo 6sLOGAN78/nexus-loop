@@ -93,10 +93,16 @@ def replay_priority(obs: dict) -> int:
 def assemble(team: str, corpus: Corpus, cov: Coverage, metrics: List[dict],
              gaps: List[dict], regressions: List[dict], decoys: List[dict],
              verifications: Optional[List[dict]] = None,
-             system_notes: str = "", extras: Optional[dict] = None) -> dict:
+             system_notes: str = "", extras: Optional[dict] = None,
+             prior_approvals: Optional[Dict[tuple, dict]] = None) -> dict:
     """Build the report dict. Golden sets must already be frozen onto each
-    regression observation (``obs['golden_set']``) before this is called."""
+    regression observation (``obs['golden_set']``) before this is called.
+
+    ``prior_approvals`` maps (prescription id, diagnosis id, target) -> approval
+    from an earlier report; a matching prescription keeps its human verdict so a
+    re-run does not silently wipe the decision record."""
     verifications = list(verifications or [])
+    prior_approvals = prior_approvals or {}
     findings: List[dict] = []
     diagnoses: List[dict] = []
     prescriptions: List[dict] = []
@@ -119,6 +125,9 @@ def assemble(team: str, corpus: Corpus, cov: Coverage, metrics: List[dict],
             if p:
                 p["golden_set"] = list(obs.get("golden_set") or [])
                 p["tenant"] = obs["tenant"]
+                prior = prior_approvals.get((p["id"], p.get("diagnosis_id"), p.get("target")))
+                if prior:
+                    p["approval"] = prior
                 prescriptions.append(p)
                 presc_tenants[p["id"]] = obs["tenant"]
 

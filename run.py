@@ -95,6 +95,24 @@ def write_report(path: str, report: dict) -> None:
     os.replace(tmp, path)
 
 
+def load_prior_approvals(path: str) -> dict:
+    """Approvals from an earlier report at the same path, keyed by
+    (prescription id, diagnosis id, target) so a re-run keeps human verdicts."""
+    if not os.path.exists(path):
+        return {}
+    try:
+        with open(path, encoding="utf-8") as fh:
+            prior = json.load(fh)
+    except (OSError, ValueError):
+        return {}
+    out = {}
+    for p in prior.get("prescriptions") or []:
+        a = p.get("approval")
+        if a:
+            out[(p.get("id"), p.get("diagnosis_id"), p.get("target"))] = a
+    return out
+
+
 def maybe_score(report_path: str, kit_root: str) -> int:
     gt = None
     for cand in (os.path.join(kit_root, "ground_truth", "ground_truth.json"),
@@ -179,6 +197,7 @@ def main(argv=None) -> int:
         a.team, corpus, cov, metrics, gaps, regressions, decoys,
         verifications=[], extras=extras,
         system_notes=system_notes(corpus, cov, notes_so_far, len(regressions), len(decoys)),
+        prior_approvals=load_prior_approvals(a.out),
     )
 
     replay_notes: list = []
@@ -204,6 +223,12 @@ def main(argv=None) -> int:
             print("  %s" % n)
 
     report["system_notes"] = system_notes(corpus, cov, replay_notes, len(regressions), len(decoys))
+    preserved = [p for p in report.get("prescriptions") or [] if p.get("approval")]
+    if preserved:
+        report["system_notes"] += (
+            "\n\nPRESERVED: %d recorded human verdict(s) carried forward from the prior report at this "
+            "path, matched by prescription id, diagnosis and target; the pipeline did not overwrite them."
+            % len(preserved))
 
     schema = load_schema(a.schema)
     public = strip_internal(report)
