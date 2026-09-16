@@ -117,8 +117,8 @@ targets, required reason. The finding list is segmented **To decide** /
 is danger red, the same token as the regression dots. Titles wrap two lines;
 the list body scrolls under the tabs; ArrowUp/ArrowDown (plus
 Home/End) move the selection. On **Not a problem** or **We will not invent**, the gate
-shows an idle line only — “Nothing to approve. This is all clear.” or
-“Nothing to approve. We will not invent this number.” Detector codes sit in
+shows an idle line only — “Nothing to approve. This is not a problem.” or
+“Nothing to approve. We will not invent a failover rate.” Detector codes sit in
 a **Technical names** footer pinned at the bottom of the story pane. Impact
 KPIs sit on a 5-column strip (label / figure / caption): conversations
 info, would-have-resolved warn, handoffs/abandoned bad, cost warn. Tab

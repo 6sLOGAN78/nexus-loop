@@ -109,11 +109,12 @@ the same screen is immediate feedback in Norman’s sense: the operator sees tha
 the world changed and does not have to trust that a POST occurred.
 
 On a gap (including A11) or a dismissed lookalike, the gate is withheld.
-The idle line is one of two, from the selected tab, never blended: **No
-number** (`gaps[]`) is “Nothing to approve. We will not invent this
-number.” **Not a problem** (dismissed lookalike, `is_regression: false`) is
-“Nothing to approve. This is all clear.” That prevents an affordance error
-in which a manager “approves” an absence because buttons were still present.
+The idle line is one of two, from the report, never blended: A11 /
+`NOT_MEASURABLE` is “Nothing to approve. We will not invent a failover
+rate.” (or “We will not invent this number.”). A dismissed lookalike
+(`is_regression: false`) or a finding with no prescription is “Nothing to
+approve. This is not a problem.” That prevents an affordance error in which
+a manager “approves” an absence because buttons were still present.
 
 The three targets share the same width and minimum height (Fitts’s law). Colour
 encodes valence; size does not. Making Accept larger or easier than Reject
