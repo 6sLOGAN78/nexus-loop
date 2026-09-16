@@ -135,7 +135,7 @@
     }
     @media (max-width: 1100px) {
       .shell { grid-template-columns: minmax(14rem, 17rem) minmax(0, 1fr); }
-      .gate-col { grid-column: 1 / -1; position: sticky; bottom: 0; z-index: 5; }
+      .gate-col { grid-column: 1 / -1; position: static; }
     }
     @media (max-width: 720px) {
       .shell { grid-template-columns: 1fr; }
@@ -145,7 +145,8 @@
     .list-col {
       border-right: 1px solid var(--color-border);
       background: var(--color-surface);
-      overflow: auto;
+      overflow-x: hidden;
+      overflow-y: auto;
       min-width: 0;
     }
     .list-head {
@@ -175,6 +176,7 @@
       display: grid;
       grid-template-columns: 0.4rem minmax(0, 1fr) auto;
       gap: var(--space-2);
+      align-items: start;
       width: 100%;
       text-align: left;
       border: 0;
@@ -195,12 +197,15 @@
     .dot.warn { background: var(--color-accent); }
     .dot.ok { background: var(--color-ok); }
     .dot.miss { background: var(--color-info); }
+    .t-main { min-width: 0; overflow: hidden; }
     .t-title {
+      display: block;
       font-size: var(--fs-sm);
       font-weight: 600;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .t-sub {
+      display: block;
       font-size: var(--fs-2xs);
       color: var(--color-muted);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -210,10 +215,12 @@
       color: var(--color-muted);
       text-align: right;
       font-variant-numeric: tabular-nums;
+      white-space: nowrap;
     }
 
     .detail {
       overflow: auto;
+      overflow-x: hidden;
       min-width: 0;
       padding: var(--space-5) var(--space-6) var(--space-8);
     }
@@ -295,7 +302,7 @@
       font-size: var(--fs-2xs);
       color: var(--color-accent);
     }
-    .span .body { min-width: 0; }
+    .span .body { min-width: 0; overflow-wrap: anywhere; }
     .span .name { font-size: var(--fs-sm); font-weight: 600; }
     .span .hint { font-size: var(--fs-2xs); color: var(--color-muted); overflow-wrap: anywhere; }
     .span .val {
@@ -593,7 +600,7 @@
         const stat = kind === "dismissed" ? "not a regression" : (imp.conversations_affected != null ? fmt(imp.conversations_affected, 0) + " conv." : "");
         items.push(`<button type="button" class="trace${selectedKey === f.id ? " is-on" : ""}" data-key="${esc(f.id)}" aria-current="${selectedKey === f.id ? "true" : "false"}">
           <span class="dot ${dot}" aria-hidden="true"></span>
-          <span><span class="t-title">${esc(f.headline || f.metric || f.id)}</span><span class="t-sub">${sub}</span></span>
+          <span class="t-main"><span class="t-title">${esc(f.headline || f.metric || f.id)}</span><span class="t-sub">${sub}</span></span>
           <span class="t-stat">${esc(stat)}</span>
         </button>`);
       };
@@ -601,7 +608,7 @@
         const key = "gap:" + g.ask_id;
         items.push(`<button type="button" class="trace${selectedKey === key ? " is-on" : ""}" data-key="${esc(key)}" aria-current="${selectedKey === key ? "true" : "false"}">
           <span class="dot miss" aria-hidden="true"></span>
-          <span><span class="t-title">${esc(g.ask_id)} · ${esc(g.verdict || "refused")}</span><span class="t-sub">missing span</span></span>
+          <span class="t-main"><span class="t-title">${esc(g.ask_id)} · ${esc(g.verdict || "refused")}</span><span class="t-sub">missing span</span></span>
           <span class="t-stat">no number</span>
         </button>`);
       };
@@ -699,7 +706,9 @@
       if (down.excess_cost_usd != null) extra.push(`$${fmt(down.excess_cost_usd)} excess`);
       const kpis = [
         [fmt(imp.conversations_affected, 0), "conversations", extra[0] || ""],
-        [fmt(down.would_have_resolved_at_baseline, 0), "would have resolved", "at baseline"],
+        down.would_have_resolved_at_baseline != null
+          ? [fmt(down.would_have_resolved_at_baseline, 0), "would have resolved", "at baseline"]
+          : [fmt(down.resolved_conversations_slowed, 0), "resolved, slowed", "outcomes flat"],
         [down.extra_turns != null ? fmt(down.extra_turns, 0) : fmt(down.unplanned_handoffs, 0),
           down.extra_turns != null ? "extra turns" : "unplanned handoffs", ""],
         [imp.cost_usd == null ? "—" : "$" + fmt(imp.cost_usd), "recorded cost", windowLbl(f.window)],
