@@ -113,12 +113,12 @@ Newsreader (claims and span headings) plus Source Sans 3 (chrome and
 numbers), with Iowan/Palatino and Segoe fallbacks. The gate is a traffic
 light: green Accept `#1F845A`, red Reject `#C9372C`, grey Defer, equal
 targets, required reason. The finding list is segmented **To decide** /
-**Not a problem** / **We will not invent** on a 3-column sticky tab grid; **To decide**
+**All clear** / **No number** on a 3-column sticky tab grid; **To decide**
 is danger red, the same token as the regression dots. Titles wrap two lines;
 the list body scrolls under the tabs; ArrowUp/ArrowDown (plus
-Home/End) move the selection. On **Not a problem** or **We will not invent**, the gate
-shows an idle line only — “Nothing to approve. This is not a problem.” or
-“Nothing to approve. We will not invent a failover rate.” Detector codes sit in
+Home/End) move the selection. On **All clear** or **No number**, the gate
+shows an idle line only — “Nothing to approve. This is all clear.” or
+“Nothing to approve. We will not invent this number.” Detector codes sit in
 a **Technical names** footer pinned at the bottom of the story pane. Impact
 KPIs sit on a 5-column strip (label / figure / caption): conversations
 info, would-have-resolved warn, handoffs/abandoned bad, cost warn. Tab

@@ -252,7 +252,7 @@
       font-weight: 600;
       padding: 0.4rem 0.2rem;
       border-radius: var(--radius-md);
-      white-space: normal;
+      white-space: nowrap;
       overflow: hidden;
       text-align: center;
       line-height: 1.2;
@@ -266,8 +266,8 @@
       --seg-fill: var(--ds-success-bg);
     }
     .seg[data-filter="refused"] {
-      --seg-accent: var(--ds-text-subtle);
-      --seg-fill: var(--ds-neutral);
+      --seg-accent: var(--ds-information);
+      --seg-fill: var(--ds-info-bg);
     }
     .seg:hover { background: var(--ds-surface); color: var(--ds-text); }
     .seg.is-on {
@@ -1130,8 +1130,8 @@
       const rest = gaps.filter((g) => g.ask_id !== "A11");
       const segs = [
         ["open", `To decide (${regs.length})`],
-        ["ignored", `Not a problem (${dismissed.length})`],
-        ["refused", `We will not invent (${gaps.length})`],
+        ["ignored", `All clear (${dismissed.length})`],
+        ["refused", `No number (${gaps.length})`],
       ];
       const items = [];
       const pushFinding = (f, kind) => {
@@ -1143,7 +1143,7 @@
         const title = f.headline || f.metric || f.id;
         const n = imp.conversations_affected;
         const stat = kind === "dismissed"
-          ? `<span class="badge ok">not a problem</span>`
+          ? `<span class="badge ok">all clear</span>`
           : (n != null ? esc(fmt(n, 0) + " conv.") : "");
         items.push(`<button type="button" class="trace${tone}${selectedKey === f.id ? " is-on" : ""}" data-key="${esc(f.id)}" title="${esc(title)}" aria-current="${selectedKey === f.id ? "true" : "false"}">
           <span class="dot ${dot}" aria-hidden="true"></span>
@@ -1157,7 +1157,7 @@
         items.push(`<button type="button" class="trace miss${selectedKey === key ? " is-on" : ""}" data-key="${esc(key)}" title="${esc(title)}" aria-current="${selectedKey === key ? "true" : "false"}">
           <span class="dot miss" aria-hidden="true"></span>
           <span class="t-main"><span class="t-title">${esc(title)}</span><span class="t-sub">No measurement</span></span>
-          <span class="t-stat"><span class="badge ghost">we will not invent</span></span>
+          <span class="t-stat"><span class="badge ghost">no number</span></span>
         </button>`);
       };
       if (listFilter === "open") regs.forEach((f) => pushFinding(f, "regression"));
@@ -1230,9 +1230,9 @@
         ? `<div class="span"><span class="kind">Lookalike</span><div class="body"><h2 class="name">Why a retry is not failover</h2><div class="hint">${esc(toManagerEnglish(g.why_the_proxy_misleads))}</div></div><span class="val">not the same</span></div>`
         : "";
       $("detail").innerHTML = `
-        <p class="kicker miss">We will not invent</p>
+        <p class="kicker miss">No number</p>
         <h1 class="claim">${esc(gapClaim(g))}</h1>
-        <div class="chips"><span class="badge ghost">we will not invent</span></div>
+        <div class="chips"><span class="badge ghost">no number</span></div>
         <div class="alert miss">
           <p><strong>${esc(idleGateCopy({ kind: "gap", gap: g }))}</strong></p>
         </div>
@@ -1266,17 +1266,17 @@
         ? pairBars("This window", f.observed, "Usual", f.expected, "warn", "ok")
         : "";
       $("detail").innerHTML = `
-        <p class="kicker ok">Not a problem</p>
+        <p class="kicker ok">All clear</p>
         <p class="path">${esc(cohortPath(f))}</p>
         <h1 class="claim">${esc(f.headline || metricLbl(f.metric) || f.id)}</h1>
         <div class="chips">
-          <span class="badge ok">not a problem</span>
+          <span class="badge ok">all clear</span>
           ${who && who !== "—" ? `<span class="badge ok">${esc(who)}</span>` : ""}
           ${f.tenant ? `<span class="badge ghost">${esc(f.tenant)}</span>` : ""}
           ${windowLbl(f.window) ? `<span class="badge ghost">${esc(windowLbl(f.window))}</span>` : ""}
         </div>
         <div class="alert ok">
-          <p><strong>This is not a problem.</strong>${who && who !== "—" ? ` A closed all-clear for the ${esc(who)}.` : ""}</p>
+          <p><strong>This is all clear.</strong>${who && who !== "—" ? ` Nothing to approve for the ${esc(who)}.` : ""}</p>
         </div>
         <p class="lede">${esc(claim)}</p>
         <div class="spans">
@@ -1410,18 +1410,14 @@
     }
 
     function idleGateCopy(pack) {
-      const g = (pack && pack.gap) || {};
-      const notMeasurable = pack && pack.kind === "gap" && (g.ask_id === "A11" || g.verdict === "NOT_MEASURABLE");
-      if (notMeasurable) {
-        return g.ask_id === "A11"
-          ? "Nothing to approve. We will not invent a failover rate."
-          : "Nothing to approve. We will not invent this number.";
-      }
       if (pack && pack.kind === "gap") {
-        return "Nothing to approve. " + gapClaim(g) + ".";
+        return "Nothing to approve. We will not invent this number.";
       }
-      if (pack && (pack.kind === "dismissed" || !pack.p)) {
-        return "Nothing to approve. This is not a problem.";
+      if (pack && pack.kind === "dismissed") {
+        return "Nothing to approve. This is all clear.";
+      }
+      if (pack && !pack.p) {
+        return "Nothing to approve on this finding.";
       }
       return "";
     }

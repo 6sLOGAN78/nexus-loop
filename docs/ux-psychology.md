@@ -57,9 +57,9 @@ So the screen is three regions with three jobs, and nothing else:
 
 | Region | Psychological job |
 |---|---|
-| List | **Orient.** Which problem is in front of me? To decide / Not a problem / We will not invent. Sticky tabs; the row list scrolls underneath. |
+| List | **Orient.** Which problem is in front of me? To decide / All clear / No number. Sticky tabs; the row list scrolls underneath. |
 | Story | **Understand.** What changed → why we think so → what we would change → did the test help. Codes in a pinned **Technical names** footer. |
-| Your decision | **Commit.** The ask, the risk, the signature — or an idle line on Not a problem / We will not invent. |
+| Your decision | **Commit.** The ask, the risk, the signature — or an idle line on All clear / No number. |
 
 ArrowUp, ArrowDown, Home, and End move the list selection without mouse
 hunt (recognition over recall for keyboard-first reviewers). Evidence,
@@ -86,7 +86,7 @@ The mapping is deliberate and bounded:
 
 | Tracing product | What we took | What we refused |
 |---|---|---|
-| Phoenix Traces / Spans / Sessions | To decide / Not a problem / We will not invent | A table of every session |
+| Phoenix Traces / Spans / Sessions | To decide / All clear / No number | A table of every session |
 | Langfuse span tree + scores | Four named steps + fidelity chips | Token/latency chrome we do not have |
 | Helicone session paths | `/tenant/intent/tool` | Fake durations or invented steps |
 | Annotation / human review | Accept / Reject / Defer + required reason | A like/dislike that writes nothing |
@@ -165,9 +165,9 @@ After save, the page re-fetches `/report.json` and the recorded verdict appears 
 
 ## 9. Lookalikes and refusals are there to fight bias
 
-The kit plants three false alarms. Flagging one as a regression costs more than missing a real problem. **Not a problem** exists so the manager (and the judge) can see the near-miss *and* the dismissal in the same genre as the real findings. That counters **confirmation bias** (“show me only the bad news”) and **availability** (“I only remember the tool break”). Explicit dismissal is the product behaviour the scorer rewards; the UI has to make it findable in one click, not a footnote.
+The kit plants three false alarms. Flagging one as a regression costs more than missing a real problem. **All clear** exists so the manager (and the judge) can see the near-miss *and* the dismissal in the same genre as the real findings. That counters **confirmation bias** (“show me only the bad news”) and **availability** (“I only remember the tool break”). Explicit dismissal is the product behaviour the scorer rewards; the UI has to make it findable in one click, not a footnote.
 
-**We will not invent**, with A11 first, is the memorable beat the problem statement asks for. We render a refusal as a first-class row: “We will not invent a failover rate,” required event on the page, and why retry is not failover. Absence has to be *visible*. A footer paragraph about A11 would be honest and forgettable. An empty observation with a spec is honest and sticky (peak-end + isolation).
+**No number**, with A11 first, is the memorable beat the problem statement asks for. We render a refusal as a first-class row: “We will not invent a failover rate,” required event on the page, and why retry is not failover. Absence has to be *visible*. A footer paragraph about A11 would be honest and forgettable. An empty observation with a spec is honest and sticky (peak-end + isolation).
 
 A refusal is not a change request. Your decision says so. That prevents the manager from “approving” a gap because the buttons were still there — an affordance error.
 
