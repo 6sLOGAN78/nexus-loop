@@ -4,7 +4,7 @@ This is the psychology behind [`nexus_loop/static/index.html`](../nexus_loop/sta
 
 The scored job of the screen is decision quality (18), readability (15), and framing (12). Those are human scores. They reward the same things cognitive psychology has names for: limited working memory, recognition over recall, calibrated trust, and a decision that has been thought, not clicked.
 
-The contract in [`docs/ui-handoff.md`](ui-handoff.md) is unchanged: every figure is copied from `loop-report.json`. Psychology here is about *what the eye meets first* and *what the hand is asked to do*. It never invents a number, never draws a chart the report did not already contain, and records the verdict only through `POST /decision`.
+The contract in [`docs/ui-handoff.md`](ui-handoff.md) is unchanged: every figure is copied from `loop-report.json`. Psychology here is about *what the eye meets first* and *what the hand is asked to do*. It never invents a number, never draws a chart the report did not already contain, and records the verdict only through `POST /decision`. The on-screen glossary is [`docs/manager-english.md`](manager-english.md).
 
 ---
 
@@ -115,10 +115,12 @@ The face is a **wealth-desk pairing**, not a paper brief and not a log. Claims a
 
 The previous screen was paper and navy: a brief to sign. That is a legitimate editorial move. It also primed **reading**, and it used a warm-cream + serif cluster that currently reads as generic generated UI. Copper and brand-blue Accept were both wrong for the same reason: they did not mean *go*.
 
-The desk follows the **Atlassian Design System (light)**: a sunken `#F7F8F9` canvas, raised white cards, 12px columns, 8px inner cards, 6px controls, 4px lozenges.
+The desk uses a **sunken canvas and raised cards**: a sunken `#F7F8F9` canvas, raised white cards, 12px columns, 8px inner cards, 6px controls, 4px lozenges.
 
-- Sunken grey (not cream, not night-shift black) is a change ticket a manager can sign on Monday morning. It is not a log, not a magazine, not acid-green-on-black. Rounded corners and raised shadows are how Atlassian marks *containers* vs *actions* — the finding is a card; the verdict is a button.
-- **The gate is a traffic light, in Atlassian tokens.** Accept is success green `#1F845A` (go). Reject is danger red `#C9372C` (stop). Defer is subtle grey (wait / no valence). Green and red are complementary hues, so they **pop apart pre-attentively** (Treisman: colour is a feature that does not need the label). Warm brown plus warm red did not: both read as “alert,” so the hand could not tell proceed from refuse without reading. Brand blue `#0C66E4` stays on selected rows, links, the mark, and the step labels — it is navigation and selection, **not Accept**.
+- Sunken grey (not cream, not night-shift black) is a change ticket a manager can sign on Monday morning. It is not a log, not a magazine, not acid-green-on-black. Rounded corners and raised shadows mark *containers* vs *actions* — the finding is a card; the verdict is a button.
+- **The gate is a traffic light.** Accept is success green `#1F845A` (go). Reject is danger red `#C9372C` (stop). Defer is subtle grey (wait / no valence). Green and red are complementary hues, so they **pop apart pre-attentively** (Treisman: colour is a feature that does not need the label). Warm brown plus warm red did not: both read as “alert,” so the hand could not tell proceed from refuse without reading. Brand blue `#0C66E4` stays on selected rows, links, the mark, and the step labels — it is navigation and selection, **not Accept**. Comparison bars in the story use the same green/red pairing, not brown.
+- **To decide is danger red**, the same token as `.dot.bad` on regression rows, so the tab that needs a call matches the pointers in that list. Finding tabs sit on a 3-column grid.
+- **KPI cards are colour-coded** on a 5-column strip with shared label / figure / caption rows: conversations info, would-have-resolved warn, handoffs/abandoned bad, cost warn.
 - Green is isolated in the gate. Coverage chips are small lozenges in the header, not competing bars, so the proceed control does not drown in “healthy.” The **bias brake is the required reason**, not a camouflaged Accept: elaboration slows the click (implementation intention). Prospect theory still applies — people overweight the frame — so all three targets stay the same size (Fitts). A rejection with a reason is a successful product decision; red is as easy to hit as green.
 
 Accept is success-bold because it must mean *proceed* before the word is read. Reject is danger-bold because it must mean *stop*. Defer is subtle because it must mean *not now*.

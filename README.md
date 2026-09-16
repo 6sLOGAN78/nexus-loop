@@ -36,7 +36,8 @@ Everything is on `master`:
   candidate solution against them.
 - **Docs**: problem statement, brief, verified kit findings,
   deliverables/replay/demo guide, submission note, solution overview, UI
-  handoff, UX psychology, and the operator-screen report sections.
+  handoff, UX psychology, the operator-screen report, and a manager-English
+  glossary (`docs/manager-english.md`).
 - **Examples** (`examples/`): a sample `loop-report.json` from the final
   solution's practice-kit run, and a standalone lo-fi `demo.html` wireframe
   (no server) that renders it.
@@ -55,7 +56,7 @@ question for the organisers; the solution reports measured coverage regardless.
 |---|---|
 | `nexus_loop/` | The solution package: ingestion, features, detectors, asks, report, replay client, decision screen |
 | `run.py` | The one-command entrypoint that produces `loop-report.json` |
-| `docs/` | Problem statement, brief, verified findings, deliverables/replay/demo guide, submission note, edge-cases, solution overview, UI handoff, UX psychology, operator-screen report sections |
+| `docs/` | Problem statement, brief, verified findings, deliverables/replay/demo guide, submission note, edge-cases, solution overview, UI handoff, UX psychology, operator-screen report, manager-English glossary |
 | `examples/` | A sample `loop-report.json` (final solution, practice kit) and a standalone lo-fi `demo.html` wireframe |
 | `kit/` | The practice dataset (sessions, steps, turns, config timeline, labels, catalog, asks, ground truth, ~33 MB) |
 | `tools/nexus-loop-kit/` | Organiser tooling: generator, starter, scorer, replay service, schema, reference reports |
@@ -103,8 +104,18 @@ python3 run.py --kit kit --team demo --out out/loop-report.json --serve --port 8
 
 The screen renders only from the report; the approve/reject action writes back
 into `prescriptions[].approval` atomically. See **`docs/ui-handoff.md`** for the
-field contract and **`docs/ux-psychology.md`** for why the console is shaped
-that way.
+field contract, **`docs/ux-psychology.md`** for why the console is shaped that
+way, and **`docs/manager-english.md`** for the jargon → manager-English
+glossary used on the page.
+
+The desk is a sunken `#F7F8F9` canvas with raised rounded cards. Type is
+Newsreader (claims and span headings) plus Source Sans 3 (chrome and
+numbers), with Iowan/Palatino and Segoe fallbacks. The gate is a traffic
+light: green Accept `#1F845A`, red Reject `#C9372C`, grey Defer, equal
+targets, required reason. Finding tabs sit on a 3-column grid; **To decide**
+is danger red, the same token as the regression dots. Impact KPIs sit on a
+5-column strip (label / figure / caption): conversations info, would-have-
+resolved warn, handoffs/abandoned bad, cost warn.
 
 ### Run the testbed
 
@@ -154,8 +165,9 @@ New to the repo, read in this order:
 9. `docs/ui-handoff.md` — what the UI/product team needs.
 10. `docs/ux-psychology.md` — why the screen is a tracing console (operator cognition).
 11. `docs/operator-screen-report.md` — UI/product justification for the TECHQUEST endterm report (section-aligned paste).
-12. `examples/demo.html` — the lo-fi wireframe + sample report (open the file directly, no server).
-13. `tools/testbed/README.md` — how to evaluate a candidate.
+12. `docs/manager-english.md` — jargon → manager English (the attached glossary for the report).
+13. `examples/demo.html` — the lo-fi wireframe + sample report (open the file directly, no server).
+14. `tools/testbed/README.md` — how to evaluate a candidate.
 
 ---
 

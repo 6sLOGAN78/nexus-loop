@@ -9,6 +9,8 @@ copied from `loop-report.json` as rendered by the live screen
 
 Source contracts: [`docs/ui-handoff.md`](ui-handoff.md),
 [`docs/ux-psychology.md`](ux-psychology.md).
+The attached glossary — jargon in the report → labels on the live screen —
+is [`docs/manager-english.md`](manager-english.md).
 
 ---
 
@@ -148,7 +150,7 @@ replay client, scorer) belong to the backend write-up.
 
 | Component | Implementation |
 |---|---|
-| Operator screen | One-page standard-library HTML/CSS/JS (`nexus_loop/static/index.html`) served by a Python `http.server` (`nexus_loop/app.py`). No SPA framework, no build step, no webfonts, no external network, no API keys. The page fetches `GET /report.json` and writes `POST /decision`. |
+| Operator screen | One-page standard-library HTML/CSS/JS (`nexus_loop/static/index.html`) served by a Python `http.server` (`nexus_loop/app.py`). No SPA framework, no build step, no API keys. Newsreader and Source Sans 3 load when the network is available; Iowan/Palatino and Segoe/Inter are the offline fallbacks. The page fetches `GET /report.json` and writes `POST /decision`. |
 
 ---
 
@@ -187,14 +189,17 @@ three jobs, and nothing else.
 | Decision | right column, “Your decision” | Commit with a written reason. |
 
 The list is segmented as **To decide**, **Not a problem**, and **We would not
-guess**. Those labels are manager English for regressions, explicit dismissals
-(`findings[]` with `is_regression: false`), and `gaps[]`. The kit plants three
-lookalikes; **Not a problem** exists so the operator (and a judge) can see the
-near-miss and the dismissal in the same genre as the real findings. That
-counters confirmation bias and availability. **We would not guess** places A11
-first. The claim on the row is “We will not invent a failover rate.” The
-required event stays on the page. Absence is visible. A footer paragraph about
-A11 would be honest and forgettable; a first-class row is honest and sticky.
+guess**, on a 3-column tab grid. Those labels are manager English for
+regressions, explicit dismissals (`findings[]` with `is_regression: false`),
+and `gaps[]`. **To decide** is danger red `#C9372C`, the same token as
+`.dot.bad` on regression rows, so the tab that needs a call matches the
+pointers in that list. The kit plants three lookalikes; **Not a problem**
+exists so the operator (and a judge) can see the near-miss and the dismissal
+in the same genre as the real findings. That counters confirmation bias and
+availability. **We would not guess** places A11 first. The claim on the row is
+“We will not invent a failover rate.” The required event stays on the page.
+Absence is visible. A footer paragraph about A11 would be honest and
+forgettable; a first-class row is honest and sticky.
 
 The story is four named steps copied from the report, not a log dump:
 
@@ -202,8 +207,9 @@ The story is four named steps copied from the report, not a log dump:
    sentence when one exists.
 2. **Why we think so** — cause in English plus the attributed configuration
    change.
-3. **What we would change** — prescription target and description, with
-   predicted from → to bars when present.
+3. **What we would change** — prescription target as a heading, description
+   in the open story, with predicted from → to bars (red vs green, not brown)
+   when present.
 4. **Did the test help** — replay before → after, or an explicit “No test this
    run.”
 
@@ -233,33 +239,43 @@ and would violate the report contract.
 
 ### 16.3 Manager English and A11 as a first-class refusal
 
-Copy is written for a manager who is not fluent with tech. Audience identifiers
-are mapped to “Agent team”, “Platform team”, “Business owner.” Metrics become
-“Share we finished”, “Turns to finish.” Cause classes become “The tool said
-success but sent an empty answer.” A11’s list title is the claim, not the ask
-code: “We will not invent a failover rate.” The story states that a retry is
-not failover, because `llm_call.retry_count > 0` is a quality retry, not a
-failover event. The required event (`failover` at step grain, fields
-`from_target, to_target, reason, recovered`, owner `conversation-runtime`)
-remains on the page so a later instrumentation decision has an owner.
+Copy is written for a manager who is not fluent with tech. The attached
+glossary is [`docs/manager-english.md`](manager-english.md). Audience
+identifiers are mapped to “Agent team”, “Platform team”, “Business owner.”
+Metrics become “Share we finished”, “Turns to finish.” Cause classes become
+“The tool said success but sent an empty answer.” A11’s list title is the
+claim, not the ask code: “We will not invent a failover rate.” The story
+states that a retry is not failover, because `llm_call.retry_count > 0` is a
+quality retry, not a failover event. The required event (`failover` at step
+grain, fields `from_target, to_target, reason, recovered`, owner
+`conversation-runtime`) remains on the page so a later instrumentation
+decision has an owner.
 
 A refusal is not a change request. The decision pane says so. That is the
 memorable beat the problem statement asks the demo to show.
 
-### 16.4 Visual language: Atlassian Design System (light)
+### 16.4 Visual language: sunken canvas, raised cards
 
-The desk follows the Atlassian Design System light theme. The canvas is sunken
-`#F7F8F9`. Columns are raised white cards with 12 px corner radius. Inner cards
-use 8 px. Controls (buttons, fields) use 6 px. Lozenges use 4 px. Hex values
-exist only in the primitive token layer. Sunken grey, not cream and not
-night-shift black, reads as a change ticket a manager can sign, not a magazine
-and not a log. Rounded corners and raised shadows mark containers versus
+The desk is a light change-ticket, not a log and not a magazine. The canvas
+is sunken `#F7F8F9`. Columns are raised white cards with a soft 12 px corner
+radius and light elevation. Inner cards use 8 px. Controls (buttons, fields)
+use 6 px. Lozenges use 4 px. Hex values exist only in the primitive token
+layer. Sunken grey, not cream and not night-shift black, reads as a ticket a
+manager can sign. Rounded corners and raised shadows mark containers versus
 actions: the finding is a card; the verdict is a button.
+
+Finding tabs sit on a 3-column grid. Impact KPIs sit on a 5-column strip with
+a shared label / figure / caption stack so the numbers line up and recorded
+cost is not an orphan.
 
 Brand blue `#0C66E4` is reserved for navigation, selected list rows (inset
 brand bar), links, and the small mark that a human is on the page. It is not
 used for Accept. Using the brand colour as a proceed cue would collapse
 navigation and verdict into one pre-attentive channel.
+
+Type is a wealth-desk pairing: **Newsreader** serif for claims and span
+headings, **Source Sans 3** for chrome, KPI figures, and buttons. Offline,
+Newsreader falls back to Iowan / Palatino and Source Sans 3 to Segoe / Inter.
 
 ### 16.5 The gate as a traffic light
 
@@ -268,9 +284,10 @@ Defer is achromatic grey (wait; no valence). Green and red are complementary
 hues, so they pop apart pre-attentively (Treisman: colour is a feature that
 does not need the label). An earlier warm-brown plus warm-red pairing did not:
 both read as “alert,” so the hand could not tell proceed from refuse without
-reading. Green is isolated in the gate. Coverage chips in the header are small
-lozenges, not competing bars, so the proceed control does not drown in
-“healthy.”
+reading. Green is isolated in the gate. Comparison bars in the story are the
+same traffic light (red now / green before), not brown-plus-red. Coverage
+chips in the header are small lozenges, not competing bars, so the proceed
+control does not drown in “healthy.”
 
 Prospect theory still applies — people overweight the frame — so all three
 targets stay the same size (Fitts). The bias brake is the required reason, not
@@ -282,11 +299,12 @@ Each of the four story steps uses a sentence-case Newsreader heading
 (`h2.name`), weight 500, not a sunken chip and not passive body copy. The kind
 label (“What changed”, “Why we think so”, “What we would change”, “Did the test
 help”) is a small uppercase tracked kicker; the serif heading is the claim the
-operator should remember. Treating the span title as a heading rather than as
+operator should remember — “Share we finished”, not a muted caption and not
+the only title on the span. Treating the span title as a heading rather than as
 muted caption text is how the causal loop remains scannable when the evidence is
 long.
 
-### 16.7 Report-only numbers; no invented charts
+### 16.7 Report-only numbers; colour-coded KPIs; no invented charts
 
 The screen renders only from `loop-report.json`. It never retypes a number and
 never recomputes a metric in JavaScript. On the practice-kit report the default
@@ -297,6 +315,11 @@ fidelity appear as English chips in the header (A01 measured, A04 measured, a
 judged chip with calibration when present — never a bare 100%). They are
 passports on the numbers, not badges of quality. They answer “can I believe
 this denominator?” before the operator reads the claim.
+
+Harm KPIs are colour-coded cards on that 5-column strip: conversations
+(info blue), would-have-resolved (warn), unplanned handoffs and abandoned
+(danger / `.kpi.bad`), recorded cost (warn). Each card is label, figure,
+caption — the same stack so figures share a baseline.
 
 Loss aversion is used only as layout order. Harm KPIs sit in the middle pane,
 before the buttons. Putting incurred losses above the signature makes inaction
@@ -327,12 +350,14 @@ Monday-morning test: could an operator who was not on the team know what to do?
 
 **Figure 5.** Final operator-facing screen. One page in three panes: (left) the
 finding list segmented as To decide, Not a problem, and We would not guess,
-with A11 titled “We will not invent a failover rate”; (centre) the causal story
-with sentence-case Newsreader span headings — what changed, why we think
-so, what we would change, did the test help — and harm KPIs copied from
+with A11 titled “We will not invent a failover rate” and the To decide tab in
+danger red matching `.dot.bad`; (centre) the causal story with sentence-case
+Newsreader span headings — what changed, why we think so, what we would
+change, did the test help — and colour-coded harm KPIs (conversations info,
+would-have-resolved warn, handoffs/abandoned bad, cost warn) copied from
 `loop-report.json`; (right) Your decision, with equal-size Accept (success
 green `#1F845A`), Reject (danger `#C9372C`), and Defer (grey) controls and a
-required reason. Atlassian Design System light canvas `#F7F8F9`. Brand blue is
+required reason. Sunken canvas `#F7F8F9`, raised rounded cards. Brand blue is
 used for selection and navigation only. Every figure on the page is copied from
 the report; none is computed in the browser.
 

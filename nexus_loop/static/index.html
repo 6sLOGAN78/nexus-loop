@@ -11,9 +11,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600;6..72,700&family=Source+Sans+3:ital,wght@0,400;0,600;0,700&display=swap" rel="stylesheet">
   <style>
     /*
-      Atlassian Design System (light) + wealth-desk type:
+      Light operator desk + wealth-desk type:
+      sunken canvas #F7F8F9, raised rounded cards, traffic-light gate
+      (Accept green #1F845A, Reject red #C9372C, Defer grey).
       Newsreader for claims / span titles, Source Sans 3 for chrome
-      and numbers. Offline fallback: Iowan / Palatino + system UI sans.
+      and numbers. Offline fallback: Iowan / Palatino + Segoe / Inter.
       Every figure is copied from loop-report.json.
     */
 
@@ -509,7 +511,6 @@
       color: var(--ds-text);
       text-align: right;
       white-space: nowrap;
-      padding-top: 0.35rem;
     }
     .bars { display: flex; flex-direction: column; gap: 4px; margin-top: var(--space-2); max-width: 22rem; }
     .barrow { display: grid; grid-template-columns: 7.2rem 1fr 4.4rem; gap: var(--space-2); align-items: center; }
