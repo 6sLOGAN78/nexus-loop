@@ -105,6 +105,12 @@ That type hierarchy is the same argument as the three panes: the eye should find
 
 ---
 
+## Type
+
+The face is a **humanist UI sans**, not a serif brief. The reference crop of “share we finished” is the SF Pro / Segoe / Helvetica Neue cluster: high x-height, book body, bold titles, slightly open tracking on copy and a hair of negative tracking on headings. We map that to `Inter, "Segoe UI", "Helvetica Neue", "SF Pro Text"` — Inter is the local SF-Pro analogue; there is no webfont (`Content-Security-Policy` has no `font-src`). Headings keep weight 700 on the sunken chip so they still scan as titles against regular body. We did not revive Georgia/Palatino: that paper + serif cluster is the generated-UI tell already refused above.
+
+---
+
 ## 5. Colour is a decision primer, not a brand
 
 The previous screen was paper and navy: a brief to sign. That is a legitimate editorial move. It also primed **reading**, and it used a warm-cream + serif cluster that currently reads as generic generated UI. Copper and brand-blue Accept were both wrong for the same reason: they did not mean *go*.
