@@ -99,13 +99,13 @@ We do not invent span durations. A fake timeline would be the most tempting lie 
 
 The previous screen was paper and navy: a brief to sign. That is a legitimate editorial move. It also primed **reading**, and it used a warm-cream + serif cluster that currently reads as generic generated UI.
 
-The desk is **cool paper + ink**, with **copper as the decision lamp**.
+The desk follows the **Atlassian Design System (light)**: a sunken `#F7F8F9` canvas, raised white cards, 12px columns, 8px inner cards, 6px controls, 4px lozenges.
 
-- Cool paper (not cream, not night-shift black) is a change ticket a manager can sign on Monday morning. It is not a log, not a magazine, not acid-green-on-black.
-- **Copper is the decision lamp.** It is the colour of “a human must act.” It is *not* sage. Sage is reserved for measured coverage, dismissed lookalikes, and a recorded accept. If Accept were green in a sea of green “healthy” chips, colour would **prime confirmation**: the page would feel like it wants a yes. Prospect theory: people overweight the frame. We frame the gate as a choice, not a celebration.
-- Coral is reserved for high/critical severity, Reject, and “now / before” bars that are the worse side of a comparison. It is a signal, used sparingly, so it still means something (von Restorff: isolation makes it memorable).
+- Sunken grey (not cream, not night-shift black) is a change ticket a manager can sign on Monday morning. It is not a log, not a magazine, not acid-green-on-black. Rounded corners and raised shadows are how Atlassian marks *containers* vs *actions* — the finding is a card; the verdict is a button.
+- **Brand blue (`#0C66E4`) is the decision lamp.** It is the colour of “a human must act.” It is *not* success green. Green is reserved for measured coverage, dismissed lookalikes, and a recorded accept. If Accept were green in a sea of green “healthy” chips, colour would **prime confirmation**: the page would feel like it wants a yes. Prospect theory: people overweight the frame. We frame the gate as a choice, not a celebration. Brand blue is also the Atlassian primary button, so the page reads as a product, not a generated dashboard.
+- Danger red (`#C9372C`) is reserved for high/critical severity, Reject, and “now / before” bars that are the worse side of a comparison. It is a signal, used sparingly, so it still means something (von Restorff: isolation makes it memorable).
 
-Accept is the filled copper button because it is the primary *action*, not because it is the morally preferred outcome. Reject is destructive (coral). Defer is ghost. All three are full-width, equally easy to hit (Fitts: target size). A rejection with a reason is a successful product decision; the styling must not punish it.
+Accept is the filled brand-blue button because it is the primary *action*, not because it is the morally preferred outcome. Reject is destructive (danger). Defer is a subtle/neutral button. All three are full-width, equally easy to hit (Fitts: target size). A rejection with a reason is a successful product decision; the styling must not punish it.
 
 ---
 
@@ -137,7 +137,7 @@ A verdict without a reason is a 400. That is a schema rule. It is also **elabora
 
 Empty-reason feedback is inline, `aria-invalid`, and the field is focused. Errors name the fix (“A reason is required”), not a mood. No apology, no toast that vanishes.
 
-After save, the page re-fetches `/report.json` and the recorded verdict appears in Your decision (sage for accept, coral for reject, copper for defer). Closing the loop on the same screen is **immediate feedback** (Norman): the operator sees that the world changed. They do not have to trust that a POST happened.
+After save, the page re-fetches `/report.json` and the recorded verdict appears in Your decision (success lozenge for accept, danger for reject, warning for defer). Closing the loop on the same screen is **immediate feedback** (Norman): the operator sees that the world changed. They do not have to trust that a POST happened.
 
 ---
 
