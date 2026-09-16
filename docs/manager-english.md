@@ -67,15 +67,13 @@ is nothing to count** names the absence. The required event stays on the
 page under “To count it later:”. The decision pane is two mutually exclusive
 idle lines, chosen from the selected tab — never blended:
 
-| Selected kind | Idle gate |
+| Selected tab | Idle gate |
 |---|---|
-| dismissed lookalike (`is_regression: false`) or no prescription | **Nothing to approve. This is not a problem.** |
-| A11 / `NOT_MEASURABLE` | **Nothing to approve. We will not invent a failover rate.** |
-| other `gaps[]` | **Nothing to approve.** plus `gapClaim` (or **We will not invent this number.**) |
+| All clear (dismissed lookalike, `is_regression: false`) | **Nothing to approve. This is all clear.** |
+| No number (`gaps[]`, including A11) | **Nothing to approve. We will not invent this number.** |
 
-The two buckets never mix. `idleGateCopy` chooses A11 / `NOT_MEASURABLE` first
-so failover is named, then other refusals, then dismissed or missing
-prescription. The long report `why` is not the idle line.
+The two never mix. The A11 *claim* on the row stays “We will not invent a
+failover rate.” The long report `why` is not the idle line.
 
 ### Story lede (keep it short)
 
@@ -200,9 +198,8 @@ Each card is label / figure / caption. Tones match the live CSS:
 | `would_not_ship_if` | Would not ship if. (under a disclosure) |
 | `accepted` / `rejected` / `deferred` | Accept / Reject / Defer |
 | empty reason | A reason is required. |
-| A11 / `NOT_MEASURABLE` | Nothing to approve. We will not invent a failover rate. |
-| other gap | Nothing to approve. plus `gapClaim` / We will not invent this number. |
-| dismissal (`is_regression: false`) or no prescription | Nothing to approve. This is not a problem. |
+| No number tab (`gaps[]`, including A11) | Nothing to approve. We will not invent this number. |
+| All clear tab (dismissal, `is_regression: false`) | Nothing to approve. This is all clear. |
 
 Codes (`cause_class`, `change_type`, metric id, `replay_run_id`, ask ids,
 gap verdicts) sit under **Technical names** in a `.tech-foot` footer pinned
