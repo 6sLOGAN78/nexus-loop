@@ -384,7 +384,7 @@
       display: grid;
       grid-template-columns: 8.75rem minmax(0, 1fr) auto;
       gap: var(--space-3);
-      align-items: center;
+      align-items: start;
       padding: var(--space-4);
       border-top: 1px solid var(--ds-border);
     }
@@ -392,12 +392,26 @@
     .span .kind {
       font-family: var(--font-sans);
       font-size: var(--fs-2xs);
-      font-weight: 600;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
       color: var(--ds-brand);
       line-height: 1.25;
+      padding-top: 0.35rem;
     }
     .span .body { min-width: 0; overflow-wrap: anywhere; }
-    .span .name { font-size: var(--fs-sm); font-weight: 600; }
+    .span .name {
+      display: inline-block;
+      font-size: 0.9375rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      line-height: 1.25;
+      color: var(--ds-text);
+      background: var(--ds-sunken);
+      border-radius: var(--radius-md);
+      padding: 0.2rem 0.55rem;
+      margin: 0 0 var(--space-1);
+    }
     .span .hint { font-size: var(--fs-2xs); color: var(--ds-text-subtle); overflow-wrap: anywhere; }
     .span .val {
       font-variant-numeric: tabular-nums;
@@ -584,10 +598,10 @@
       business_owner: "Business owner",
     };
     const METRIC = {
-      resolution_rate: "share we finished",
-      turns_to_resolve: "turns to finish",
-      tool_p95_latency_ms: "tool wait time",
-      containment_rate: "share we handled end to end",
+      resolution_rate: "Share we finished",
+      turns_to_resolve: "Turns to finish",
+      tool_p95_latency_ms: "Tool wait time",
+      containment_rate: "Share we handled end to end",
     };
     const CAUSE = {
       "tool.contract_break": "The tool said success but sent an empty answer",
@@ -598,7 +612,11 @@
       "judge_change": "The scorecard changed, not the agent",
     };
     const audienceLbl = (ids) => (ids || []).map((x) => AUDIENCE[x] || x).join(", ") || "—";
-    const metricLbl = (id) => METRIC[id] || String(id || "").replace(/_/g, " ");
+    const metricLbl = (id) => {
+      if (METRIC[id]) return METRIC[id];
+      const s = String(id || "").replace(/_/g, " ").trim();
+      return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+    };
     const causeLbl = (id) => CAUSE[id] || String(id || "unknown").replace(/[._]/g, " ");
     const gapClaim = (g) => {
       if (!g) return "We would not guess";
