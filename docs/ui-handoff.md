@@ -114,7 +114,7 @@ scrolling through evidence.
 | Region | Role |
 |--------|------|
 | Header | Quiet title, corpus, coverage/fidelity chips. REAL / STUBBED / SIMULATED sit under a disclosure — Framing 12 without a wall of notes. |
-| List | To decide / Not a problem / We would not guess (A11 first, titled “We will not invent a failover rate”). 3-column tab grid; **To decide** is danger red, same token as `.dot.bad`. Each row: headline, tenant, days, conversations. Default selection is the verification’s prescription, else `tool.contract_break`. Hash deep-links the selected id. |
+| List | To decide / All clear / No number (A11 first, titled “We will not invent a failover rate”). 3-column tab grid; **To decide** is danger red, same token as `.dot.bad`. All clear is mint; No number is grey/info. Each row: headline, tenant, days, conversations. Default selection is the verification’s prescription, else `tool.contract_break`. Hash deep-links the selected id. |
 | Story | Four steps copied from the report: what changed, why we think so, what we would change, did the test help. Each step label is uppercase tracked; `.span .name` is a Newsreader heading; observed values are tabular sans. A matching `standard[]` sentence sits under what changed. Bars plot report values in red vs green (not brown). Colour-coded KPI strip (5 columns, label / figure / caption): conversations info, would-have-resolved warn, handoffs/abandoned bad, cost warn. Evidence under a disclosure. Codes under Technical names. |
 | Your decision | The ask, a one-line risk, then full risk/no-ship under a disclosure, then Accept / Reject / Defer and a required reason. After save, the page POSTs `/decision` and re-fetches `/report.json`. |
 
@@ -208,7 +208,7 @@ demo show the refusal, state coverage out loud, and admit what is faked?
 These were presentation, not detector work. The loop still produces the data;
 the screen only maps it.
 
-- One finding at a time; the list is To decide / Not a problem / We would not guess (A11 first). To decide is danger red matching `.dot.bad`. Tabs are a 3-column grid.
+- One finding at a time; the list is To decide / All clear / No number (A11 first). To decide is danger red matching `.dot.bad`. Tabs are a 3-column grid.
 - The loop is four English steps: what changed, why we think so, what we would change, did the test help. A matching `standard[]` sentence sits under what changed. Span titles are Newsreader headings, not passive body copy.
 - Hybrid disclosure: `cause_class`, `change_type`, metric id, `replay_run_id`, ask ids, gap verdicts sit under Technical names. The prescription description and `asking_approval_for` stay in the open story and decision.
 - A11 is a first-class list row. The claim is “We will not invent a failover rate.” The required event stays on the page.

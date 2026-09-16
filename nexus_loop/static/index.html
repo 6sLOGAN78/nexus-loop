@@ -223,9 +223,9 @@
       color: var(--ds-text-subtle);
       font-size: var(--fs-xs);
       font-weight: 600;
-      padding: var(--space-2) var(--space-2);
+      padding: var(--space-2) var(--space-1);
       border-radius: var(--radius-md);
-      white-space: normal;
+      white-space: nowrap;
       text-align: center;
       line-height: 1.2;
       min-height: 2.25rem;
@@ -237,7 +237,7 @@
       --seg-accent: var(--ds-success);
       --seg-fill: var(--ds-success-bg);
     }
-    .seg[data-filter="miss"] {
+    .seg[data-filter="refused"] {
       --seg-accent: var(--ds-information);
       --seg-fill: var(--ds-info-bg);
     }
@@ -276,12 +276,26 @@
       border-color: transparent;
       box-shadow: inset 3px 0 0 var(--ds-brand);
     }
+    .trace.is-on.ok {
+      background: var(--ds-success-bg);
+      box-shadow: inset 3px 0 0 var(--ds-success);
+    }
+    .trace.is-on.miss {
+      background: var(--ds-neutral);
+      box-shadow: inset 3px 0 0 var(--ds-text-subtle);
+    }
     .trace:focus-visible {
       outline: none;
       box-shadow: 0 0 0 var(--ring) var(--ds-border-focused);
     }
     .trace.is-on:focus-visible {
       box-shadow: inset 3px 0 0 var(--ds-brand), 0 0 0 var(--ring) var(--ds-border-focused);
+    }
+    .trace.is-on.ok:focus-visible {
+      box-shadow: inset 3px 0 0 var(--ds-success), 0 0 0 var(--ring) var(--ds-border-focused);
+    }
+    .trace.is-on.miss:focus-visible {
+      box-shadow: inset 3px 0 0 var(--ds-text-subtle), 0 0 0 var(--ring) var(--ds-border-focused);
     }
     .dot {
       width: 0.5rem; height: 0.5rem; min-height: 0;
@@ -295,12 +309,17 @@
     .dot.miss { background: var(--ds-brand); }
     .t-main { min-width: 0; overflow: hidden; }
     .t-title {
-      display: block;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
       font-family: var(--font-sans);
       font-size: var(--fs-sm);
       font-weight: 600;
       letter-spacing: var(--tracking-display);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      line-height: 1.25;
+      white-space: normal;
+      overflow: hidden;
+      overflow-wrap: break-word;
     }
     .t-sub {
       display: block;
@@ -326,6 +345,15 @@
       border-radius: var(--radius-xl);
       box-shadow: var(--ds-shadow-raised);
     }
+    .kicker {
+      font-size: var(--fs-2xs);
+      font-weight: 700;
+      letter-spacing: var(--tracking-label);
+      text-transform: uppercase;
+      margin: 0 0 var(--space-2);
+    }
+    .kicker.ok { color: var(--ds-success); }
+    .kicker.miss { color: var(--ds-text-subtle); }
     .path {
       font-family: var(--font-mono);
       font-size: var(--fs-2xs);
@@ -639,6 +667,8 @@
     .flash.err { color: var(--ds-danger); }
     .flash.ok { color: var(--ds-success); }
     .idle { color: var(--ds-text-subtle); font-size: var(--fs-sm); }
+    .gate-col .alert { margin: 0; }
+    .gate-col .alert .idle { margin: 0; color: inherit; }
 
     footer.foot {
       grid-column: 1 / -1;
@@ -724,11 +754,11 @@
     };
     const causeLbl = (id) => CAUSE[id] || String(id || "unknown").replace(/[._]/g, " ");
     const gapClaim = (g) => {
-      if (!g) return "We would not guess";
+      if (!g) return "We will not invent this number";
       if (g.ask_id === "A11") return "We will not invent a failover rate";
       if (g.ask_id === "A09") return "We will not guess why people left";
       if (g.ask_id === "A02") return "We will not break this down by customer";
-      return "We would not guess this number";
+      return "We will not invent this number";
     };
     const replayLbl = (v) => {
       if (!v) return "No test this run";
@@ -938,8 +968,8 @@
       const rest = gaps.filter((g) => g.ask_id !== "A11");
       const segs = [
         ["open", `To decide (${regs.length})`],
-        ["ignored", `Not a problem (${dismissed.length})`],
-        ["refused", `We would not guess (${gaps.length})`],
+        ["ignored", `All clear (${dismissed.length})`],
+        ["refused", `No number (${gaps.length})`],
       ];
       const items = [];
       const pushFinding = (f, kind) => {
@@ -947,7 +977,7 @@
         const sev = f.severity || "";
         const dot = kind === "dismissed" ? "ok" : (sev === "critical" || sev === "high") ? "bad" : "warn";
         const sub = `${esc(f.tenant || "—")} · ${esc(windowLbl(f.window) || "—")}`;
-        const stat = kind === "dismissed" ? "not a problem" : (imp.conversations_affected != null ? fmt(imp.conversations_affected, 0) + " conv." : "");
+        const stat = kind === "dismissed" ? "all clear" : (imp.conversations_affected != null ? fmt(imp.conversations_affected, 0) + " conv." : "");
         items.push(`<button type="button" class="trace${selectedKey === f.id ? " is-on" : ""}" data-key="${esc(f.id)}" aria-current="${selectedKey === f.id ? "true" : "false"}">
           <span class="dot ${dot}" aria-hidden="true"></span>
           <span class="t-main"><span class="t-title">${esc(f.headline || f.metric || f.id)}</span><span class="t-sub">${sub}</span></span>
@@ -1005,7 +1035,7 @@
         : "";
       $("detail").innerHTML = `
         <h1 class="claim">${esc(gapClaim(g))}</h1>
-        <div class="chips"><span class="badge ghost">No measurement</span></div>
+        <div class="chips"><span class="badge ghost">no number</span></div>
         <p class="lede">${esc(why)}</p>
         <div class="spans">
           <div class="span">
@@ -1033,7 +1063,7 @@
         <p class="path">${esc(cohortPath(f))}</p>
         <h1 class="claim">${esc(f.headline || f.metric || f.id)}</h1>
         <div class="chips">
-          <span class="badge ok">not a problem</span>
+          <span class="badge ok">all clear</span>
           ${f.tenant ? `<span class="badge ghost">${esc(f.tenant)}</span>` : ""}
           ${windowLbl(f.window) ? `<span class="badge ghost">${esc(windowLbl(f.window))}</span>` : ""}
         </div>
@@ -1157,18 +1187,14 @@
     }
 
     function idleGateCopy(pack) {
-      const g = (pack && pack.gap) || {};
-      const notMeasurable = pack && pack.kind === "gap" && (g.ask_id === "A11" || g.verdict === "NOT_MEASURABLE");
-      if (notMeasurable) {
-        return g.ask_id === "A11"
-          ? "Nothing to approve. We will not invent a failover rate."
-          : "Nothing to approve. We will not invent this number.";
-      }
       if (pack && pack.kind === "gap") {
         return "Nothing to approve. We will not invent this number.";
       }
-      if (pack && (pack.kind === "dismissed" || !pack.p)) {
-        return "Nothing to approve. This is not a problem.";
+      if (pack && pack.kind === "dismissed") {
+        return "Nothing to approve. This is all clear.";
+      }
+      if (pack && !pack.p) {
+        return "Nothing to approve on this finding.";
       }
       return "";
     }

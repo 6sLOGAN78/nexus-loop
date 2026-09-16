@@ -73,17 +73,28 @@ class ScreenHttp(unittest.TestCase):
         c.close()
         return r.status, dict(r.getheaders()), data
 
-    def test_idle_gate_copy_is_split(self):
+    def test_finding_tabs_and_idle_copy(self):
         st, _, body = self._json("GET", "/")
         page = body.decode()
         self.assertEqual(st, 200)
-        self.assertIn("Nothing to approve. We will not invent a failover rate.", page)
+        self.assertIn("`To decide (${regs.length})`", page)
+        self.assertIn("`All clear (${dismissed.length})`", page)
+        self.assertIn("`No number (${gaps.length})`", page)
+        self.assertNotIn("`Not a problem (${dismissed.length})`", page)
+        self.assertNotIn("`We would not guess (${gaps.length})`", page)
+        self.assertIn("Nothing to approve. This is all clear.", page)
         self.assertIn("Nothing to approve. We will not invent this number.", page)
-        self.assertIn("Nothing to approve. This is not a problem.", page)
-        self.assertNotIn("Nothing to approve — we would not guess this number", page)
-        self.assertNotIn("Nothing to change — this is not a problem.", page)
-        self.assertIn('g.ask_id === "A11" || g.verdict === "NOT_MEASURABLE"', page)
-        self.assertIn("pack.kind === \"dismissed\" || !pack.p", page)
+        self.assertNotIn("Nothing to approve. This is not a problem.", page)
+        self.assertNotIn("Nothing to approve. We will not invent a failover rate.", page)
+        self.assertIn("We will not invent a failover rate", page)
+        self.assertIn(">all clear<", page)
+        self.assertIn(">no number<", page)
+        self.assertNotIn(">not a problem<", page)
+        self.assertNotIn("we would not guess this number", page)
+        self.assertIn('pack.kind === "gap"', page)
+        self.assertIn('pack.kind === "dismissed"', page)
+        self.assertIn("white-space: nowrap;", page)
+        self.assertIn("-webkit-line-clamp: 2;", page)
 
     def test_get_page_and_security_headers(self):
         st, hdrs, body = self._json("GET", "/")

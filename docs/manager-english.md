@@ -59,16 +59,15 @@ A11 is `NOT_MEASURABLE`. The list title is the claim, not `A11`.
 | A11 | We will not invent a failover rate |
 | A09 | We will not guess why people left |
 | A02 | We will not break this down by customer |
-| any other gap | We would not guess this number |
+| any other gap | We will not invent this number |
 
 A11’s story also states **Why a retry is not failover** (from
 `why_the_proxy_misleads`) and **There is nothing to count**. The required
 event stays on the page. The decision pane is two mutually exclusive idle
-lines, chosen from the loaded finding: A11 / `NOT_MEASURABLE` says
-**Nothing to approve. We will not invent a failover rate.** (or **We will
-not invent this number.** if the metric is not failover). A dismissed
-lookalike (`is_regression: false`) or a finding with no prescription says
-**Nothing to approve. This is not a problem.** The two never mix.
+lines, chosen from the selected tab: **No number** (`gaps[]`, including A11)
+says **Nothing to approve. We will not invent this number.** **All clear**
+(dismissed lookalike, `is_regression: false`) says **Nothing to approve.
+This is all clear.** The two never mix.
 
 ---
 
@@ -93,15 +92,18 @@ when the report has it. Judged chips show calibration, never a bare 100%.
 | Internal group | Tab on the screen |
 |---|---|
 | regressions (`is_regression: true`) | To decide |
-| dismissed lookalikes (`is_regression: false`) | Not a problem |
-| `gaps[]` | We would not guess |
+| dismissed lookalikes (`is_regression: false`) | All clear |
+| `gaps[]` | No number |
+
+Only **To decide** is a work queue (Accept / Reject / Defer). **All clear**
+and **No number** need no decision.
 
 Row copy:
 
-| Situation | Subtitle / stat |
+| Situation | Subtitle / stat / chip |
 |---|---|
-| a gap | No measurement / no number |
-| a dismissal | not a problem |
+| a gap | No measurement / **no number** |
+| a dismissal | **all clear** |
 | a regression | conversation count from `impact.conversations_affected` |
 
 ---
@@ -161,8 +163,8 @@ Each card is label / figure / caption. Tones match the live CSS:
 | `would_not_ship_if` | Would not ship if. (under a disclosure) |
 | `accepted` / `rejected` / `deferred` | Accept / Reject / Defer |
 | empty reason | A reason is required. |
-| A11 / `NOT_MEASURABLE` | Nothing to approve. We will not invent a failover rate. (else: We will not invent this number.) |
-| a dismissal (`is_regression: false`) or no prescription | Nothing to approve. This is not a problem. |
+| No number tab (`gaps[]`, including A11) | Nothing to approve. We will not invent this number. |
+| All clear tab (dismissal, `is_regression: false`) | Nothing to approve. This is all clear. |
 
 Codes (`cause_class`, `change_type`, metric id, `replay_run_id`, ask ids,
 gap verdicts) sit under **Technical names**. The prescription description
