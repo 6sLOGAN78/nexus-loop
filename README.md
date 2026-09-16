@@ -103,7 +103,8 @@ python3 run.py --kit kit --team demo --out out/loop-report.json --serve --port 8
 
 The screen renders only from the report; the approve/reject action writes back
 into `prescriptions[].approval` atomically. See **`docs/ui-handoff.md`** for the
-full contract.
+field contract and **`docs/ux-psychology.md`** for why the console is shaped
+that way.
 
 ### Run the testbed
 

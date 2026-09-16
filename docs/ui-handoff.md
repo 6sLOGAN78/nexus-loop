@@ -100,18 +100,19 @@ recognition, trust calibration, why Reject is easy — is in
 
 **Regions (live screen):**
 
-The page is a **trace console**, not a dashboard of every session. Layout follows
-the tracing products operators already know (Phoenix / Langfuse / Helicone): a
-trace list, a span waterfall for this finding, and a human annotation pane.
-An operator should see the claim, the harm, and the ask without scrolling through
-evidence.
+The page is an **operator console**, not a dashboard of every session. Layout
+follows the tracing products (list / story / decision). Copy is manager English;
+detector codes live under **Technical names**. The prescription description and
+`asking_approval_for` stay in the open story and decision — they are already
+English. An operator should see the claim, the harm, and the ask without
+scrolling through evidence.
 
 | Region | Role |
 |--------|------|
 | Header | Quiet title, corpus, coverage/fidelity chips. REAL / STUBBED / SIMULATED sit under a disclosure — Framing 12 without a wall of notes. |
-| Trace list | Open regressions, dismissed lookalikes, refusals (A11 first). Each row is a finding: status, headline, tenant/window, conversations. Default selection is the verification’s prescription, else `tool.contract_break`. Hash deep-links the selected id. |
-| Waterfall | Four spans copied from the report: observe (metric vs baseline), diagnose (cause + config change), prescribe (change type), verify (replay before/after). Bars plot report values; they do not invent durations. Evidence stays under a disclosure. |
-| Annotate | The ask, then risk/no-ship under a disclosure, then Accept / Reject / Defer and a required reason. After save, the page re-fetches `/report.json`. |
+| List | To decide / Not a problem / We would not guess (A11 first, titled “We will not invent a failover rate”). Each row: headline, tenant, days, conversations. Default selection is the verification’s prescription, else `tool.contract_break`. Hash deep-links the selected id. |
+| Story | Four steps copied from the report: what changed, why we think so, what we would change, did the test help. A matching `standard[]` sentence sits under what changed. Bars plot report values. Evidence under a disclosure. Codes under Technical names. |
+| Your decision | The ask, then risk/no-ship under a disclosure, then Accept / Reject / Defer and a required reason. After save, the page re-fetches `/report.json`. |
 
 **Styles:** CSS follows the ui-ux-pro-max **design-system skill** (primitive →
 semantic → component tokens; Button / Card / Badge / Input / Alert specs and
@@ -195,16 +196,14 @@ demo show the refusal, state coverage out loud, and admit what is faked?
 These were presentation, not detector work. The loop still produces the data;
 the screen only maps it.
 
-- One finding at a time as a **trace**; the list reaches other regressions,
-  dismissed lookalikes, and refusals (A11 first).
-- The loop is a span waterfall (observe → diagnose → prescribe → verify).
-  Evidence, baseline working, and risk/no-ship sit under disclosures.
-- A11 is a first-class list row (not footer text): required event in mono, and
-  why retry is not failover.
+- One finding at a time; the list is To decide / Not a problem / We would not guess (A11 first).
+- The loop is four English steps: what changed, why we think so, what we would change, did the test help. A matching `standard[]` sentence sits under what changed.
+- Hybrid disclosure: `cause_class`, `change_type`, metric id, `replay_run_id`, ask ids, gap verdicts sit under Technical names. The prescription description and `asking_approval_for` stay in the open story and decision.
+- A11 is a first-class list row. The claim is “We will not invent a failover rate.” The required event stays on the page.
 - `coverage` / `fidelity` are chips; REAL / STUBBED / SIMULATED is one disclosure,
   not a header essay.
-- Graphite console + copper decision signal (tracing vernacular). Accept is
-  primary; Reject is destructive (a valid outcome); a recorded accept is success.
+- Graphite console + copper decision signal. Accept is primary; Reject is
+  destructive (a valid outcome); a recorded accept is success.
 
 **Do not**: recompute metrics client-side, invent values, change the report shape
 (ask the backend owner first), or let the screen and report diverge.
