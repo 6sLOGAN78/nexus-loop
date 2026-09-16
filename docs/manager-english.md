@@ -164,6 +164,16 @@ Comparison bars (report values only; green vs red, not brown):
 
 ---
 
+## Evidence and hints (`toManagerEnglish`)
+
+Evidence bullets and lead-ev lines run through `toManagerEnglish()` in
+`nexus_loop/static/index.html`. Raw codes in the report are replaced with
+the same English as the maps above (plus phrase pairs such as `tool p95
+latency` → Tool wait time). Codes stay under **Technical names**; the open
+Evidence list is manager-readable.
+
+---
+
 ## Harm KPIs (colour-coded cards)
 
 Each card is label / figure / caption. Tones match the live CSS:
