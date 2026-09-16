@@ -98,20 +98,24 @@ browser.
 
 **Regions (live screen):**
 
-The page is a **brief plus a signature**, not three columns of cards. An operator should
-see the claim, the harm, and the ask without scrolling through evidence.
+The page is a **trace console**, not a dashboard of every session. Layout follows
+the tracing products operators already know (Phoenix / Langfuse / Helicone): a
+trace list, a span waterfall for this finding, and a human annotation pane.
+An operator should see the claim, the harm, and the ask without scrolling through
+evidence.
 
 | Region | Role |
 |--------|------|
 | Header | Quiet title, corpus, coverage/fidelity chips. REAL / STUBBED / SIMULATED sit under a disclosure — Framing 12 without a wall of notes. |
-| Switcher | One-line tabs: regressions to decide, lookalikes ignored, refusals (A11 first). Selecting a tab loads the brief. Default selection is the verification’s prescription, else `tool.contract_break`. |
-| Brief | The eight questions, as prose, not a questionnaire. Impact + owner + inaction sit together. Evidence and baseline working live under a disclosure. |
-| Gate (sticky) | The ask, then risk/no-ship under a disclosure, then Accept / Reject / Defer and a required reason. After save, the page re-fetches `/report.json`. |
+| Trace list | Open regressions, dismissed lookalikes, refusals (A11 first). Each row is a finding: status, headline, tenant/window, conversations. Default selection is the verification’s prescription, else `tool.contract_break`. Hash deep-links the selected id. |
+| Waterfall | Four spans copied from the report: observe (metric vs baseline), diagnose (cause + config change), prescribe (change type), verify (replay before/after). Bars plot report values; they do not invent durations. Evidence stays under a disclosure. |
+| Annotate | The ask, then risk/no-ship under a disclosure, then Accept / Reject / Defer and a required reason. After save, the page re-fetches `/report.json`. |
 
 **Styles:** CSS follows the ui-ux-pro-max **design-system skill** (primitive →
 semantic → component tokens; Button / Card / Badge / Input / Alert specs and
 states). Hex exists only in the primitive layer. Numbers still come **only**
-from the report — tokens do not invent charts or metrics.
+from the report — tokens do not invent charts or metrics. Dark graphite + copper
+signal is the tracing-console vernacular, not a paper brief.
 
 ---
 
@@ -189,16 +193,16 @@ demo show the refusal, state coverage out loud, and admit what is faked?
 These were presentation, not detector work. The loop still produces the data;
 the screen only maps it.
 
-- One finding at a time as a **brief**; a one-line tab switcher reaches other
-  regressions, dismissed lookalikes, and refusals (A11 first).
-- Evidence, baseline working, and risk/no-ship sit under disclosures so the
-  first screen is the claim, the harm, and the signature.
-- A11 is a first-class tab (not footer text): required event in mono, and why
-  retry is not failover.
+- One finding at a time as a **trace**; the list reaches other regressions,
+  dismissed lookalikes, and refusals (A11 first).
+- The loop is a span waterfall (observe → diagnose → prescribe → verify).
+  Evidence, baseline working, and risk/no-ship sit under disclosures.
+- A11 is a first-class list row (not footer text): required event in mono, and
+  why retry is not failover.
 - `coverage` / `fidelity` are chips; REAL / STUBBED / SIMULATED is one disclosure,
   not a header essay.
-- Paper + navy tokens (not a dark dashboard). Accept is primary; Reject is
-  destructive (a valid outcome); a recorded accept is success.
+- Graphite console + copper decision signal (tracing vernacular). Accept is
+  primary; Reject is destructive (a valid outcome); a recorded accept is success.
 
 **Do not**: recompute metrics client-side, invent values, change the report shape
 (ask the backend owner first), or let the screen and report diverge.
