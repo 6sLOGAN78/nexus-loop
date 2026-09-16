@@ -111,7 +111,7 @@ def detect_tool_contract(corpus: Corpus, cov: Coverage) -> List[dict]:
                 e = d["errors_by_tool"].get(tool, 0)
                 empty.add_rate(int(s["day"]), d["empty_by_tool"].get(tool, 0), c - e)
                 errs.add_rate(int(s["day"]), e, c)
-            w = best_window(empty, "up", min_len=3, max_len=D // 2, min_n_in=T.TOOL_MIN_CALLS_IN,
+            w = best_window(empty, "up", min_len=3, max_len=D, min_n_in=T.TOOL_MIN_CALLS_IN,
                             min_n_out=T.TOOL_MIN_CALLS_IN, min_days_out=T.MIN_DAYS_OUT)
             if not w:
                 continue
@@ -218,7 +218,7 @@ def detect_resolution_drops(corpus: Corpus, cov: Coverage, claimed: List[dict]) 
             ser = DaySeries(D)
             for s in rows:
                 ser.add(int(s["day"]), 1.0 if resolved(s) else 0.0)
-            w = best_window(ser, "down", min_len=3, max_len=D // 2, min_n_in=T.RES_MIN_N_IN,
+            w = best_window(ser, "down", min_len=3, max_len=D, min_n_in=T.RES_MIN_N_IN,
                             min_n_out=T.RES_MIN_N_IN, min_days_out=T.MIN_DAYS_OUT)
             if not w or (w.outside - w.inside) < T.RES_MIN_DROP or w.z < T.RES_MIN_Z:
                 continue
@@ -362,7 +362,7 @@ def detect_efficiency(corpus: Corpus, cov: Coverage) -> List[dict]:
             ser = DaySeries(D)
             for s in res_rows:
                 ser.add(int(s["day"]), float(s["turns"]))
-            w = best_window(ser, "up", min_len=4, max_len=D // 2, min_n_in=T.EFF_MIN_N_IN,
+            w = best_window(ser, "up", min_len=4, max_len=D, min_n_in=T.EFF_MIN_N_IN,
                             min_n_out=T.EFF_MIN_N_IN, min_days_out=T.MIN_DAYS_OUT)
             if not w or w.outside <= 0:
                 continue

@@ -26,6 +26,7 @@ class T:
     MIX_MIN_AGG_MOVE = 0.01
     MIX_FLAT_TOL = 0.05
     MIX_FLAT_Z = 4.0               # two-proportion z bar; aligned with the resolution detector's RES_MIN_Z
+    MIX_SMALL_TOL = 0.25           # below the z-test floor, a move this large still blocks a mix dismissal
     LOAD_MIN_VOLUME_RATIO = 2.0
     LOAD_HOLD_RATIO = 1.5
     LOAD_MAX_LEN = 7
@@ -81,7 +82,7 @@ def detect_traffic_mix(corpus: Corpus, regressions: List[dict]) -> List[dict]:
                 share.add_rate(d, i_by_day.get(d, 0), tot)
             if share.first_day() is None or share.first_day() > T.MIN_DAYS_OUT:
                 continue                              # a newly born cohort is not a mix shift
-            w = best_window(share, "up", min_len=3, max_len=D // 2, min_n_in=T.MIN_N,
+            w = best_window(share, "up", min_len=3, max_len=D, min_n_in=T.MIN_N,
                             min_n_out=T.MIN_N, min_days_out=T.MIN_DAYS_OUT)
             if not w or w.inside < T.MIX_MIN_SHARE_RATIO * max(w.outside, 1e-9) \
                     or (w.inside - w.outside) < T.MIX_MIN_SHARE_ABS:
@@ -100,15 +101,25 @@ def detect_traffic_mix(corpus: Corpus, regressions: List[dict]) -> List[dict]:
                            if g.get("tenant") == tenant and (g.get("cohort") or {}).get("intent")}
             per_intent = {}
             moved = []
+            small_untested = []
             for p_intent, p_rows in by_intent.items():
                 p_in, p_out = _in(p_rows, a, b), _out(p_rows, a, b)
-                if len(p_in) < T.MIN_N or len(p_out) < T.MIN_N:
+                if not p_in or not p_out:
                     continue
                 r_in = rate(sum(1 for s in p_in if contained(s)), len(p_in))
                 r_out = rate(sum(1 for s in p_out if contained(s)), len(p_out))
                 per_intent[p_intent] = (r_in, r_out)
-                if _rate_moved(r_in, r_out, len(p_in), len(p_out)) and p_intent not in reg_intents:
+                if p_intent in reg_intents:
+                    continue
+                if len(p_in) >= T.MIN_N and len(p_out) >= T.MIN_N:
+                    if _rate_moved(r_in, r_out, len(p_in), len(p_out)):
+                        moved.append(p_intent)
+                elif abs((r_in or 0.0) - (r_out or 0.0)) > T.MIX_SMALL_TOL:
+                    # too small to z-test, but a large absolute move still blocks
+                    # the dismissal rather than being waved away as mix
                     moved.append(p_intent)
+                else:
+                    small_untested.append(p_intent)
             if moved:
                 continue
             out.append({
@@ -128,6 +139,10 @@ def detect_traffic_mix(corpus: Corpus, regressions: List[dict]) -> List[dict]:
                     "aggregate containment %s -> %s; stratified by intent: %s"
                     % (_fmt(agg_out, 4), _fmt(agg_in, 4),
                        ", ".join("%s %s->%s" % (k, _fmt(v[1]), _fmt(v[0])) for k, v in sorted(per_intent.items()))),
+                    ("small cohorts below the %d-session z-test floor, none moved more than %.0fpt: %s"
+                     % (T.MIN_N, 100 * T.MIX_SMALL_TOL, ", ".join(sorted(small_untested)))
+                     if small_untested else
+                     "every intent cleared the %d-session z-test floor" % T.MIN_N),
                     ("config changes in the tenant during the window — none touches %s's rate: %s"
                      % (intent, "; ".join("day %d %s %s" % (c["day"], c["kind"], c["target"])
                                           for c in corpus.changes_for(tenant) if a <= c["day"] < b))
