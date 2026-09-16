@@ -106,6 +106,8 @@ structured `coverage.observed_vs_declared` rather than a vague note.
 Three detectors, each owning its own cohort dimensions. A shared window scanner
 (`series.py`) finds the contiguous day window whose inside mean differs most
 from the outside mean (a Welch z-score), which suits faults that start and end.
+Window length is not capped below the corpus length; a 7-day outside requirement
+is what bounds it, so a long-running fault can still be enclosed.
 
 1. **Silent tool contract break** — per `(tenant, tool)`: the per-day rate of
    responses that are HTTP 200 / `ok` but carry zero result fields. Requires the
@@ -133,7 +135,9 @@ missing a real problem. Each is emitted as a **non-regression finding with a
 linked diagnosis** carrying the exact cause class:
 
 - **traffic_mix** — aggregate moves, one intent's share jumps, per-intent rates
-  flat (regression cohorts excused; flatness is a two-proportion z test).
+  flat (regression cohorts excused; flatness is a two-proportion z test). Cohorts
+  too small for the z-test are checked with an absolute floor and named in
+  evidence, so a small-cohort drop cannot be silently dismissed as mix.
 - **load** — volume and latency spike then revert, outcomes flat.
 - **judge_change** — quality drops on both tenants at a `judge_version`
   boundary; we never trend quality across it.

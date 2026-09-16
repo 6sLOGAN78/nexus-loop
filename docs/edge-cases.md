@@ -36,6 +36,22 @@ The catalog's coverage claims do not always match the generated corpus (e.g.
 > "We don't trust the catalog's coverage prose; we measure it and print the
 > declared-vs-observed gap when they disagree."
 
+### 1.4 Catalog drift we do not edit — [handled by measuring, not by trusting]
+The kit's catalog is a planning contract, and in a few places it disagrees with
+the mounted corpus. Kit files are organiser-owned, so we do not edit them; we
+measure and flag:
+- **Calibration set size.** `catalog.json` describes "100 human-scored sessions";
+  `manifest.json` and `labels/rubric_scores.jsonl` are **96**, and the published
+  calibration uses n=96.
+- **v2 coverage.** `catalog.json` declares `cost_per_session` and
+  `kb_fallthrough_rate` coverage `0.72`/`0.93` on the basis that `v2_flow` lacks
+  `kb_lookup` and cost. In the corpus, v2 sessions carry `cost_usd` and emit
+  `kb_lookup` (and guardrail) steps; only `tool_call` is truly absent. Each
+  affected metric carries `coverage.observed_vs_declared` rather than trusting the
+  prose.
+> "We measure coverage from the corpus and print the declared-vs-observed gap,
+> including where the catalog's own numbers are stale."
+
 ---
 
 ## 2. Cost — A03 / A08
@@ -125,7 +141,10 @@ force a scapegoat.
 
 ### 4.2 The three lookalikes — [handled]
 Traffic-mix shift, load spike, and judge-version boundary are each examined and
-explicitly dismissed with the scorer's cause class and a written reason.
+explicitly dismissed with the scorer's cause class and a written reason. The mix
+dismissal flatness-tests **every** intent; a cohort too small for the z-test is
+checked with an absolute guard (`MIX_SMALL_TOL`) and, if quiet, named in evidence,
+so a genuine small-cohort drop cannot be waved away as mix.
 > "We earn specificity by looking and being right, not by staying quiet."
 
 ### 4.3 Month-over-month is mix-adjusted (A02) — [handled]
@@ -272,12 +291,15 @@ trap is found or a `[queued]` item ships.
 | GE4 | Decision shaped before the gate: asking / risk / would-not-ship | `diagnose.prescription` | `prescriptions[].decision` | handled |
 | GE5 | Impact says who must act | `impact.AUDIENCE` | `findings[].audience` | handled |
 | FX1 | Empty-success requires an explicit `result_field_count == 0`; a missing key is unknown, not empty | `features.py` `_fold` | `metrics[m_tool_empty_success_*]`, `findings[f01]` | handled |
-| FX2 | Traffic-mix dismissal compares like outcomes (containment on both sides) | `decoys.detect_traffic_mix` | `findings[f05].not_a_regression_by` | handled |
+| FX2 | Traffic-mix dismissal compares like outcomes (containment on both sides) | `decoys.detect_traffic_mix` | `findings[f05].not_a_regression_because` | handled |
 | FX3 | A02 adjusted: both ends on the common-intent scope; born-in-month-2 named | `asks.py` A02 | `metrics[m_mom_resolution_adjusted].value`, `.breakdown.*.born_in_month2` | handled |
 | FX4 | A03 `cost_state`: `unbounded` (0 resolved) vs `cost_unavailable` (no priced resolution) | `asks.py` A03 | `metrics[m_cost_per_resolved_*].breakdown` | handled |
 | FX5 | `plan.breakdowns` matches the produced breakdown | `asks.py` (all metrics) | `metrics[].plan.breakdowns` | handled |
 | FX6 | A06 files a gap when calibration is unavailable (no silent vanish); CSAT not over-claimed | `asks.py` A06 | `gaps[A06]` | handled |
 | FX7 | Regeneration preserves recorded approvals by (id, diagnosis, target) | `run.py`, `report.assemble` | `prescriptions[].approval`, `system_notes` PRESERVED | handled |
+| FX8 | Step-grain fallback for by-design handoff and milestones when the session field is absent | `features.by_design_handoff`, `features.milestones_of` | `metrics[m_containment]`, `metrics[m_returns_dropoff]` | handled |
+| FX9 | Mix dismissal no longer silently skips small cohorts | `decoys.detect_traffic_mix` | `findings[f05].evidence` | handled |
+| FX10 | Window length cap raised from `D//2` to `D` | `series.best_window` callers | `findings[].window` | handled |
 | IN1 | z assumes independent sessions; clustering inflates z (high floors offset) | `series.best_window` | `findings[].evidence` z token | state-only |
 | IN2 | Multiple comparisons: ~1,500 windows × ~50 cohorts under a fixed z floor | `series.py`, `detect.py` | `findings[].evidence` | state-only |
 | IN3 | Winner's curse: window chosen for contrast, effect measured on same days | `series.py` | `findings[].observed/expected` | state-only |
@@ -289,8 +311,8 @@ trap is found or a `[queued]` item ships.
 | IN9 | Efficiency conditions on resolved sessions (selection if resolution shifts) | `detect.detect_efficiency` | `findings[f03]` | verify-later |
 | IN10 | No cross-tenant control; a global fault is invisible except the judge decoy | `detect.py`, `decoys.py` | — | state-only |
 | IN11 | Controls can move with the fault (sick KB peers; all siblings move) | `detect.py` | `findings[].evidence` | state-only |
-| IN12 | Small intents (<60) exempt from the mix-flatness guard | `decoys.py` | `findings[f05].not_a_regression_by` | state-only |
-| IN13 | Window caps (`max_len=D//2`, `min_days_out=7`) can miss long/early/late faults | `series.py` | `findings[].window` | state-only |
+| IN12 | Small intents: an absolute guard (`MIX_SMALL_TOL`) blocks a large small-cohort move; quiet ones are named | `decoys.detect_traffic_mix` | `findings[f05].evidence` | handled |
+| IN13 | Window length cap raised to `D` (`min_days_out` still bounds); long faults now encloseable | `series.best_window` callers | `findings[].window` | handled |
 | IN14 | Right-censoring at the corpus edge is unmodeled | `features.py`, `series.py` | — | verify-later |
 | SC1 | Loop 8/8 saturates from metrics+links+predicted (replay not needed for the cap) | `score.py` | `metrics/diagnoses/prescriptions` | state-only |
 | SC2 | Fidelity+coverage 4 points are automatic for schema-valid reports | `score.py`, schema | `metrics[].fidelity/coverage` | state-only |
