@@ -1410,14 +1410,18 @@
     }
 
     function idleGateCopy(pack) {
+      const g = (pack && pack.gap) || {};
+      const notMeasurable = pack && pack.kind === "gap" && (g.ask_id === "A11" || g.verdict === "NOT_MEASURABLE");
+      if (notMeasurable) {
+        return g.ask_id === "A11"
+          ? "Nothing to approve. We will not invent a failover rate."
+          : "Nothing to approve. We will not invent this number.";
+      }
       if (pack && pack.kind === "gap") {
-        return "Nothing to approve. We will not invent this number.";
+        return "Nothing to approve. " + gapClaim(g) + ".";
       }
-      if (pack && pack.kind === "dismissed") {
-        return "Nothing to approve. This is all clear.";
-      }
-      if (pack && !pack.p) {
-        return "Nothing to approve on this finding.";
+      if (pack && (pack.kind === "dismissed" || !pack.p)) {
+        return "Nothing to approve. This is not a problem.";
       }
       return "";
     }
