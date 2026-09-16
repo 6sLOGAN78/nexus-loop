@@ -74,12 +74,18 @@ no price constant exists in the corpus, so they stay counts and rates.
 If an intent resolves nothing, cost per successful resolution is not `0` and not
 undefined-to-be-ignored — it is **unbounded**, the worst case. `cost_to_resolve`
 is emitted as the literal `"unbounded"`, those intents are ranked **first** by
-total spend (not last), and they are listed under
-`breakdown.unbounded_intents`. The old `cost_per_resolved or 0` key sorted
-"cannot compute" as "cheapest"; that is fixed. None exist in the practice corpus
-(min resolved per intent is 309), but a hostile sealed corpus can produce them.
-> "An intent that spends money and resolves nothing has infinite unit cost — that
-> is the loudest row on the page, not a blank one."
+total spend (not last), and they are listed under `breakdown.unbounded_intents`.
+
+A **different** state is kept separate: an intent that *does* resolve but whose
+resolved sessions carry no recorded cost is `cost_to_resolve="cost_unavailable"`
+(a coverage gap, ranked after unbounded, listed under
+`breakdown.cost_unavailable_intents`) — never confused with infinite cost. The
+old `cost_per_resolved or 0` key sorted "cannot compute" as "cheapest"; both
+states are now explicit. None exist in the practice corpus (min resolved per
+intent is 309), but a hostile sealed corpus can produce either.
+> "An intent that spends money and resolves nothing has infinite unit cost; an
+> intent whose cost telemetry is missing is a coverage gap — different states,
+> and neither is ranked as 'cheapest'."
 
 ---
 
@@ -133,16 +139,23 @@ We answer A02 with **two** metrics, not one:
   so the mix is visible in the same table.
 - `m_mom_resolution_adjusted` (derived) — hold **month-1 intent shares static**,
   apply **month-2 per-intent rates** over the common intents (≥30 sessions in each
-  month, renormalised). It reports `raw`, `adjusted`, `mix_effect = raw − adjusted`,
-  and `change_beyond_mix = adjusted − month_1`. The `breakdown` lists the excluded
-  intents, the month-1 weights, and any detected event overlapping a month window.
+  month, renormalised). Crucially, **both ends sit on the same common-intent
+  scope**: it reports `raw_all_intents`, `common` = `[month_1_common, month_2_common]`,
+  `adjusted` = `[month_1_common, mix-held month_2]`, `mix_effect = common_month2 −
+  adjusted`, and `change_beyond_mix = adjusted − common_month1`. So
+  `change_beyond_mix` is not contaminated by an intent entering or leaving.
 
-The idea is exactly the teammate's: freezing the fraction-of-people removes the mix
-from the comparison, so whatever is left is the agent. Quality is never trended
-month over month — the judge-version boundary (4.4) makes that a measurement of the
-rubric, not the agent.
-> "We hold last month's mix fixed and apply this month's per-intent rates. The gap
-> between raw and adjusted is the mix effect; the rest is the agent."
+The idea is the teammate's: freezing the fraction-of-people removes the mix from
+the comparison, so whatever is left is the agent. One caveat is stated, not hidden:
+a cohort **born in month 2** has no month-1 share and cannot be mix-held, so it is
+excluded and named under `breakdown.<tenant>.born_in_month2`. A regression that
+arrives as a brand-new cohort (here `premium_card_info`, the F1 fault) will *not*
+show in the adjusted number — it shows in the raw per-intent table. Quality is
+never trended month over month — the judge-version boundary (4.4) makes that a
+measurement of the rubric, not the agent.
+> "We hold last month's mix fixed and apply this month's per-intent rates, and both
+> ends are the same common-intent scope. A cohort born this month can't be held
+> fixed, so we name it and point you at the raw table instead."
 
 ### 4.4 Judge-version boundary — [handled]
 Judged quality drops on every tenant on the day `judge_version` flips v1→v2.
@@ -258,3 +271,121 @@ trap is found or a `[queued]` item ships.
 | GE3 | Deterministic scope, judged ordering (A10) | `asks._review_queue` | `metrics[m_review_queue]` | handled |
 | GE4 | Decision shaped before the gate: asking / risk / would-not-ship | `diagnose.prescription` | `prescriptions[].decision` | handled |
 | GE5 | Impact says who must act | `impact.AUDIENCE` | `findings[].audience` | handled |
+| FX1 | Empty-success requires an explicit `result_field_count == 0`; a missing key is unknown, not empty | `features.py` `_fold` | `metrics[m_tool_empty_success_*]`, `findings[f01]` | handled |
+| FX2 | Traffic-mix dismissal compares like outcomes (containment on both sides) | `decoys.detect_traffic_mix` | `findings[f05].not_a_regression_by` | handled |
+| FX3 | A02 adjusted: both ends on the common-intent scope; born-in-month-2 named | `asks.py` A02 | `metrics[m_mom_resolution_adjusted].value`, `.breakdown.*.born_in_month2` | handled |
+| FX4 | A03 `cost_state`: `unbounded` (0 resolved) vs `cost_unavailable` (no priced resolution) | `asks.py` A03 | `metrics[m_cost_per_resolved_*].breakdown` | handled |
+| FX5 | `plan.breakdowns` matches the produced breakdown | `asks.py` (all metrics) | `metrics[].plan.breakdowns` | handled |
+| FX6 | A06 files a gap when calibration is unavailable (no silent vanish); CSAT not over-claimed | `asks.py` A06 | `gaps[A06]` | handled |
+| FX7 | Regeneration preserves recorded approvals by (id, diagnosis, target) | `run.py`, `report.assemble` | `prescriptions[].approval`, `system_notes` PRESERVED | handled |
+| IN1 | z assumes independent sessions; clustering inflates z (high floors offset) | `series.best_window` | `findings[].evidence` z token | state-only |
+| IN2 | Multiple comparisons: ~1,500 windows × ~50 cohorts under a fixed z floor | `series.py`, `detect.py` | `findings[].evidence` | state-only |
+| IN3 | Winner's curse: window chosen for contrast, effect measured on same days | `series.py` | `findings[].observed/expected` | state-only |
+| IN4 | Degenerate zero-variance baseline makes z huge (e.g. z=21 vs 0.0%) | `series.py:131-135` | `findings[f01].evidence` | state-only |
+| IN5 | Detection uses Welch SE, mix guard uses pooled SE — same z bar, different tests | `series.py` vs `decoys._rate_moved` | — | state-only |
+| IN6 | Detect on mean turns, report median turns (heavy tails disagree) | `detect.detect_efficiency` | `findings[f03].evidence` | state-only |
+| IN7 | `diagnoses[].confidence` is an author prior, not a calibrated posterior | `detect.py`, `decoys.py` | `diagnoses[].confidence` | state-only |
+| IN8 | Severity is effect size only (no n/significance) | `impact.severity_for` | `findings[].severity` | state-only |
+| IN9 | Efficiency conditions on resolved sessions (selection if resolution shifts) | `detect.detect_efficiency` | `findings[f03]` | verify-later |
+| IN10 | No cross-tenant control; a global fault is invisible except the judge decoy | `detect.py`, `decoys.py` | — | state-only |
+| IN11 | Controls can move with the fault (sick KB peers; all siblings move) | `detect.py` | `findings[].evidence` | state-only |
+| IN12 | Small intents (<60) exempt from the mix-flatness guard | `decoys.py` | `findings[f05].not_a_regression_by` | state-only |
+| IN13 | Window caps (`max_len=D//2`, `min_days_out=7`) can miss long/early/late faults | `series.py` | `findings[].window` | state-only |
+| IN14 | Right-censoring at the corpus edge is unmodeled | `features.py`, `series.py` | — | verify-later |
+| SC1 | Loop 8/8 saturates from metrics+links+predicted (replay not needed for the cap) | `score.py` | `metrics/diagnoses/prescriptions` | state-only |
+| SC2 | Fidelity+coverage 4 points are automatic for schema-valid reports | `score.py`, schema | `metrics[].fidelity/coverage` | state-only |
+| SC3 | Silence is punished: empty findings = 0; unexamined decoy −4.2 vs −1.47 | `score.py` | `findings[]` | state-only |
+| SC4 | Fidelity asymmetry: A04 gap hurts (−1.0), A09 gap helps (+0.75) | `score.py` | `gaps[A04]/gaps[A09]` | state-only |
+| SC5 | A11 field credit lenient in score.py, strict in the testbed | `score.py`, testbed | `gaps[A11].required_event` | state-only |
+| SC6 | The gate is "real" only if a verdict is recorded (0/3 until clicked) | `score.py` judges' checklist, `app.py` | `prescriptions[].approval` | state-only |
+| VL1 | Autocorrelation magnitude | — | — | verify-later |
+| VL2 | Day-of-week / seasonality sensitivity | — | — | verify-later |
+| VL3 | Right-censoring at export | — | — | verify-later |
+| VL4 | Coverage computed globally vs per tenant | `coverage.py` | `metrics[].coverage` | verify-later |
+| VL5 | Cost missingness MNAR (are expensive sessions unpriced?) | `_cost_coverage` | `metrics[].coverage` | verify-later |
+| VL6 | A10 p90 over 56 days vs the last-7-day window | `asks._review_queue` | `metrics[m_review_queue]` | verify-later |
+| VL7 | Golden-set fingerprint keys on corpus shape, not content | `standards.freeze_golden_sets` | `prescriptions[].golden_set` | verify-later |
+| VL8 | Validation backend differs with/without `jsonschema` installed | `validate.py` | — | verify-later |
+
+---
+
+## 10. Statistical inference caveats (state them, don't hide them)
+
+These are properties of the method, not bugs to fix — they are the "how much
+should you trust this" answers. (Ledger rows IN1–IN14.)
+
+- **Independence.** The Welch z treats every session as an independent draw.
+  Sessions cluster by day, agent, prompt version and KB version, so the effective
+  sample size is smaller than `n` and the z is optimistic. The high z floors (4–6)
+  are an informal offset, not a cluster-robust test.
+- **Multiple comparisons.** `best_window` maximises over ~1,500 candidate windows
+  per series across ~50 cohorts, so an unadjusted z=4 is not a 1-in-30k event. The
+  floors plus absolute-lift requirements are the family-wise guard; we say so.
+- **Winner's curse.** The window is chosen because it contrasts most, and the
+  effect and baseline are then estimated on those same days, so effect sizes are
+  inflated. The frozen golden set removes hindsight for *fixes*, not for detection.
+- **Degenerate baselines.** "0.0% outside (z=21.0)" is a zero-variance baseline;
+  the z is driven by the degenerate outside, not by precision. A rule-of-three or
+  an exact interval would be the honest scale.
+- **Two z estimators.** Detection uses an unpooled (Welch) SE; the mix-flatness
+  guard uses a pooled two-proportion SE. Both compare to ~4.0, so "z ≥ 4" is not
+  the same test in the two places.
+- **Estimand.** Efficiency detects on mean turns (z, severity ratio) but reports
+  median turns; heavy tails make them disagree, so both are printed.
+- **Confidence is a prior.** `diagnoses[].confidence` is a hand-set author value,
+  not a calibrated posterior; it does not vary with z or n.
+- **Severity is effect size only.** No n/significance term, so a 60-session cohort
+  can be "critical" while a 5,000-session 6-point drop is "high".
+- **Selection on resolution (efficiency).** Turns are measured only on resolved
+  sessions, so if a fault changes *which* conversations resolve, the estimate is
+  selection-biased.
+- **No cross-tenant control by design.** Peers/siblings are same-tenant only, so a
+  global model/provider fault is invisible to the detectors (only the judge
+  boundary looks across tenants). This avoids tenant confounds at the cost of
+  global-fault blindness.
+- **Controls can move with the fault.** KB peers must be healthy and siblings must
+  not move; if the whole KB degrades, or every sibling moves, the control defeats
+  itself and the fault is under-reported.
+- **Small cohorts exempt.** The mix-flatness guard only runs for intents with ≥60
+  sessions on each side, so a genuine small-cohort drop can be waved away as mix.
+- **Window caps.** `max_len = D//2` and `min_days_out = 7` mean a fault longer than
+  half the corpus, or one starting in the first week, can fall outside the scan.
+- **Right-censoring.** Conversations still open at export are not modelled; a real
+  export could show a fake late drop. The simulator always writes an end state, so
+  this is latent in-kit but real in production logs.
+
+## 11. Scoring and delivery mechanics (worth knowing)
+
+- **Loop points are already saturated.** Metrics + linked diagnoses + linked
+  prescriptions + a predicted delta sum to 9 > the 8 cap, so the loop rubric is
+  maxed before any replay. We still run replay because the demo and the testbed
+  require a real `rp_` verification.
+- **The 4 fidelity+coverage honesty points are automatic** for any schema-valid
+  file (both fields are schema-required). The differentiating honesty points are
+  the tool-coverage trap C1, the calibration, the A11 refusal, and the A04/A09
+  fidelity traps.
+- **Silence is punished, not rewarded.** Specificity starts at 15; an empty
+  `findings` list scores 0, and an unexamined decoy costs −4.2 when nothing was
+  flagged vs −1.47 when something was.
+- **Fidelity asymmetry.** An A04 *gap* scores −1.0 (tool failure must be
+  measured); an A09 *gap* scores +0.75 (abandonment reason must be judged). Never
+  put a gap where a measured number belongs.
+- **A11 field credit** needs only one overlapping field for `score.py` but all
+  four for the testbed; we always name all four.
+- **The gate is only "real" if you click it.** The judges' checklist counts
+  recorded verdicts (0/3 until a decision is made). The demo should record a
+  verdict on each prescription, and the printed scorecard is taken before any
+  decision, so re-score after deciding.
+- **Regeneration used to wipe verdicts — now fixed.** Approvals are carried
+  forward by (id, diagnosis_id, target) and `run.py` notes PRESERVED.
+
+## 12. Verify-later (data checks for a sealed or other corpus)
+
+- Autocorrelation magnitude; day-of-week/seasonality; right-censoring.
+- Coverage computed globally vs per tenant (a tenant-specific emission hole).
+- Cost missingness MNAR — are expensive/long sessions preferentially unpriced?
+- A10 uses a 56-day p90 but a last-7-day window, so a bad week flags more.
+- Golden-set fingerprint keys on corpus shape (`n_sessions/tenants/days`), not
+  content — two same-sized sealed corpora would share golden sets.
+- `jsonschema` is absent here, so validation falls back to the built-in subset
+  checker; an environment with it installed is the stricter authority.
