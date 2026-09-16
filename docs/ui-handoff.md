@@ -119,8 +119,9 @@ semantic → component tokens; Button / Card / Badge / Input / Alert specs and
 states). Hex exists only in the primitive layer. Numbers still come **only**
 from the report — tokens do not invent charts or metrics. The page follows the
 Atlassian Design System (light): sunken `#F7F8F9` canvas, raised 12px columns,
-8px cards, 6px buttons and fields, 4px lozenges. Accept is brand blue `#0C66E4`
-(primary action, not a “yes”). Reject is danger `#C9372C`. Defer is subtle.
+8px cards, 6px buttons and fields, 4px lozenges. Accept is success green
+`#1F845A` (go). Reject is danger `#C9372C` (stop). Defer is subtle (wait).
+Brand blue stays on navigation, selected rows, and links.
 
 ---
 
@@ -205,8 +206,9 @@ the screen only maps it.
 - `coverage` / `fidelity` chips in English (coverage named as coverage; judged
   chips show calibration, never a bare 100%). REAL / STUBBED / SIMULATED / 100×
   sit under one disclosure.
-- Atlassian light tokens, rounded and raised. Accept is brand-blue primary;
-  Reject is danger (a valid outcome); a recorded accept is a success lozenge.
+- Atlassian light tokens, rounded and raised. Accept is success green (go);
+  Reject is danger (stop, a valid outcome); Defer is subtle (wait). A recorded
+  accept is a success lozenge.
 
 **Do not**: recompute metrics client-side, invent values, change the report shape
 (ask the backend owner first), or let the screen and report diverge.

@@ -102,10 +102,10 @@ The previous screen was paper and navy: a brief to sign. That is a legitimate ed
 The desk follows the **Atlassian Design System (light)**: a sunken `#F7F8F9` canvas, raised white cards, 12px columns, 8px inner cards, 6px controls, 4px lozenges.
 
 - Sunken grey (not cream, not night-shift black) is a change ticket a manager can sign on Monday morning. It is not a log, not a magazine, not acid-green-on-black. Rounded corners and raised shadows are how Atlassian marks *containers* vs *actions* — the finding is a card; the verdict is a button.
-- **Brand blue (`#0C66E4`) is the decision lamp.** It is the colour of “a human must act.” It is *not* success green. Green is reserved for measured coverage, dismissed lookalikes, and a recorded accept. If Accept were green in a sea of green “healthy” chips, colour would **prime confirmation**: the page would feel like it wants a yes. Prospect theory: people overweight the frame. We frame the gate as a choice, not a celebration. Brand blue is also the Atlassian primary button, so the page reads as a product, not a generated dashboard.
-- Danger red (`#C9372C`) is reserved for high/critical severity, Reject, and “now / before” bars that are the worse side of a comparison. It is a signal, used sparingly, so it still means something (von Restorff: isolation makes it memorable).
+- **The gate is a traffic light, in Atlassian tokens.** Success green `#1F845A` (go / Accept) sits opposite danger red `#C9372C` (stop / Reject). They are complementary hues, so they **pop apart pre-attentively** (Treisman: colour is a feature that does not need the label). Warm brown plus warm red did not: both read as “alert,” so the hand could not tell proceed from refuse without reading. Defer stays achromatic (wait / no valence). Brand blue `#0C66E4` stays on selected rows, links, and “a human is here” — it is navigation, not a verdict.
+- Green is isolated in the gate. Coverage chips are small lozenges in the header, not competing bars, so the proceed control does not drown in “healthy.” The **bias brake is the required reason**, not a camouflaged Accept: elaboration slows the click (implementation intention). Prospect theory still applies — people overweight the frame — so all three targets stay the same size (Fitts). A rejection with a reason is a successful product decision; red is as easy to hit as green.
 
-Accept is the filled brand-blue button because it is the primary *action*, not because it is the morally preferred outcome. Reject is destructive (danger). Defer is a subtle/neutral button. All three are full-width, equally easy to hit (Fitts: target size). A rejection with a reason is a successful product decision; the styling must not punish it.
+Accept is success-bold because it must mean *proceed* before the word is read. Reject is danger-bold because it must mean *stop*. Defer is subtle because it must mean *not now*.
 
 ---
 
@@ -165,7 +165,7 @@ We do not auto-Accept. We do not hide Reject. We do not pre-fill the reason. Def
 |---|---|
 | A dashboard of sessions | Exploration trap; 80k rows are not a decision |
 | Charts we compute in the browser | Second source of truth |
-| Green primary / “success” Accept | Primes yes |
+| Making Accept larger or greener-and-easier than Reject | Punishes a valid no; colour encodes go/stop, size stays equal |
 | Paper + serif brief | Wrong genre for this operator; currently a generated-UI tell |
 | Fake waterfall durations | Invented telemetry |
 | Labelling the eight questions | Turns a brief into a form |

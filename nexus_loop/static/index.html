@@ -25,6 +25,8 @@
       --ds-danger: #c9372c;
       --ds-danger-hovered: #ae2e24;
       --ds-success: #1f845a;
+      --ds-success-hovered: #0f6e4b;
+      --ds-success-pressed: #164b35;
       --ds-warning: #a54800;
       --ds-information: #0c66e4;
       --ds-surface: #ffffff;
@@ -80,9 +82,9 @@
       --color-bad: var(--ds-danger);
       --color-info: var(--ds-information);
       --color-ring: var(--ds-border-focused);
-      --button-bg: var(--ds-brand);
+      --button-bg: var(--ds-success);
       --button-fg: var(--ds-text-inverse);
-      --button-hover: var(--ds-brand-hovered);
+      --button-hover: var(--ds-success-hovered);
       --button-bad-bg: var(--ds-danger);
       --button-bad-fg: var(--ds-text-inverse);
       --button-ghost-bg: var(--ds-surface);
@@ -507,6 +509,9 @@
                   0 0 0 calc(var(--ring-off) + var(--ring)) var(--ds-border-focused);
     }
     .btn:disabled { opacity: 0.5; pointer-events: none; }
+    .btn-ok { background: var(--ds-success); color: var(--ds-text-inverse); }
+    .btn-ok:hover { background: var(--ds-success-hovered); }
+    .btn-ok:active { background: var(--ds-success-pressed); }
     .btn-bad { background: var(--button-bad-bg); color: var(--button-bad-fg); }
     .btn-bad:hover { background: var(--ds-danger-hovered); }
     .btn-ghost { background: var(--ds-neutral); color: var(--ds-text); border-color: transparent; }
@@ -1052,7 +1057,7 @@
           <label class="field" for="why">Reason</label>
           <textarea class="input" id="why" name="reason" required maxlength="4000" autocomplete="off" placeholder="Why you are making this call…"></textarea>
           <div class="btn-row">
-            <button class="btn" type="submit" name="verdict" value="accepted">Accept</button>
+            <button class="btn btn-ok" type="submit" name="verdict" value="accepted">Accept</button>
             <button class="btn btn-bad" type="submit" name="verdict" value="rejected">Reject</button>
             <button class="btn btn-ghost" type="submit" name="verdict" value="deferred">Defer</button>
           </div>
