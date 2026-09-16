@@ -133,7 +133,7 @@ from the report — tokens do not invent charts or metrics.
 | Recorded verdict | `prescriptions[].approval` |
 | Replay before/after | `verifications[].metric`, `.before`, `.after`, `.verdict`, `.golden_set_pass`, `.prediction_error` |
 | Dismissed lookalikes | `findings[]` where `is_regression: false` (with `not_a_regression_because` and its diagnosis) |
-| Refusals | `gaps[]` (A11, A09, C2), each with `verdict`, `why`, `required_event` |
+| Refusals | `gaps[]` (`A11`, `A09`, and the `A02` / `CARDINALITY_REFUSED` gap), each with `verdict`, `why`, `required_event` |
 | Number definitions | `metrics[].{fidelity, coverage, plan, calibration}`, `metrics[].value_note` |
 | Mined standard | `standard[]` |
 | Self-assessment | `self_assessment` |

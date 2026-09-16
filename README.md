@@ -24,7 +24,7 @@ versions, the reviewed set of good conversations) to make a result look better.
 
 ## Status
 
-Everything is on `main`:
+Everything is on `master`:
 
 - **Solution pipeline** (`nexus_loop/` + `run.py`): scores **55/55** on the
   practice corpus and passes every held-out corpus the testbed throws at it —
@@ -55,7 +55,7 @@ question for the organisers; the solution reports measured coverage regardless.
 |---|---|
 | `nexus_loop/` | The solution package: ingestion, features, detectors, asks, report, replay client, decision screen |
 | `run.py` | The one-command entrypoint that produces `loop-report.json` |
-| `docs/` | Problem statement, brief, verified findings, deliverables/replay/demo guide, submission note, solution overview, UI handoff |
+| `docs/` | Problem statement, brief, verified findings, deliverables/replay/demo guide, submission note, edge-cases, solution overview, UI handoff |
 | `examples/` | A sample `loop-report.json` (final solution, practice kit) and a standalone lo-fi `demo.html` wireframe |
 | `kit/` | The practice dataset (sessions, steps, turns, config timeline, labels, catalog, asks, ground truth, ~33 MB) |
 | `tools/nexus-loop-kit/` | Organiser tooling: generator, starter, scorer, replay service, schema, reference reports |

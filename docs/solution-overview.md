@@ -73,9 +73,10 @@ The kit has three grains:
 
 Steps fan out many-to-one onto sessions. `features.py` builds **one dict per
 session** and folds every step fact down to it (`n_tool_calls`,
-`n_empty_success` = HTTP 200 / `ok` / `result_field_count == 0`, same-tool
-retries, KB hits and scores, LLM errors, guardrail blocks, milestones). Every
-downstream metric works on this session table, so the fan-out bug cannot occur.
+`n_empty_success` = HTTP 200 / `ok` / an **explicit** `result_field_count == 0`; a
+missing field is unknown, not empty; same-tool retries, KB hits and scores, LLM
+errors, guardrail blocks, milestones). Every downstream metric works on this
+session table, so the fan-out bug cannot occur.
 
 ---
 
@@ -89,7 +90,8 @@ passport" at calculation time:
   numbers), or `judged` (a model/human decided meaning);
 - **coverage**: the share of traffic that can even produce the metric, computed
   per tenant from which `agent_kind`s emit the step type;
-- **plan**: source, filter, denominator, breakdowns;
+- **plan**: source, filter, denominator, and the breakdown dimensions actually
+  produced;
 - **calibration** for judged metrics.
 
 Coverage is measured, not copied: `v2_flow` never emits `tool_call`, so tool
@@ -152,13 +154,20 @@ Each ask in `kit/asks.md` becomes a metric or a gap. The four required asks
   grain, `from_target,to_target,reason,recovered`, owner `conversation-runtime`)
   and why the retry proxy misleads.
 
-Notable among the rest: **A02** reports both the raw month-over-month comparison
-and a **mix-adjusted** one (hold month-1 intent shares, apply month-2 per-intent
-rates) with the mix effect isolated and overlapping events flagged; **A06**
-offers the measured KB hit rate *and* a judged quality reading, segmented by
-`judge_version` and calibrated against the kit's human labels; **A07** compares
-model upgrades only on unconfounded windows; **A10** is a deterministic review
-queue ordered by judged quality within the current judge version.
+Notable among the rest: **A02** reports the raw month-over-month comparison and a
+**mix-adjusted** one, with **both ends on the same common-intent scope** (month-1
+shares held, month-2 per-intent rates applied), the mix effect isolated, and any
+cohort **born in month 2** named — it cannot be mix-held, so a regression that
+arrives as a new cohort shows in the raw per-intent table; **A03** reports cost per
+resolved conversation with escalation (`unplanned_handoffs`, `escalation_rate`,
+`abandoned`) beside it, and separates an `unbounded` intent (zero resolutions) from
+`cost_unavailable` (resolves but no priced resolution); **A06** offers the measured
+KB hit rate *and* a judged quality reading, segmented by `judge_version` and
+calibrated against the kit's human labels — if fewer than 10 labels join it files a
+gap rather than going quiet; **A07** compares model upgrades on ±7-day windows and
+nulls any comparison a detected event confounds (judged quality is also nulled
+across a judge-version boundary); **A10** is a deterministic review queue ordered
+by judged quality within the current judge version.
 
 ---
 
@@ -170,7 +179,9 @@ queue ordered by judged quality within the current judge version.
 - **`report.py`** assembles findings (with impact, owner, consequence of
   inaction and a derivation), diagnoses (cause class + blamed change),
   prescriptions (change type, predicted delta, the decision a human approves,
-  the risk, and a no-ship condition), then validates against the schema.
+  the risk, and a no-ship condition), then validates against the schema. On a
+  re-run, `run.py` carries a recorded `approval` forward onto a prescription with
+  the same (id, diagnosis_id, target), so regenerating does not wipe a verdict.
 - **`replay.py`** posts the strongest fix to the replay service on the exact
   detected cohort with the frozen golden set, and records run id, before/after,
   verdict and prediction error. `no_effect` is recorded honestly. If the service

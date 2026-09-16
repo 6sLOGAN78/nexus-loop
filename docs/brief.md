@@ -181,7 +181,10 @@ The organisers care a lot about not pretending we know more than we do.
 
 Coverage means: “what fraction of traffic has the data needed for this metric?”
 
-Legacy `v2_flow` sessions emit no tool-call, KB-lookup, or guardrail steps.
+Legacy `v2_flow` sessions emit no `tool_call` steps — that is the coverage hole.
+(The catalog also claims v2 lacks `kb_lookup` and cost, but in the mounted corpus
+v2 *does* emit `kb_lookup` and carries `cost_usd`; we measure coverage from the
+corpus rather than trust the prose.)
 
 So a tool metric must say:
 
