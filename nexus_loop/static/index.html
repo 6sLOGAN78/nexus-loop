@@ -819,6 +819,44 @@
       return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
     };
     const causeLbl = (id) => CAUSE[id] || String(id || "unknown").replace(/[._]/g, " ");
+    const PHRASE_ENGLISH = [
+      ["tool_call p95 duration_ms", "Tool wait time"],
+      ["tool p95 latency", "Tool wait time"],
+      ["duration_ms", "wait (ms)"],
+      ["sessions/day", "sessions a day"],
+      ["timeout rate", "timeouts"],
+      ["platform owner", "Platform team"],
+      ["agent builder", "Agent team"],
+      ["business owner", "Business owner"],
+      ["judge_version", "scorecard version"],
+      ["config_timeline", "setup timeline"],
+      ["quality_rubric", "quality rubric"],
+      ["agent_kind", "agent kind"],
+      ["tool_call", "tool call"],
+      ["quality_score", "Scorecard quality"],
+      ["aggregate containment", "Share we handled end to end"],
+      ["containment rate", "Share we handled end to end"],
+      ["Resolution is flat", "Share we finished is flat"],
+    ];
+    function toManagerEnglish(s) {
+      if (s == null) return "";
+      let out = String(s);
+      const pairs = [];
+      [METRIC, CAUSE, AUDIENCE].forEach((map) => {
+        Object.keys(map).forEach((k) => pairs.push([k, map[k]]));
+      });
+      PHRASE_ENGLISH.forEach((row) => pairs.push(row));
+      pairs.sort((a, b) => b[0].length - a[0].length);
+      const seen = new Set();
+      pairs.forEach(([k, v]) => {
+        const key = k.toLowerCase();
+        if (seen.has(key)) return;
+        seen.add(key);
+        const re = new RegExp(k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
+        out = out.replace(re, v);
+      });
+      return out.replace(/\s*->\s*/g, " → ");
+    }
     const gapClaim = (g) => {
       if (!g) return "We will not invent this number";
       if (g.ask_id === "A11") return "We will not invent a failover rate";
@@ -1157,7 +1195,7 @@
       const ev = g.required_event || {};
       const whyFull = (g.why || "").replace(/\s*Required event:[\s\S]*$/i, "").trim();
       const retry = g.why_the_proxy_misleads
-        ? `<div class="span"><span class="kind">Lookalike</span><div class="body"><h2 class="name">A retry is not failover</h2><div class="hint">${esc(firstBeat(g.why_the_proxy_misleads, 160))}</div></div><span class="val">not the same</span></div>`
+        ? `<div class="span"><span class="kind">Lookalike</span><div class="body"><h2 class="name">A retry is not failover</h2><div class="hint">${esc(toManagerEnglish(firstBeat(g.why_the_proxy_misleads, 160)))}</div></div><span class="val">not the same</span></div>`
         : "";
       $("detail").innerHTML = `
         <h1 class="claim">${esc(gapClaim(g))}</h1>
@@ -1193,7 +1231,7 @@
           ${windowLbl(f.window) ? `<span class="badge ghost">${esc(windowLbl(f.window))}</span>` : ""}
         </div>
         <p class="lede">${esc(firstBeat(f.not_a_regression_because, 140) || "This is all clear.")}</p>
-        ${details("Evidence", `<ul class="evidence">${(f.evidence || []).map((e) => `<li>${esc(e)}</li>`).join("")}</ul>`)}
+        ${details("Evidence", `<ul class="evidence">${(f.evidence || []).map((e) => `<li>${esc(toManagerEnglish(e))}</li>`).join("")}</ul>`)}
         ${techBlock([
           { k: "cause", v: d && d.cause_class },
           { k: "metric", v: f.metric },
@@ -1241,10 +1279,10 @@
       const predBars = pairBars("Today", pd.from, "If we change it", pd.to, "bad", "ok");
       const replayBars = v ? pairBars("Test before", v.before, "Test after", v.after, "bad", "ok") : "";
       const evList = [].concat(f.evidence || [], (d && d.evidence) || []);
-      const ev0 = evList[0] || "";
+      const ev0 = evList[0] ? toManagerEnglish(evList[0]) : "";
       const evRest = evList.slice(1);
       const evInner = evRest.length
-        ? `<ul class="evidence">${evRest.map((e) => `<li>${esc(e)}</li>`).join("")}</ul>`
+        ? `<ul class="evidence">${evRest.map((e) => `<li>${esc(toManagerEnglish(e))}</li>`).join("")}</ul>`
         : "";
       const std = matchStandard(rep, f);
       const stdHint = std ? `<p class="hint">${esc(standardLine(std, f.metric))}</p>` : "";
