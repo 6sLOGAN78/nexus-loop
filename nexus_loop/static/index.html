@@ -223,12 +223,30 @@
       border-radius: var(--radius-md);
       white-space: nowrap;
       flex: 1 1 auto;
+      --seg-accent: var(--ds-brand);
+      --seg-fill: var(--ds-selected);
+    }
+    .seg[data-filter="ignored"] {
+      --seg-accent: var(--ds-success);
+      --seg-fill: var(--ds-success-bg);
+    }
+    .seg[data-filter="miss"] {
+      --seg-accent: var(--ds-information);
+      --seg-fill: var(--ds-info-bg);
     }
     .seg:hover { background: var(--ds-surface); color: var(--ds-text); }
-    .seg.is-on { background: var(--ds-surface); color: var(--ds-text); box-shadow: var(--ds-shadow-raised); }
+    .seg.is-on {
+      background: var(--seg-fill);
+      color: var(--seg-accent);
+      box-shadow: inset 0 3px 0 var(--seg-accent);
+    }
     .seg:focus-visible {
       outline: none;
       box-shadow: 0 0 0 var(--ring) var(--ds-border-focused);
+    }
+    .seg.is-on:focus-visible {
+      box-shadow: inset 0 3px 0 var(--seg-accent),
+                  0 0 0 var(--ring) var(--ds-border-focused);
     }
     .trace {
       display: grid;
