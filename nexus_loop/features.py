@@ -90,8 +90,11 @@ class Corpus:
                 d["tool_latencies"].append(st["duration_ms"])
             if st.get("outcome") == "ok":
                 d["n_tool_ok"] += 1
-                if (st.get("status_code") == 200
-                        and (st.get("result_field_count") or 0) == 0):
+                # only an explicit result_field_count == 0 is an empty success.
+                # A missing key is unknown, not empty — treating absent as zero
+                # would flag a valid response as a silent failure.
+                rfc = st.get("result_field_count")
+                if st.get("status_code") == 200 and rfc is not None and rfc == 0:
                     d["n_empty_success"] += 1
                     d["empty_by_tool"][tool] += 1
             else:
