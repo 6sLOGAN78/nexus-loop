@@ -174,6 +174,50 @@ class ScreenHttp(unittest.TestCase):
         self.assertIn('{ k: "fields", v: (ev.fields || []).join(", ") }', page)
         self.assertIn("overflow-x: auto", page)
 
+    def test_list_body_wrapper_in_served_html(self):
+        st, _, body = self._json("GET", "/")
+        page = body.decode()
+        self.assertEqual(st, 200)
+        self.assertIn(".list-body {", page)
+        self.assertIn('</div><div class="list-body">${items.join("")', page)
+        self.assertIn("overflow-y: auto", page)
+
+    def test_gap_lede_and_first_beat_helpers(self):
+        st, _, body = self._json("GET", "/")
+        page = body.decode()
+        self.assertEqual(st, 200)
+        self.assertIn("const GAP_LEDE = {", page)
+        self.assertIn(
+            'A11: "Failover does not exist here. There is no rate to show."',
+            page,
+        )
+        self.assertIn("function gapLede(g)", page)
+        self.assertIn("GAP_LEDE[g.ask_id]", page)
+        self.assertIn("function firstBeat(s, max)", page)
+        self.assertIn("${esc(gapLede(g))}", page)
+
+    def test_list_keyboard_navigation_bound(self):
+        st, _, body = self._json("GET", "/")
+        page = body.decode()
+        self.assertEqual(st, 200)
+        self.assertIn("function bindListKeys(rep)", page)
+        self.assertIn("bindListKeys(rep);", page)
+        self.assertIn('$("list").addEventListener("keydown"', page)
+        self.assertIn('ev.key !== "ArrowDown"', page)
+        self.assertIn('ev.key !== "ArrowUp"', page)
+        self.assertIn('ev.key !== "Home"', page)
+        self.assertIn('ev.key !== "End"', page)
+
+    def test_finding_tab_label_contract(self):
+        st, _, body = self._json("GET", "/")
+        page = body.decode()
+        self.assertEqual(st, 200)
+        self.assertIn("`All clear (${dismissed.length})`", page)
+        self.assertIn("`No number (${gaps.length})`", page)
+        self.assertNotIn("`Not a problem (${dismissed.length})`", page)
+        self.assertNotIn("`We would not guess (${gaps.length})`", page)
+        self.assertNotIn("We would not guess", page)
+
 
 if __name__ == "__main__":
     unittest.main()
