@@ -63,8 +63,12 @@ A11 is `NOT_MEASURABLE`. The list title is the claim, not `A11`.
 
 A11’s story also states **Why a retry is not failover** (from
 `why_the_proxy_misleads`) and **There is nothing to count**. The required
-event stays on the page. The decision pane says **Nothing to approve — we
-would not guess this number.**
+event stays on the page. The decision pane is two mutually exclusive idle
+lines, chosen from the loaded finding: A11 / `NOT_MEASURABLE` says
+**Nothing to approve. We will not invent a failover rate.** (or **We will
+not invent this number.** if the metric is not failover). A dismissed
+lookalike (`is_regression: false`) or a finding with no prescription says
+**Nothing to approve. This is not a problem.** The two never mix.
 
 ---
 
@@ -157,8 +161,8 @@ Each card is label / figure / caption. Tones match the live CSS:
 | `would_not_ship_if` | Would not ship if. (under a disclosure) |
 | `accepted` / `rejected` / `deferred` | Accept / Reject / Defer |
 | empty reason | A reason is required. |
-| a gap | Nothing to approve — we would not guess this number. |
-| a dismissal | Nothing to change — this is not a problem. |
+| A11 / `NOT_MEASURABLE` | Nothing to approve. We will not invent a failover rate. (else: We will not invent this number.) |
+| a dismissal (`is_regression: false`) or no prescription | Nothing to approve. This is not a problem. |
 
 Codes (`cause_class`, `change_type`, metric id, `replay_run_id`, ask ids,
 gap verdicts) sit under **Technical names**. The prescription description

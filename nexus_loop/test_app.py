@@ -73,6 +73,18 @@ class ScreenHttp(unittest.TestCase):
         c.close()
         return r.status, dict(r.getheaders()), data
 
+    def test_idle_gate_copy_is_split(self):
+        st, _, body = self._json("GET", "/")
+        page = body.decode()
+        self.assertEqual(st, 200)
+        self.assertIn("Nothing to approve. We will not invent a failover rate.", page)
+        self.assertIn("Nothing to approve. We will not invent this number.", page)
+        self.assertIn("Nothing to approve. This is not a problem.", page)
+        self.assertNotIn("Nothing to approve — we would not guess this number", page)
+        self.assertNotIn("Nothing to change — this is not a problem.", page)
+        self.assertIn('g.ask_id === "A11" || g.verdict === "NOT_MEASURABLE"', page)
+        self.assertIn("pack.kind === \"dismissed\" || !pack.p", page)
+
     def test_get_page_and_security_headers(self):
         st, hdrs, body = self._json("GET", "/")
         lower = {k.lower(): v for k, v in hdrs.items()}
