@@ -104,8 +104,8 @@ def detect_traffic_mix(corpus: Corpus, regressions: List[dict]) -> List[dict]:
                 p_in, p_out = _in(p_rows, a, b), _out(p_rows, a, b)
                 if len(p_in) < T.MIN_N or len(p_out) < T.MIN_N:
                     continue
-                r_in = rate(sum(1 for s in p_in if resolved(s)), len(p_in))
-                r_out = rate(sum(1 for s in p_out if resolved(s)), len(p_out))
+                r_in = rate(sum(1 for s in p_in if contained(s)), len(p_in))
+                r_out = rate(sum(1 for s in p_out if contained(s)), len(p_out))
                 per_intent[p_intent] = (r_in, r_out)
                 if _rate_moved(r_in, r_out, len(p_in), len(p_out)) and p_intent not in reg_intents:
                     moved.append(p_intent)
@@ -118,7 +118,7 @@ def detect_traffic_mix(corpus: Corpus, regressions: List[dict]) -> List[dict]:
                 "confidence": 0.93, "attributed_change": None,
                 "not_because": (
                     "aggregate containment moves %+.1fpt on days %d-%d only because %s's share of "
-                    "traffic goes from %.0f%% to %.0f%%. Every per-intent resolution rate is flat "
+                    "traffic goes from %.0f%% to %.0f%%. Every per-intent containment rate is flat "
                     "within %.0fpt. This is a mix shift, not a quality change in either direction."
                     % (100 * (agg_in - agg_out), a, b - 1, intent, 100 * w.outside, 100 * w.inside,
                        100 * T.MIX_FLAT_TOL)),
