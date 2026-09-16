@@ -96,7 +96,10 @@ The operator screen is **one page, not a dashboard**. It exists so a reviewer ca
 answer the eight questions from the report without recomputing anything in the
 browser. The psychology behind the tracing-console layout — working memory,
 recognition, trust calibration, why Reject is easy — is in
-[`docs/ux-psychology.md`](ux-psychology.md).
+[`docs/ux-psychology.md`](ux-psychology.md). Paste-ready TECHQUEST endterm
+sections for this screen are in [`docs/operator-screen-report.md`](operator-screen-report.md).
+Paste-ready TECHQUEST sections (Decision Layer, Operator Screen, screen-only
+transparency) are in [`docs/operator-screen-report.md`](operator-screen-report.md).
 
 **Regions (live screen):**
 
@@ -111,8 +114,8 @@ scrolling through evidence.
 |--------|------|
 | Header | Quiet title, corpus, coverage/fidelity chips. REAL / STUBBED / SIMULATED sit under a disclosure — Framing 12 without a wall of notes. |
 | List | To decide / Not a problem / We would not guess (A11 first, titled “We will not invent a failover rate”). Each row: headline, tenant, days, conversations. Default selection is the verification’s prescription, else `tool.contract_break`. Hash deep-links the selected id. |
-| Story | Four steps copied from the report: what changed, why we think so, what we would change, did the test help. A matching `standard[]` sentence sits under what changed. Bars plot report values. Evidence under a disclosure. Codes under Technical names. |
-| Your decision | The ask, a one-line risk, then full risk/no-ship under a disclosure, then Accept / Reject / Defer and a required reason. After save, the page re-fetches `/report.json`. |
+| Story | Four steps copied from the report: what changed, why we think so, what we would change, did the test help. Each step label is uppercase; `.span .name` is a sentence-case heading in a sunken chip; observed values are tabular and bold. A matching `standard[]` sentence sits under what changed. Bars plot report values. Evidence under a disclosure. Codes under Technical names. |
+| Your decision | The ask, a one-line risk, then full risk/no-ship under a disclosure, then Accept / Reject / Defer and a required reason. After save, the page POSTs `/decision` and re-fetches `/report.json`. |
 
 **Styles:** CSS follows the ui-ux-pro-max **design-system skill** (primitive →
 semantic → component tokens; Button / Card / Badge / Input / Alert specs and
@@ -120,8 +123,10 @@ states). Hex exists only in the primitive layer. Numbers still come **only**
 from the report — tokens do not invent charts or metrics. The page follows the
 Atlassian Design System (light): sunken `#F7F8F9` canvas, raised 12px columns,
 8px cards, 6px buttons and fields, 4px lozenges. Accept is success green
-`#1F845A` (go). Reject is danger `#C9372C` (stop). Defer is subtle (wait).
-Brand blue stays on navigation, selected rows, and links.
+`#1F845A` (go). Reject is danger `#C9372C` (stop). Defer is subtle grey (wait).
+Brand blue is navigation, selected rows, links, and step labels — **not** Accept.
+Span titles (`.span .name`) are `h2` headings: sentence case, weight 700, sunken
+rounded chip. Observed values (`.span .val`) are tabular-nums and bold.
 
 ---
 
@@ -207,8 +212,10 @@ the screen only maps it.
   chips show calibration, never a bare 100%). REAL / STUBBED / SIMULATED / 100×
   sit under one disclosure.
 - Atlassian light tokens, rounded and raised. Accept is success green (go);
-  Reject is danger (stop, a valid outcome); Defer is subtle (wait). A recorded
-  accept is a success lozenge.
+  Reject is danger (stop, a valid outcome); Defer is subtle grey (wait). Brand
+  blue is not a verdict colour. A recorded accept is a success lozenge.
+- Span titles are headings in sunken chips (sentence case, 700). Step labels
+  are uppercase. Observed values are tabular and bold.
 
 **Do not**: recompute metrics client-side, invent values, change the report shape
 (ask the backend owner first), or let the screen and report diverge.

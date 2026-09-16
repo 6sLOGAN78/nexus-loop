@@ -35,8 +35,8 @@ Everything is on `master`:
 - **Testbed** (`tools/testbed/`): generates held-out corpora and evaluates any
   candidate solution against them.
 - **Docs**: problem statement, brief, verified kit findings,
-  deliverables/replay/demo guide, submission note, solution overview, and UI
-  handoff.
+  deliverables/replay/demo guide, submission note, solution overview, UI
+  handoff, UX psychology, and the operator-screen report sections.
 - **Examples** (`examples/`): a sample `loop-report.json` from the final
   solution's practice-kit run, and a standalone lo-fi `demo.html` wireframe
   (no server) that renders it.
@@ -55,7 +55,7 @@ question for the organisers; the solution reports measured coverage regardless.
 |---|---|
 | `nexus_loop/` | The solution package: ingestion, features, detectors, asks, report, replay client, decision screen |
 | `run.py` | The one-command entrypoint that produces `loop-report.json` |
-| `docs/` | Problem statement, brief, verified findings, deliverables/replay/demo guide, submission note, edge-cases, solution overview, UI handoff, UX psychology |
+| `docs/` | Problem statement, brief, verified findings, deliverables/replay/demo guide, submission note, edge-cases, solution overview, UI handoff, UX psychology, operator-screen report sections |
 | `examples/` | A sample `loop-report.json` (final solution, practice kit) and a standalone lo-fi `demo.html` wireframe |
 | `kit/` | The practice dataset (sessions, steps, turns, config timeline, labels, catalog, asks, ground truth, ~33 MB) |
 | `tools/nexus-loop-kit/` | Organiser tooling: generator, starter, scorer, replay service, schema, reference reports |
@@ -153,8 +153,10 @@ New to the repo, read in this order:
 8. `docs/edge-cases.md` — the non-obvious traps and how we handle them (judge Q&A).
 9. `docs/ui-handoff.md` — what the UI/product team needs.
 10. `docs/ux-psychology.md` — why the screen is a tracing console (operator cognition).
-11. `examples/demo.html` — the lo-fi wireframe + sample report (open the file directly, no server).
-12. `tools/testbed/README.md` — how to evaluate a candidate.
+10a. `docs/operator-screen-report.md` — UI/product sections for the TECHQUEST endterm report.
+11. `docs/operator-screen-report.md` — paste-ready TECHQUEST sections for the operator screen only.
+12. `examples/demo.html` — the lo-fi wireframe + sample report (open the file directly, no server).
+13. `tools/testbed/README.md` — how to evaluate a candidate.
 
 ---
 

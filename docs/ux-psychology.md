@@ -1,10 +1,10 @@
 # Why the operator screen is a tracing console
 
-This is the psychology behind [`nexus_loop/static/index.html`](../nexus_loop/static/index.html). It is not a style note. It is the argument that the layout, colour, and what we hide are how an operator makes a *better Monday-morning call*, not how we make a prettier page.
+This is the psychology behind [`nexus_loop/static/index.html`](../nexus_loop/static/index.html). It is not a style note. It is the argument that the layout, colour, type, and what we hide are how an operator makes a *better Monday-morning call*, not how we make a prettier page.
 
 The scored job of the screen is decision quality (18), readability (15), and framing (12). Those are human scores. They reward the same things cognitive psychology has names for: limited working memory, recognition over recall, calibrated trust, and a decision that has been thought, not clicked.
 
-The contract in [`docs/ui-handoff.md`](ui-handoff.md) is unchanged: every figure is copied from `loop-report.json`. Psychology here is about *what the eye meets first* and *what the hand is asked to do*. It never invents a number.
+The contract in [`docs/ui-handoff.md`](ui-handoff.md) is unchanged: every figure is copied from `loop-report.json`. Psychology here is about *what the eye meets first* and *what the hand is asked to do*. It never invents a number, never draws a chart the report did not already contain, and records the verdict only through `POST /decision`.
 
 ---
 
@@ -95,21 +95,33 @@ We do not invent span durations. A fake timeline would be the most tempting lie 
 
 ---
 
-## 4. Colour is a decision primer, not a brand
+## 4. Span titles are headings, not body copy
 
-The previous screen was paper and navy: a brief to sign. That is a legitimate editorial move. It also primed **reading**, and it used a warm-cream + serif cluster that currently reads as generic generated UI.
+The four steps are a story, so each step has a heading. `.span .name` is an `h2`: sentence case (“Share we finished”, not `RESOLUTION_RATE`), weight 700, and a sunken rounded chip (`#F7F8F9` fill, hairline, inset shadow) so it reads as a title sitting on the card, not a sentence in the paragraph. Step labels (`.span .kind` — What changed, Why we think so, What we would change, Did the test help) stay uppercase, brand-blue, and small: they name the *job* of the row; the chip names the *claim*.
+
+Observed values (`.span .val`) are tabular-nums and bold navy, aligned to the right of the heading. A manager comparing 77.5% to 85.5% should not have to hunt a muted caption. The bars still sit under the heading; they copy the same report numbers. Nothing in the span is a chart we invented.
+
+That type hierarchy is the same argument as the three panes: the eye should find the claim, then the number, then the evidence — not a wall of equal-weight log lines.
+
+---
+
+## 5. Colour is a decision primer, not a brand
+
+The previous screen was paper and navy: a brief to sign. That is a legitimate editorial move. It also primed **reading**, and it used a warm-cream + serif cluster that currently reads as generic generated UI. Copper and brand-blue Accept were both wrong for the same reason: they did not mean *go*.
 
 The desk follows the **Atlassian Design System (light)**: a sunken `#F7F8F9` canvas, raised white cards, 12px columns, 8px inner cards, 6px controls, 4px lozenges.
 
 - Sunken grey (not cream, not night-shift black) is a change ticket a manager can sign on Monday morning. It is not a log, not a magazine, not acid-green-on-black. Rounded corners and raised shadows are how Atlassian marks *containers* vs *actions* — the finding is a card; the verdict is a button.
-- **The gate is a traffic light, in Atlassian tokens.** Success green `#1F845A` (go / Accept) sits opposite danger red `#C9372C` (stop / Reject). They are complementary hues, so they **pop apart pre-attentively** (Treisman: colour is a feature that does not need the label). Warm brown plus warm red did not: both read as “alert,” so the hand could not tell proceed from refuse without reading. Defer stays achromatic (wait / no valence). Brand blue `#0C66E4` stays on selected rows, links, and “a human is here” — it is navigation, not a verdict.
+- **The gate is a traffic light, in Atlassian tokens.** Accept is success green `#1F845A` (go). Reject is danger red `#C9372C` (stop). Defer is subtle grey (wait / no valence). Green and red are complementary hues, so they **pop apart pre-attentively** (Treisman: colour is a feature that does not need the label). Warm brown plus warm red did not: both read as “alert,” so the hand could not tell proceed from refuse without reading. Brand blue `#0C66E4` stays on selected rows, links, the mark, and the step labels — it is navigation and selection, **not Accept**.
 - Green is isolated in the gate. Coverage chips are small lozenges in the header, not competing bars, so the proceed control does not drown in “healthy.” The **bias brake is the required reason**, not a camouflaged Accept: elaboration slows the click (implementation intention). Prospect theory still applies — people overweight the frame — so all three targets stay the same size (Fitts). A rejection with a reason is a successful product decision; red is as easy to hit as green.
 
 Accept is success-bold because it must mean *proceed* before the word is read. Reject is danger-bold because it must mean *stop*. Defer is subtle because it must mean *not now*.
 
+Span titles are headings, not sentences. “Share we finished” at the same weight as the note under it read as a shrug. The name is now 700, navy, sentence case, on an 8px sunken chip; the step label is uppercase tracking. The observed value beside it stays tabular and bold. Title and body have to look like different speech acts.
+
 ---
 
-## 5. Harm before the ask
+## 6. Harm before the ask
 
 Your decision is on the right. The harm KPIs are in the middle, *before* the buttons. That order is the argument.
 
@@ -119,7 +131,7 @@ We always show impact, owner, and consequence of inaction together. A finding is
 
 ---
 
-## 6. Trust is designed as Stage 1 transparency
+## 7. Trust is designed as Stage 1 transparency
 
 Relationship-design’s trust ladder starts at **transparency**, not autonomy. This product never auto-ships a prompt. The human is the loop. So the screen must show its work without turning into an essay.
 
@@ -129,9 +141,11 @@ Relationship-design’s trust ladder starts at **transparency**, not autonomy. T
 
 The rule “never recompute in JavaScript” is psychological as well as scoring. If the screen and the report diverge, the operator’s memory becomes a second source of truth. Dual sources produce **authority confusion**. One source, copied, is how the page stays honest when a judge asks “where did that 2,686 come from?”
 
+The only mutating call the page makes is **`POST /decision`**: `{prescription_id, verdict, decided_by, reason}`. Empty reason is a 400. The screen re-fetches `GET /report.json` after save. There is no second write path, no client-side metric, no invented plot.
+
 ---
 
-## 7. The reason box is the thinking
+## 8. The reason box is the thinking
 
 A verdict without a reason is a 400. That is a schema rule. It is also **elaboration**: writing a sentence is slower than clicking, and slower here is the point. People generate better justifications when they know the justification will be stored (`prescriptions[].approval.reason`, `decisions.log`). That is implementation-intention adjacent: “I am accepting *because*…” rather than “I am accepting.”
 
@@ -141,7 +155,7 @@ After save, the page re-fetches `/report.json` and the recorded verdict appears 
 
 ---
 
-## 8. Lookalikes and refusals are there to fight bias
+## 9. Lookalikes and refusals are there to fight bias
 
 The kit plants three false alarms. Flagging one as a regression costs more than missing a real problem. **Not a problem** exists so the manager (and the judge) can see the near-miss *and* the dismissal in the same genre as the real findings. That counters **confirmation bias** (“show me only the bad news”) and **availability** (“I only remember the tool break”). Explicit dismissal is the product behaviour the scorer rewards; the UI has to make it findable in one click, not a footnote.
 
@@ -151,7 +165,7 @@ A refusal is not a change request. Your decision says so. That prevents the mana
 
 ---
 
-## 9. Default selection is a recommended path, not a dark pattern
+## 10. Default selection is a recommended path, not a dark pattern
 
 On load we select the verification’s prescription, else `tool.contract_break`. That is **sensible defaults** (Nielsen), aligned with the loop: the finding that has replay evidence is the one a stranger can decide. Hash deep-links (`#f01_…`, `#gap:A11`) exist so a reviewer can point at a row without describing it. Shared attention is a coordination problem; the URL is the cheapest fix.
 
@@ -159,36 +173,37 @@ We do not auto-Accept. We do not hide Reject. We do not pre-fill the reason. Def
 
 ---
 
-## 10. What we refused, on purpose
+## 11. What we refused, on purpose
 
 | Temptation | Why it was dropped |
 |---|---|
 | A dashboard of sessions | Exploration trap; 80k rows are not a decision |
 | Charts we compute in the browser | Second source of truth |
-| Making Accept larger or greener-and-easier than Reject | Punishes a valid no; colour encodes go/stop, size stays equal |
-| Paper + serif brief | Wrong genre for this operator; currently a generated-UI tell |
+| Making Accept larger, bluer, or greener-and-easier than Reject | Punishes a valid no; colour encodes go/stop, size stays equal |
+| Paper + serif brief, copper, or brand-blue Accept | Wrong genre; copper and blue do not mean go |
 | Fake waterfall durations | Invented telemetry |
 | Labelling the eight questions | Turns a brief into a form |
 | Putting A11 in the footer | Honest, not memorable |
 | Making Reject harder to click | Punishes a valid outcome |
 | Sticky gate covering the waterfall on a phone | Fitts at the cost of the claim — the claim has to be readable first |
+| Span titles as muted body copy | The step claim has to scan as a heading |
 
 ---
 
-## 11. How this maps to the human score
+## 12. How this maps to the human score
 
 | Rubric | What the psychology is aiming at |
 |---|---|
-| Decision quality (18) | Harm, owner, inaction, risk, and a written reason on one view. Traceable numbers. Named baseline. |
-| The screen (15) | A stranger can read it. List / story / decision is spatial, not a glossary. Evidence is one click away, not in the way. Approve / reject / defer all work. |
+| Decision quality (18) | Harm, owner, inaction, risk, and a written reason on one view. Traceable numbers. Named baseline. `POST /decision` is the only write. |
+| The screen (15) | A stranger can read it. List / story / decision is spatial, not a glossary. Span titles are headings. Evidence is one click away, not in the way. Approve / reject / defer all work. |
 | Framing (12) | Opens on the problem (default = verified finding). Shows the lookalike. Shows the refusal as a first-class row. States coverage as chips. Admits simulated replay under a disclosure. |
 
 If a judge can sit down, answer the eight questions without scrolling past a wall of evidence, dismiss a lookalike, read A11, and record a reasoned verdict, the psychology did its job. If they have to hunt, or if they feel the page wanted a yes, it did not.
 
 ---
 
-## 12. One sentence
+## 13. One sentence
 
-Treat the finding as one decision, the loop as four plain steps, and the human
-as the person who signs — because a manager will not learn “span,” and a
+Treat the finding as one decision, the loop as four plain headed steps, and the
+human as the person who signs — because a manager will not learn “span,” and a
 signature on a short causal story still beats a dashboard they will not finish.
