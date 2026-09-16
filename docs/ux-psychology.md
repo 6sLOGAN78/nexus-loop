@@ -97,7 +97,7 @@ We do not invent span durations. A fake timeline would be the most tempting lie 
 
 ## 4. Span titles are headings, not body copy
 
-The four steps are a story, so each step has a heading. `.span .name` is an `h2`: sentence case (“Share we finished”, not `RESOLUTION_RATE`), weight 700, and a sunken rounded chip (`#F7F8F9` fill, hairline, inset shadow) so it reads as a title sitting on the card, not a sentence in the paragraph. Step labels (`.span .kind` — What changed, Why we think so, What we would change, Did the test help) stay uppercase, brand-blue, and small: they name the *job* of the row; the chip names the *claim*.
+The four steps are a story, so each step has a heading. `.span .name` is an `h2` in Newsreader, sentence case (“Share we finished”, not `RESOLUTION_RATE`), weight 500 — the same speech act as “Pacific Heights residence” on a wealth desk. Step labels (`.span .kind`) stay uppercase, tracked, and muted: they name the *job* of the row; the serif names the *claim*.
 
 Observed values (`.span .val`) are tabular-nums and bold navy, aligned to the right of the heading. A manager comparing 77.5% to 85.5% should not have to hunt a muted caption. The bars still sit under the heading; they copy the same report numbers. Nothing in the span is a chart we invented.
 
@@ -107,7 +107,7 @@ That type hierarchy is the same argument as the three panes: the eye should find
 
 ## Type
 
-The face is a **humanist UI sans**, not a serif brief. The reference crop of “share we finished” is the SF Pro / Segoe / Helvetica Neue cluster: high x-height, book body, bold titles, slightly open tracking on copy and a hair of negative tracking on headings. We map that to `Inter, "Segoe UI", "Helvetica Neue", "SF Pro Text"` — Inter is the local SF-Pro analogue; there is no webfont (`Content-Security-Policy` has no `font-src`). Headings keep weight 700 on the sunken chip so they still scan as titles against regular body. We did not revive Georgia/Palatino: that paper + serif cluster is the generated-UI tell already refused above.
+The face is a **wealth-desk pairing**, not a paper brief and not a log. Claims and span titles set in **Newsreader** (serif, weight 500): “Silent tool failure…” and “Share we finished” should read like “Your wealth, on pace” — a status you can say out loud. Chrome, KPI figures, and buttons stay **Source Sans 3**: that is the $18.42M / FUNDED / TARGET layer — tabular, tracked labels, no serif on the controls. Offline, Newsreader falls back to Iowan / Palatino and Source Sans 3 to Segoe / Inter. We do not set the whole page in Georgia: a serif *UI* is the generated-brief tell; a serif *claim* on a sans desk is the product.
 
 ---
 

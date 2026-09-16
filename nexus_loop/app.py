@@ -36,7 +36,9 @@ SECURITY_HEADERS = (
     ("Referrer-Policy", "no-referrer"),
     ("Cache-Control", "no-store"),
     ("Content-Security-Policy",
-     "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; "
+     "default-src 'none'; script-src 'unsafe-inline'; "
+     "style-src 'unsafe-inline' https://fonts.googleapis.com; "
+     "font-src https://fonts.gstatic.com; "
      "img-src 'none'; connect-src 'self'; form-action 'self'; "
      "base-uri 'none'; frame-ancestors 'none'"),
 )

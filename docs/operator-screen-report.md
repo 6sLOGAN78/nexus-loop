@@ -278,12 +278,12 @@ a camouflaged Accept. Colour is the primer; the sentence is the thought.
 
 ### 16.6 Span titles as headings
 
-Each of the four story steps uses a sentence-case heading (`h2.name`), font
-weight 700, on a sunken chip, not passive body copy. The kind label
-(“What changed”, “Why we think so”, “What we would change”, “Did the test
-help”) is a small uppercase kicker; the heading is the claim the operator
-should remember. Treating the span title as a heading rather than as muted
-caption text is how the causal loop remains scannable when the evidence is
+Each of the four story steps uses a sentence-case Newsreader heading
+(`h2.name`), weight 500, not a sunken chip and not passive body copy. The kind
+label (“What changed”, “Why we think so”, “What we would change”, “Did the test
+help”) is a small uppercase tracked kicker; the serif heading is the claim the
+operator should remember. Treating the span title as a heading rather than as
+muted caption text is how the causal loop remains scannable when the evidence is
 long.
 
 ### 16.7 Report-only numbers; no invented charts
@@ -328,7 +328,7 @@ Monday-morning test: could an operator who was not on the team know what to do?
 **Figure 5.** Final operator-facing screen. One page in three panes: (left) the
 finding list segmented as To decide, Not a problem, and We would not guess,
 with A11 titled “We will not invent a failover rate”; (centre) the causal story
-with sentence-case span headings on sunken chips — what changed, why we think
+with sentence-case Newsreader span headings — what changed, why we think
 so, what we would change, did the test help — and harm KPIs copied from
 `loop-report.json`; (right) Your decision, with equal-size Accept (success
 green `#1F845A`), Reject (danger `#C9372C`), and Defer (grey) controls and a
