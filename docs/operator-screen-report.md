@@ -191,15 +191,15 @@ three jobs, and nothing else.
 | Story | centre column | Understand the causal loop. |
 | Decision | right column, “Your decision” | Commit with a written reason. |
 
-The list is segmented as **To decide**, **All clear**, and **No number**,
+The list is segmented as **To decide**, **Not a problem**, and **We will not invent**,
 on a 3-column tab grid. Those labels are manager English for
 regressions, explicit dismissals (`findings[]` with `is_regression: false`),
 and `gaps[]`. Only **To decide** is a work queue. **To decide** is danger red `#C9372C`, the same token as
 `.dot.bad` on regression rows, so the tab that needs a call matches the
-pointers in that list. The kit plants three lookalikes; **All clear**
+pointers in that list. The kit plants three lookalikes; **Not a problem**
 exists so the operator (and a judge) can see the near-miss and the dismissal
 in the same genre as the real findings. That counters confirmation bias and
-availability. **No number** places A11 first. The claim on the row is
+availability. **We will not invent** places A11 first. The claim on the row is
 “We will not invent a failover rate.” Titles wrap two lines so a long headline
 stays scannable; the list body scrolls under sticky tabs. ArrowUp,
 ArrowDown, Home, and End move the selection without leaving the list.
@@ -359,7 +359,7 @@ Monday-morning test: could an operator who was not on the team know what to do?
 ### Figure 5 caption (paste under the screenshot of the live desk)
 
 **Figure 5.** Final operator-facing screen. One page in three panes: (left) the
-finding list segmented as To decide, All clear, and No number,
+finding list segmented as To decide, Not a problem, and We will not invent,
 with A11 titled “We will not invent a failover rate” and the To decide tab in
 danger red matching `.dot.bad`; (centre) the causal story with sentence-case
 Newsreader span headings — what changed, why we think so, what we would

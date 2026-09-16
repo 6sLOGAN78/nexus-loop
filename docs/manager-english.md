@@ -61,7 +61,7 @@ A11 is `NOT_MEASURABLE`. The list title is the claim, not `A11`.
 | A02 | We will not break this down by customer |
 | any other gap | We will not invent this number |
 
-A11’s story chip is **no number**. The span title is **A retry is not
+A11’s story chip is **we will not invent**. The span title is **A retry is not
 failover** (from `why_the_proxy_misleads`, first beat in the hint). **There
 is nothing to count** names the absence. The required event stays on the
 page under “To count it later:”. The decision pane is two mutually exclusive
@@ -74,7 +74,7 @@ idle lines, chosen from the loaded finding — never blended:
 | other `gaps[]` | **Nothing to approve.** plus `gapClaim` (or **We will not invent this number.**) |
 
 The two buckets never mix. `idleGateCopy` chooses A11 / `NOT_MEASURABLE` first
-so failover is named. Tabs stay All clear / No number; idle copy is from the
+so failover is named. Tabs are Not a problem / We will not invent; idle copy is from the
 report. The long report `why` is not the idle line.
 
 ### Story lede (keep it short)
@@ -114,11 +114,12 @@ when the report has it. Judged chips show calibration, never a bare 100%.
 | Internal group | Tab on the screen |
 |---|---|
 | regressions (`is_regression: true`) | To decide |
-| dismissed lookalikes (`is_regression: false`) | All clear |
-| `gaps[]` | No number |
+| dismissed lookalikes (`is_regression: false`) | Not a problem |
+| `gaps[]` | We will not invent |
 
-Only **To decide** is a work queue (Accept / Reject / Defer). **All clear**
-is a closed mint queue that needs no decision. **No number** is a grey/info
+Only **To decide** is a work queue (Accept / Reject / Defer). **Not a
+problem** is a closed mint all-clear that needs no decision. **We will not
+invent** is a grey/info
 refusal that needs no decision. They do not share idle copy or chips. List
 titles wrap two lines. `.list-body` scrolls underneath sticky tabs.
 
@@ -126,8 +127,8 @@ Row copy:
 
 | Situation | Subtitle / stat / chip |
 |---|---|
-| a gap | No measurement / **no number** |
-| a dismissal | tenant · days; chip **all clear** |
+| a gap | No measurement / **we will not invent** |
+| a dismissal | tenant · days; chip **not a problem** |
 | a regression | tenant · days; conversation count |
 
 ArrowUp, ArrowDown, Home, and End move the selection while the list has
