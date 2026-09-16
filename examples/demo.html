@@ -171,7 +171,7 @@
   <code>nexus_loop/static/index.html</code>.</div>
 
 <div class="subbar">
-  <span class="ctx">Corpus A &middot; team demo &middot; 2026-09-14T17:58:30Z &middot; northwind-retail + acme-bank</span>
+  <span class="ctx">Corpus A &middot; team demo &middot; 2026-09-16T05:50:04Z &middot; northwind-retail + acme-bank</span>
   <span class="spacer"></span>
   <span class="chip bad">3 regressions</span> <span class="chip muted">3 dismissed</span> <span class="chip warn">3 refused asks</span> <span class="chip good">replay improved</span>
 </div>
@@ -278,7 +278,7 @@
 </div>
 
     <div class="card">
-      <div class="acc "><button class="acchead"><span class="chip bad">regression</span><span class="acctitle">Knowledge gap — retrieval never grounds the answer</span><span class="accarrow">&#9662;</span></button><div class="accbody"><p>At the observed rate about 8 conversations a day in this cohort fail that would have resolved, and 63% of the cohort reaches a human who was not meant to be involved. The cohort is new, so these are first impressions of it.</p></div></div><div class="acc "><button class="acchead"><span class="chip bad">regression</span><span class="acctitle">Prompt regression — same outcomes, more turns and cost</span><span class="accarrow">&#9662;</span></button><div class="accbody"><p>Every day this runs costs roughly 245 extra user turns and about 4.39 USD a day of excess model spend on this agent, with no change in how often it resolves — the users pay in time, the tenant pays in tokens, and no outcome alert will ever fire.</p></div></div><div class="acc dismissed"><button class="acchead"><span class="chip muted">dismissed</span><span class="chip ">load</span><span class="acctitle">Load spike, not a quality regression</span><span class="accarrow">&#9662;</span></button><div class="accbody"><p>volume runs at 3.5x normal for 4 day(s) (2696 vs 768 sessions/day); tool p95 latency 1338 -&gt; 3152 ms and timeouts 0.0061 -&gt; 0.0158 per call. Resolution is flat (0.7896 -&gt; 0.7769), so this is a reliability event for the platform owner, not a quality regression, and it self-corrects when volume reverts.</p></div></div><div class="acc dismissed"><button class="acchead"><span class="chip muted">dismissed</span><span class="chip ">traffic_mix</span><span class="acctitle">Traffic mix shift, not a quality change</span><span class="accarrow">&#9662;</span></button><div class="accbody"><p>aggregate containment moves +1.9pt on days 22-31 only because branch_locator&#x27;s share of traffic goes from 13% to 44%. Every per-intent resolution rate is flat within 5pt. This is a mix shift, not a quality change in either direction.</p></div></div><div class="acc dismissed"><button class="acchead"><span class="chip muted">dismissed</span><span class="chip ">judge_change</span><span class="acctitle">Judge-version boundary, not an agent regression</span><span class="accarrow">&#9662;</span></button><div class="accbody"><p>judged quality_score drops 3.89 -&gt; 3.29 on day 28 simultaneously on every tenant (acme-bank 3.91-&gt;3.31; northwind-retail 3.88-&gt;3.27) and every intent, exactly where judge_version flips v1 -&gt; v2 (config_timeline day 28: judge quality_rubric v1 -&gt; v2). We measured the rubric, not the agent. quality_score is only compared within one judge_version from here on.</p></div></div><div class="acc refused"><button class="acchead"><span class="chip warn">refused</span><span class="acctitle">A09 &middot; REQUIRES_NEW_JUDGE</span><span class="accarrow">&#9662;</span></button><div class="accbody"><p>session_end = &#x27;abandoned&#x27; is MEASURED and reported here: abandonment is acme-bank 5.92%, northwind-retail 5.73% of sessions. WHY a user abandoned — frustration versus having got what they needed — is a judgment about meaning. No versioned judge with a published calibration for that question exists in this deployment, and inferring the reason from the end code would be a Rule 1 violation dressed up as an aggregate. This system publishes no such number.</p><div class="need"><b>Required event</b> abandonment_reason_judgement at <code>session</code> grain · fields <code>judge_version, reason_class, confidence, calibration_set_id</code> · owner <code>quality-judging</code></div><div class="need warn"><b>Tempting proxy</b> abandoned sessions with an unusually high turn count or a same-tool retry &mdash; it flags effort, not frustration; a user who leaves happy after two turns and one who rage-quits after two turns look identical in the logs</div></div></div><div class="acc refused"><button class="acchead"><span class="chip warn">refused</span><span class="acctitle">A11 &middot; NOT_MEASURABLE</span><span class="accarrow">&#9662;</span></button><div class="accbody"><p>No failover mechanism exists in the runtime, so no failover event is ever emitted: there is no primary/secondary path to observe. Nothing in the corpus records a primary model or tool failing and an alternate serving the user, because that choice is never made. Required event: failover at step grain with fields from_target, to_target, reason, recovered, owner conversation-runtime.</p><div class="need"><b>Required event</b> failover at <code>step</code> grain · fields <code>from_target, to_target, reason, recovered</code> · owner <code>conversation-runtime</code></div><div class="need warn"><b>Tempting proxy</b> llm_call rows with retry_count &gt; 0 (1956 in this corpus) &mdash; those are QUALITY retries — the same target re-issued after a provider error or malformed response, not a switch to an alternate target. Reporting them as failover would show a small non-zero rate that reads as &#x27;failover is working&#x27; when failover does not exist; a chart here would be worse than no chart.</div></div></div><div class="acc refused"><button class="acchead"><span class="chip warn">refused</span><span class="acctitle">A02 &middot; CARDINALITY_REFUSED</span><span class="accarrow">&#9662;</span></button><div class="accbody"><p>a per-customer breakdown (custom_dims.customer_ref) was considered for the cohort drill-down and refused: 80252 distinct values against the catalog&#x27;s declared cardinality budget of 200 for session.custom_dims.customer_ref. The field is near-unique per session; grouping by it is a planner error, not a cohort. session_id is the only declared join key; customer_ref is not one.</p><div class="need warn"><b>Tempting proxy</b> custom_dims.segment (closed set, budget 50) &mdash; segment groups customers into three bands; it answers &#x27;which kind of customer&#x27;, not &#x27;which customer&#x27;</div></div></div>
+      <div class="acc "><button class="acchead"><span class="chip bad">regression</span><span class="acctitle">Knowledge gap — retrieval never grounds the answer</span><span class="accarrow">&#9662;</span></button><div class="accbody"><p>At the observed rate about 8 conversations a day in this cohort fail that would have resolved, and 63% of the cohort reaches a human who was not meant to be involved. The cohort is new, so these are first impressions of it.</p></div></div><div class="acc "><button class="acchead"><span class="chip bad">regression</span><span class="acctitle">Prompt regression — same outcomes, more turns and cost</span><span class="accarrow">&#9662;</span></button><div class="accbody"><p>Every day this runs costs roughly 245 extra user turns and about 4.39 USD a day of excess model spend on this agent, with no change in how often it resolves — the users pay in time, the tenant pays in tokens, and no outcome alert will ever fire.</p></div></div><div class="acc dismissed"><button class="acchead"><span class="chip muted">dismissed</span><span class="chip ">load</span><span class="acctitle">Load spike, not a quality regression</span><span class="accarrow">&#9662;</span></button><div class="accbody"><p>volume runs at 3.5x normal for 4 day(s) (2696 vs 768 sessions/day); tool p95 latency 1338 -&gt; 3152 ms and timeouts 0.0061 -&gt; 0.0158 per call. Resolution is flat (0.7896 -&gt; 0.7769), so this is a reliability event for the platform owner, not a quality regression, and it self-corrects when volume reverts.</p></div></div><div class="acc dismissed"><button class="acchead"><span class="chip muted">dismissed</span><span class="chip ">traffic_mix</span><span class="acctitle">Traffic mix shift, not a quality change</span><span class="accarrow">&#9662;</span></button><div class="accbody"><p>aggregate containment moves +1.9pt on days 22-31 only because branch_locator&#x27;s share of traffic goes from 13% to 44%. Every per-intent containment rate is flat within 5pt. This is a mix shift, not a quality change in either direction.</p></div></div><div class="acc dismissed"><button class="acchead"><span class="chip muted">dismissed</span><span class="chip ">judge_change</span><span class="acctitle">Judge-version boundary, not an agent regression</span><span class="accarrow">&#9662;</span></button><div class="accbody"><p>judged quality_score drops 3.89 -&gt; 3.29 on day 28 simultaneously on every tenant (acme-bank 3.91-&gt;3.31; northwind-retail 3.88-&gt;3.27) and every intent, exactly where judge_version flips v1 -&gt; v2 (config_timeline day 28: judge quality_rubric v1 -&gt; v2). We measured the rubric, not the agent. quality_score is only compared within one judge_version from here on.</p></div></div><div class="acc refused"><button class="acchead"><span class="chip warn">refused</span><span class="acctitle">A09 &middot; REQUIRES_NEW_JUDGE</span><span class="accarrow">&#9662;</span></button><div class="accbody"><p>session_end = &#x27;abandoned&#x27; is MEASURED and reported here: abandonment is acme-bank 5.92%, northwind-retail 5.73% of sessions. WHY a user abandoned — frustration versus having got what they needed — is a judgment about meaning. No versioned judge with a published calibration for that question exists in this deployment, and inferring the reason from the end code would be a Rule 1 violation dressed up as an aggregate. This system publishes no such number.</p><div class="need"><b>Required event</b> abandonment_reason_judgement at <code>session</code> grain · fields <code>judge_version, reason_class, confidence, calibration_set_id</code> · owner <code>quality-judging</code></div><div class="need warn"><b>Tempting proxy</b> abandoned sessions with an unusually high turn count or a same-tool retry &mdash; it flags effort, not frustration; a user who leaves happy after two turns and one who rage-quits after two turns look identical in the logs</div></div></div><div class="acc refused"><button class="acchead"><span class="chip warn">refused</span><span class="acctitle">A11 &middot; NOT_MEASURABLE</span><span class="accarrow">&#9662;</span></button><div class="accbody"><p>No failover mechanism exists in the runtime, so no failover event is ever emitted: there is no primary/secondary path to observe. Nothing in the corpus records a primary model or tool failing and an alternate serving the user, because that choice is never made. Required event: failover at step grain with fields from_target, to_target, reason, recovered, owner conversation-runtime.</p><div class="need"><b>Required event</b> failover at <code>step</code> grain · fields <code>from_target, to_target, reason, recovered</code> · owner <code>conversation-runtime</code></div><div class="need warn"><b>Tempting proxy</b> llm_call rows with retry_count &gt; 0 (1956 in this corpus) &mdash; those are QUALITY retries — the same target re-issued after a provider error or malformed response, not a switch to an alternate target. Reporting them as failover would show a small non-zero rate that reads as &#x27;failover is working&#x27; when failover does not exist; a chart here would be worse than no chart.</div></div></div><div class="acc refused"><button class="acchead"><span class="chip warn">refused</span><span class="acctitle">A02 &middot; CARDINALITY_REFUSED</span><span class="accarrow">&#9662;</span></button><div class="accbody"><p>a per-customer breakdown (custom_dims.customer_ref) was considered for the cohort drill-down and refused: 80252 distinct values against the catalog&#x27;s declared cardinality budget of 200 for session.custom_dims.customer_ref. The field is near-unique per session; grouping by it is a planner error, not a cohort. session_id is the only declared join key; customer_ref is not one.</p><div class="need warn"><b>Tempting proxy</b> custom_dims.segment (closed set, budget 50) &mdash; segment groups customers into three bands; it answers &#x27;which kind of customer&#x27;, not &#x27;which customer&#x27;</div></div></div>
     </div>
     <div class="card">
       <div class="pad" style="padding-bottom:4px"><h4>What is real, stubbed, or simulated</h4></div>
@@ -326,7 +326,7 @@ Findings this run: 3 regressions, 3 explicit non-regressions.</p></div></div>
         <div class="kvs">
           <div><span>Team</span><b>demo</b></div>
           <div><span>Corpus</span><b>A</b></div>
-          <div><span>Generated</span><b>2026-09-14T17:58:30Z</b></div>
+          <div><span>Generated</span><b>2026-09-16T05:50:04Z</b></div>
           <div><span>Tool coverage</span><b>acme-bank=0.721, northwind-retail=0.931)</b></div>
         </div>
       </div>
@@ -343,7 +343,7 @@ Findings this run: 3 regressions, 3 explicit non-regressions.</p></div></div>
   <pre>{
   &quot;team&quot;: &quot;demo&quot;,
   &quot;corpus&quot;: &quot;A&quot;,
-  &quot;generated_at&quot;: &quot;2026-09-14T17:58:30Z&quot;,
+  &quot;generated_at&quot;: &quot;2026-09-16T05:50:04Z&quot;,
   &quot;system_notes&quot;: &quot;REAL: session-grain feature table from sessions.jsonl.gz + agent_steps.jsonl.gz; coverage computed per tenant from which agent_kinds emit each step type in THIS corpus (tool_call coverage acme-bank=0.721, northwind-retail=0.931); 11 asks answered with a metric or a structured gap; three detector-specific analyses (tool contract / KB gap with same-tenant peers / prompt efficiency with sibling-agent control); three explicit decoy dismissals; A11 refused with required event failover {from_target,to_target,reason,recovered} owner conversation-runtime; cost is the sum of recorded cost_usd or null; cardinality refusal cites the catalog&#x27;s fixed budget of 200 on session.custom_dims.customer_ref; golden-set IDs frozen to out/golden_set.json before any prescription; decision screen renders this report and writes approval back into it.\n\nSTUBBED: no LLM is called anywhere. A09 (why a user abandoned) is a REQUIRES_NEW_JUDGE gap rather than a trained frustration classifier. Quality calibration uses the kit&#x27;s human rubric labels against the corpus&#x27;s own judge, not a judge we trained.\n\nSIMULATED: the replay endpoint (replay/serve.py) is a hypothesis verifier with a seeded effect model. Its &#x27;before&#x27; is not this system&#x27;s corpus measurement. We send at most a few high-confidence runs on the exact detected cohort; no_effect is recorded honestly. Replay this run: replay p01_tool_contract_northwind: tool.validate get_order_status on {\&quot;from_day\&quot;: 40, \&quot;intent\&quot;: \&quot;order_status\&quot;, \&quot;to_day\&quot;: 51, \&quot;tool\&quot;: \&quot;get_order_status\&quot;} -&gt; improved (run rp_7d753011, before 0.7741 after 0.8574, golden True)\n\nBREAKS AT 100x: the session map is in-memory (~80k sessions, ~900k steps is comfortable; tens of millions of sessions would need an on-disk grain and a streaming window scan). The decision screen writes the report file atomically \u2014 that is not a multi-user store. Detector thresholds are relative/statistical, not practice literals, but a sealed corpus with a different empty-success base rate still has to clear the same lift/z bars.\n\nThis file is generated by run.py from the kit corpus; no hand-edited or reference report is read or copied.\n\nFindings this run: 3 regressions, 3 explicit non-regressions.&quot;,
   &quot;metrics&quot;: [
     {
@@ -363,10 +363,7 @@ Findings this run: 3 regressions, 3 explicit non-regressions.</p></div></div>
         &quot;filter&quot;: &quot;session_end = &#x27;resolved&#x27; OR (session_end = &#x27;handoff&#x27; AND handoff_by_design = true)&quot;,
         &quot;denominator&quot;: &quot;all sessions in scope&quot;,
         &quot;breakdowns&quot;: [
-          &quot;tenant&quot;,
-          &quot;intent&quot;,
-          &quot;channel&quot;,
-          &quot;agent_kind&quot;
+          &quot;tenant&quot;
         ],
         &quot;alternatives_offered&quot;: [
           &quot;resolution_rate \u2014 excludes by-design handoffs entirely&quot;
@@ -399,10 +396,7 @@ Findings this run: 3 regressions, 3 explicit non-regressions.</p></div></div>
         &quot;filter&quot;: &quot;outcome &lt;&gt; &#x27;ok&#x27; AND tenant = &#x27;acme-bank&#x27;&quot;,
         &quot;denominator&quot;: &quot;all tool_call steps for this tenant on agent_kinds that emit tool_call&quot;,
         &quot;breakdowns&quot;: [
-          &quot;error_class&quot;,
-          &quot;tool_name&quot;,
-          &quot;channel&quot;,
-          &quot;agent_id&quot;
+          &quot;tool_name&quot;
         ]
       },
       &quot;breakdown&quot;: {
@@ -439,9 +433,7 @@ Findings this run: 3 regressions, 3 explicit non-regressions.</p></div></div>
         &quot;filter&quot;: &quot;outcome = &#x27;ok&#x27; AND status_code = 200 AND result_field_count = 0 AND tenant = &#x27;acme-bank&#x27;&quot;,
         &quot;denominator&quot;: &quot;all tool_call steps with outcome = &#x27;ok&#x27; for this tenant&quot;,
         &quot;breakdowns&quot;: [
-          &quot;tool_name&quot;,
-          &quot;tool_version&quot;,
-          &quot;intent&quot;
+          &quot;tool_name&quot;
         ],
         &quot;alternatives_offered&quot;: [
           &quot;catalog lists silent_tool_success as derivable_not_declared \u2014 derived and declared here&quot;
@@ -480,10 +472,7 @@ Findings this run: 3 regressions, 3 explicit non-regressions.</p></div></div>
         &quot;filter&quot;: &quot;outcome &lt;&gt; &#x27;ok&#x27; AND tenant = &#x27;northwind-retail&#x27;&quot;,
         &quot;denominator&quot;: &quot;all tool_call steps for this tenant on agent_kinds that emit tool_call&quot;,
         &quot;breakdowns&quot;: [
-          &quot;error_class&quot;,
-          &quot;tool_name&quot;,
-          &quot;channel&quot;,
-          &quot;agent_id&quot;
+          &quot;tool_name&quot;
         ]
       },
       &quot;breakdown&quot;: {
@@ -519,9 +508,7 @@ Findings this run: 3 regressions, 3 explicit non-regressions.</p></div></div>
         &quot;filter&quot;: &quot;outcome = &#x27;ok&#x27; AND status_code = 200 AND result_field_count = 0 AND tenant = &#x27;northwind-retail&#x27;&quot;,
         &quot;denominator&quot;: &quot;all tool_call steps with outcome = &#x27;ok&#x27; for this tenant&quot;,
         &quot;breakdowns&quot;: [
-          &quot;tool_name&quot;,
-          &quot;tool_version&quot;,
-          &quot;intent&quot;
+          &quot;tool_name&quot;
         ],
         &quot;alternatives_offered&quot;: [
           &quot;catalog lists silent_tool_success as derivable_not_declared \u2014 derived and declared here&quot;
@@ -586,9 +573,7 @@ Findings this run: 3 regressions, 3 explicit non-regressions.</p></div></div>
         &quot;denominator&quot;: &quot;all sessions in each month, per tenant and per intent&quot;,
         &quot;breakdowns&quot;: [
           &quot;tenant&quot;,
-          &quot;intent&quot;,
-          &quot;agent_id&quot;,
-          &quot;channel&quot;
+          &quot;intent&quot;
         ],
         &quot;alternatives_offered&quot;: [
           &quot;quality_score is NOT trended month over month: the judge_version boundary makes it a measurement of the rubric, not the agent&quot;,
@@ -850,19 +835,27 @@ Findings this run: 3 regressions, 3 explicit non-regressions.</p></div></div>
       &quot;fidelity&quot;: &quot;derived&quot;,
       &quot;value&quot;: {
         &quot;acme-bank&quot;: {
-          &quot;raw&quot;: [
+          &quot;raw_all_intents&quot;: [
             0.8153,
             0.7989
+          ],
+          &quot;common&quot;: [
+            0.8153,
+            0.807
           ],
           &quot;adjusted&quot;: [
             0.8153,
             0.8079
           ],
-          &quot;mix_effect&quot;: -0.0089,
+          &quot;mix_effect&quot;: -0.0009,
           &quot;change_beyond_mix&quot;: -0.0075
         },
         &quot;northwind-retail&quot;: {
-          &quot;raw&quot;: [
+          &quot;raw_all_intents&quot;: [
+            0.7891,
+            0.784
+          ],
+          &quot;common&quot;: [
             0.7891,
             0.784
           ],
@@ -876,23 +869,24 @@ Findings this run: 3 regressions, 3 explicit non-regressions.</p></div></div>
       },
       &quot;coverage&quot;: {
         &quot;value&quot;: 1.0,
-        &quot;basis&quot;: &quot;session_end is present on every session; the adjusted figure is computed from per-intent rates and month-1 shares of the common intents (conversation shares, not people)&quot;
+        &quot;basis&quot;: &quot;session_end is present on every session; both ends of the adjusted comparison are on the common-intent scope (month-1 shares held, month-2 per-intent rates)&quot;
       },
       &quot;calibration&quot;: null,
       &quot;plan&quot;: {
         &quot;source&quot;: &quot;corpus/sessions.jsonl.gz&quot;,
-        &quot;filter&quot;: &quot;weight month-2 per-intent resolution by month-1 intent shares, common intents only, renormalised&quot;,
+        &quot;filter&quot;: &quot;weight month-2 per-intent resolution by month-1 intent shares, over the common intents only, renormalised; the month-1 end is the common-intent rate on that same scope&quot;,
         &quot;denominator&quot;: &quot;sessions of the common intents in each month&quot;,
         &quot;breakdowns&quot;: [
           &quot;tenant&quot;,
           &quot;intent&quot;
         ],
         &quot;alternatives_offered&quot;: [
-          &quot;m_mom_resolution is the raw, unadjusted comparison; the gap between raw and adjusted is the mix effect&quot;,
-          &quot;intents present in only one month, or with fewer than 30 sessions in a month, are excluded and listed&quot;
+          &quot;raw_all_intents is the aggregate over every intent and is shown beside it; a gap between raw_all_intents and adjusted mixes a true mix effect with intents entering or leaving the cohort&quot;,
+          &quot;intents present in only one month, or with fewer than 30 sessions in a month, are excluded and listed&quot;,
+          &quot;a cohort born in month 2 cannot be mix-held and is excluded; a regression delivered as a new cohort is found in m_mom_resolution per intent, not here&quot;
         ]
       },
-      &quot;value_note&quot;: &quot;derived: raw vs adjusted resolution, the mix effect, and the change beyond mix; the breakdown lists the excluded intents and any detected events that overlap a month window&quot;,
+      &quot;value_note&quot;: &quot;derived: raw_all_intents, the common-intent rates, the mix effect and the change beyond mix. Both adjusted ends are on the common-intent scope, so change_beyond_mix is not a scope change; the breakdown lists excluded intents, those born in month 2, and overlapping events&quot;,
       &quot;breakdown&quot;: {
         &quot;acme-bank&quot;: {
           &quot;weights_month1&quot;: {
@@ -924,12 +918,16 @@ Findings this run: 3 regressions, 3 explicit non-regressions.</p></div></div>
               &quot;n_month2&quot;: 531
             }
           ],
+          &quot;born_in_month2&quot;: [
+            &quot;premium_card_info&quot;
+          ],
           &quot;confounded_by&quot;: [
             &quot;acme-bank/efficiency&quot;,
             &quot;acme-bank/kb_gap&quot;,
             &quot;acme-bank/traffic_mix&quot;
           ],
-          &quot;reading&quot;: &quot;not reliable as a trend: detected event(s) overlap a month window (acme-bank/efficiency, acme-bank/kb_gap, acme-bank/traffic_mix)&quot;
+          &quot;reading&quot;: &quot;not reliable as a trend: detected event(s) overlap a month window (acme-bank/efficiency, acme-bank/kb_gap, acme-bank/traffic_mix)&quot;,
+          &quot;caveat&quot;: &quot;a cohort born in month 2 (premium_card_info) has no month-1 share and is excluded from the adjusted comparison; a regression that arrives as a brand-new cohort shows in the raw per-intent table, not here&quot;
         },
         &quot;northwind-retail&quot;: {
           &quot;weights_month1&quot;: {
@@ -953,11 +951,13 @@ Findings this run: 3 regressions, 3 explicit non-regressions.</p></div></div>
             &quot;sizing_help&quot;
           ],
           &quot;excluded_intents&quot;: [],
+          &quot;born_in_month2&quot;: [],
           &quot;confounded_by&quot;: [
             &quot;northwind-retail/load&quot;,
             &quot;northwind-retail/tool_contract&quot;
           ],
-          &quot;reading&quot;: &quot;not reliable as a trend: detected event(s) overlap a month window (northwind-retail/load, northwind-retail/tool_contract)&quot;
+          &quot;reading&quot;: &quot;not reliable as a trend: detected event(s) overlap a month window (northwind-retail/load, northwind-retail/tool_contract)&quot;,
+          &quot;caveat&quot;: null
         }
       }
     },
@@ -987,67 +987,163 @@ Findings this run: 3 regressions, 3 explicit non-regressions.</p></div></div>
       &quot;plan&quot;: {
         &quot;source&quot;: &quot;corpus/sessions.jsonl.gz&quot;,
         &quot;filter&quot;: &quot;cost_usd IS NOT NULL AND tenant = &#x27;acme-bank&#x27;&quot;,
-        &quot;denominator&quot;: &quot;resolved sessions of the intent (sessions without recorded cost leave both numerator and denominator)&quot;,
+        &quot;denominator&quot;: &quot;resolved sessions of the intent that carry a recorded cost (sessions without recorded cost leave both numerator and denominator)&quot;,
         &quot;breakdowns&quot;: [
           &quot;intent&quot;,
-          &quot;agent_id&quot;,
           &quot;agent_kind&quot;
+        ],
+        &quot;alternatives_offered&quot;: [
+          &quot;escalation is a hidden cost: unplanned handoffs and abandonment sit beside each intent as counts and rates, never priced \u2014 no human-handling constant exists in the corpus&quot;,
+          &quot;zero successful resolutions with spend is unbounded unit cost; it is listed as cost_to_resolve=&#x27;unbounded&#x27; and ranked first by spend, not last&quot;,
+          &quot;an intent that resolves but has no priced resolution is cost_to_resolve=&#x27;cost_unavailable&#x27; (a telemetry gap), ranked after unbounded and never confused with infinite cost&quot;
         ]
       },
-      &quot;value_note&quot;: &quot;top five intents by cost per resolved conversation; full table in breakdown&quot;,
+      &quot;value_note&quot;: &quot;ranked by unit cost: &#x27;unbounded&#x27; (zero successes, by spend) first, then &#x27;cost_unavailable&#x27; (no priced success), then cost per resolved conversation; escalation_rate and abandon_rate sit beside each intent so a cheap-looking intent that escalates is not read as cheap&quot;,
       &quot;breakdown&quot;: {
         &quot;by_intent&quot;: {
           &quot;balance_enquiry&quot;: {
+            &quot;sessions&quot;: 5357,
+            &quot;sessions_with_cost&quot;: 5357,
             &quot;cost_usd&quot;: 185.5627,
             &quot;resolved&quot;: 4626,
-            &quot;cost_per_resolved&quot;: 0.0401
+            &quot;resolved_with_cost&quot;: 4626,
+            &quot;cost_per_resolved&quot;: 0.0401,
+            &quot;cost_to_resolve&quot;: 0.0401,
+            &quot;cost_state&quot;: &quot;ok&quot;,
+            &quot;unplanned_handoffs&quot;: 315,
+            &quot;escalation_rate&quot;: 0.0588,
+            &quot;abandoned&quot;: 314,
+            &quot;abandon_rate&quot;: 0.0586
           },
           &quot;branch_locator&quot;: {
+            &quot;sessions&quot;: 5543,
+            &quot;sessions_with_cost&quot;: 5543,
             &quot;cost_usd&quot;: 153.441,
             &quot;resolved&quot;: 5005,
-            &quot;cost_per_resolved&quot;: 0.0307
+            &quot;resolved_with_cost&quot;: 5005,
+            &quot;cost_per_resolved&quot;: 0.0307,
+            &quot;cost_to_resolve&quot;: 0.0307,
+            &quot;cost_state&quot;: &quot;ok&quot;,
+            &quot;unplanned_handoffs&quot;: 178,
+            &quot;escalation_rate&quot;: 0.0321,
+            &quot;abandoned&quot;: 300,
+            &quot;abandon_rate&quot;: 0.0541
           },
           &quot;card_block&quot;: {
+            &quot;sessions&quot;: 3038,
+            &quot;sessions_with_cost&quot;: 3038,
             &quot;cost_usd&quot;: 166.9183,
             &quot;resolved&quot;: 2474,
-            &quot;cost_per_resolved&quot;: 0.0675
+            &quot;resolved_with_cost&quot;: 2474,
+            &quot;cost_per_resolved&quot;: 0.0675,
+            &quot;cost_to_resolve&quot;: 0.0675,
+            &quot;cost_state&quot;: &quot;ok&quot;,
+            &quot;unplanned_handoffs&quot;: 259,
+            &quot;escalation_rate&quot;: 0.0853,
+            &quot;abandoned&quot;: 179,
+            &quot;abandon_rate&quot;: 0.0589
           },
           &quot;employment_letter&quot;: {
+            &quot;sessions&quot;: 1871,
+            &quot;sessions_with_cost&quot;: 1871,
             &quot;cost_usd&quot;: 124.7105,
             &quot;resolved&quot;: 1293,
-            &quot;cost_per_resolved&quot;: 0.0965
+            &quot;resolved_with_cost&quot;: 1293,
+            &quot;cost_per_resolved&quot;: 0.0965,
+            &quot;cost_to_resolve&quot;: 0.0965,
+            &quot;cost_state&quot;: &quot;ok&quot;,
+            &quot;unplanned_handoffs&quot;: 319,
+            &quot;escalation_rate&quot;: 0.1705,
+            &quot;abandoned&quot;: 113,
+            &quot;abandon_rate&quot;: 0.0604
           },
           &quot;fx_rate&quot;: {
+            &quot;sessions&quot;: 1586,
+            &quot;sessions_with_cost&quot;: 1586,
             &quot;cost_usd&quot;: 40.7654,
             &quot;resolved&quot;: 1362,
-            &quot;cost_per_resolved&quot;: 0.0299
+            &quot;resolved_with_cost&quot;: 1362,
+            &quot;cost_per_resolved&quot;: 0.0299,
+            &quot;cost_to_resolve&quot;: 0.0299,
+            &quot;cost_state&quot;: &quot;ok&quot;,
+            &quot;unplanned_handoffs&quot;: 92,
+            &quot;escalation_rate&quot;: 0.058,
+            &quot;abandoned&quot;: 114,
+            &quot;abandon_rate&quot;: 0.0719
           },
           &quot;loan_status&quot;: {
+            &quot;sessions&quot;: 2673,
+            &quot;sessions_with_cost&quot;: 2673,
             &quot;cost_usd&quot;: 127.2804,
             &quot;resolved&quot;: 2118,
-            &quot;cost_per_resolved&quot;: 0.0601
+            &quot;resolved_with_cost&quot;: 2118,
+            &quot;cost_per_resolved&quot;: 0.0601,
+            &quot;cost_to_resolve&quot;: 0.0601,
+            &quot;cost_state&quot;: &quot;ok&quot;,
+            &quot;unplanned_handoffs&quot;: 267,
+            &quot;escalation_rate&quot;: 0.0999,
+            &quot;abandoned&quot;: 158,
+            &quot;abandon_rate&quot;: 0.0591
           },
           &quot;premium_card_info&quot;: {
+            &quot;sessions&quot;: 531,
+            &quot;sessions_with_cost&quot;: 531,
             &quot;cost_usd&quot;: 29.2159,
             &quot;resolved&quot;: 309,
-            &quot;cost_per_resolved&quot;: 0.0945
+            &quot;resolved_with_cost&quot;: 309,
+            &quot;cost_per_resolved&quot;: 0.0945,
+            &quot;cost_to_resolve&quot;: 0.0945,
+            &quot;cost_state&quot;: &quot;ok&quot;,
+            &quot;unplanned_handoffs&quot;: 171,
+            &quot;escalation_rate&quot;: 0.322,
+            &quot;abandoned&quot;: 31,
+            &quot;abandon_rate&quot;: 0.0584
           },
           &quot;product_info&quot;: {
+            &quot;sessions&quot;: 4101,
+            &quot;sessions_with_cost&quot;: 4101,
             &quot;cost_usd&quot;: 204.8082,
             &quot;resolved&quot;: 3064,
-            &quot;cost_per_resolved&quot;: 0.0668
+            &quot;resolved_with_cost&quot;: 3064,
+            &quot;cost_per_resolved&quot;: 0.0668,
+            &quot;cost_to_resolve&quot;: 0.0668,
+            &quot;cost_state&quot;: &quot;ok&quot;,
+            &quot;unplanned_handoffs&quot;: 475,
+            &quot;escalation_rate&quot;: 0.1158,
+            &quot;abandoned&quot;: 260,
+            &quot;abandon_rate&quot;: 0.0634
           },
           &quot;statement_request&quot;: {
+            &quot;sessions&quot;: 2430,
+            &quot;sessions_with_cost&quot;: 2430,
             &quot;cost_usd&quot;: 103.9876,
             &quot;resolved&quot;: 2062,
-            &quot;cost_per_resolved&quot;: 0.0504
+            &quot;resolved_with_cost&quot;: 2062,
+            &quot;cost_per_resolved&quot;: 0.0504,
+            &quot;cost_to_resolve&quot;: 0.0504,
+            &quot;cost_state&quot;: &quot;ok&quot;,
+            &quot;unplanned_handoffs&quot;: 159,
+            &quot;escalation_rate&quot;: 0.0654,
+            &quot;abandoned&quot;: 150,
+            &quot;abandon_rate&quot;: 0.0617
           },
           &quot;txn_dispute&quot;: {
+            &quot;sessions&quot;: 2392,
+            &quot;sessions_with_cost&quot;: 2392,
             &quot;cost_usd&quot;: 202.6376,
             &quot;resolved&quot;: 1514,
-            &quot;cost_per_resolved&quot;: 0.1338
+            &quot;resolved_with_cost&quot;: 1514,
+            &quot;cost_per_resolved&quot;: 0.1338,
+            &quot;cost_to_resolve&quot;: 0.1338,
+            &quot;cost_state&quot;: &quot;ok&quot;,
+            &quot;unplanned_handoffs&quot;: 451,
+            &quot;escalation_rate&quot;: 0.1885,
+            &quot;abandoned&quot;: 128,
+            &quot;abandon_rate&quot;: 0.0535
           }
         },
+        &quot;unbounded_intents&quot;: [],
+        &quot;cost_unavailable_intents&quot;: [],
         &quot;cost_by_agent_kind&quot;: {
           &quot;v2_flow&quot;: 385.2631,
           &quot;v3_agent&quot;: 954.0645
@@ -1079,9 +1175,9 @@ Findings this run: 3 regressions, 3 explicit non-regressions.</p></div></div>
         &quot;filter&quot;: &quot;SUM(cost_usd) WHERE tenant = &#x27;acme-bank&#x27; GROUP BY 28-day month&quot;,
         &quot;denominator&quot;: &quot;n/a \u2014 a total; recorded llm_call cost rolled up to session grain, nothing imputed&quot;,
         &quot;breakdowns&quot;: [
+          &quot;month&quot;,
           &quot;intent&quot;,
-          &quot;agent_id&quot;,
-          &quot;model&quot;
+          &quot;agent_id&quot;
         ],
         &quot;alternatives_offered&quot;: [
           &quot;human handling cost is NOT included: no price constant exists in the corpus, so handoffs are reported as counts, never as dollars&quot;
@@ -1157,57 +1253,135 @@ Findings this run: 3 regressions, 3 explicit non-regressions.</p></div></div>
       &quot;plan&quot;: {
         &quot;source&quot;: &quot;corpus/sessions.jsonl.gz&quot;,
         &quot;filter&quot;: &quot;cost_usd IS NOT NULL AND tenant = &#x27;northwind-retail&#x27;&quot;,
-        &quot;denominator&quot;: &quot;resolved sessions of the intent (sessions without recorded cost leave both numerator and denominator)&quot;,
+        &quot;denominator&quot;: &quot;resolved sessions of the intent that carry a recorded cost (sessions without recorded cost leave both numerator and denominator)&quot;,
         &quot;breakdowns&quot;: [
           &quot;intent&quot;,
-          &quot;agent_id&quot;,
           &quot;agent_kind&quot;
+        ],
+        &quot;alternatives_offered&quot;: [
+          &quot;escalation is a hidden cost: unplanned handoffs and abandonment sit beside each intent as counts and rates, never priced \u2014 no human-handling constant exists in the corpus&quot;,
+          &quot;zero successful resolutions with spend is unbounded unit cost; it is listed as cost_to_resolve=&#x27;unbounded&#x27; and ranked first by spend, not last&quot;,
+          &quot;an intent that resolves but has no priced resolution is cost_to_resolve=&#x27;cost_unavailable&#x27; (a telemetry gap), ranked after unbounded and never confused with infinite cost&quot;
         ]
       },
-      &quot;value_note&quot;: &quot;top five intents by cost per resolved conversation; full table in breakdown&quot;,
+      &quot;value_note&quot;: &quot;ranked by unit cost: &#x27;unbounded&#x27; (zero successes, by spend) first, then &#x27;cost_unavailable&#x27; (no priced success), then cost per resolved conversation; escalation_rate and abandon_rate sit beside each intent so a cheap-looking intent that escalates is not read as cheap&quot;,
       &quot;breakdown&quot;: {
         &quot;by_intent&quot;: {
           &quot;account_update&quot;: {
+            &quot;sessions&quot;: 3491,
+            &quot;sessions_with_cost&quot;: 3491,
             &quot;cost_usd&quot;: 145.3978,
             &quot;resolved&quot;: 2890,
-            &quot;cost_per_resolved&quot;: 0.0503
+            &quot;resolved_with_cost&quot;: 2890,
+            &quot;cost_per_resolved&quot;: 0.0503,
+            &quot;cost_to_resolve&quot;: 0.0503,
+            &quot;cost_state&quot;: &quot;ok&quot;,
+            &quot;unplanned_handoffs&quot;: 309,
+            &quot;escalation_rate&quot;: 0.0885,
+            &quot;abandoned&quot;: 180,
+            &quot;abandon_rate&quot;: 0.0516
           },
           &quot;delivery_reschedule&quot;: {
+            &quot;sessions&quot;: 5119,
+            &quot;sessions_with_cost&quot;: 5119,
             &quot;cost_usd&quot;: 294.7466,
             &quot;resolved&quot;: 3672,
-            &quot;cost_per_resolved&quot;: 0.0803
+            &quot;resolved_with_cost&quot;: 3672,
+            &quot;cost_per_resolved&quot;: 0.0803,
+            &quot;cost_to_resolve&quot;: 0.0803,
+            &quot;cost_state&quot;: &quot;ok&quot;,
+            &quot;unplanned_handoffs&quot;: 769,
+            &quot;escalation_rate&quot;: 0.1502,
+            &quot;abandoned&quot;: 314,
+            &quot;abandon_rate&quot;: 0.0613
           },
           &quot;order_status&quot;: {
+            &quot;sessions&quot;: 14552,
+            &quot;sessions_with_cost&quot;: 14552,
             &quot;cost_usd&quot;: 509.7621,
             &quot;resolved&quot;: 12240,
-            &quot;cost_per_resolved&quot;: 0.0416
+            &quot;resolved_with_cost&quot;: 12240,
+            &quot;cost_per_resolved&quot;: 0.0416,
+            &quot;cost_to_resolve&quot;: 0.0416,
+            &quot;cost_state&quot;: &quot;ok&quot;,
+            &quot;unplanned_handoffs&quot;: 1206,
+            &quot;escalation_rate&quot;: 0.0829,
+            &quot;abandoned&quot;: 804,
+            &quot;abandon_rate&quot;: 0.0553
           },
           &quot;product_availability&quot;: {
+            &quot;sessions&quot;: 6570,
+            &quot;sessions_with_cost&quot;: 6570,
             &quot;cost_usd&quot;: 208.4714,
             &quot;resolved&quot;: 5472,
-            &quot;cost_per_resolved&quot;: 0.0381
+            &quot;resolved_with_cost&quot;: 5472,
+            &quot;cost_per_resolved&quot;: 0.0381,
+            &quot;cost_to_resolve&quot;: 0.0381,
+            &quot;cost_state&quot;: &quot;ok&quot;,
+            &quot;unplanned_handoffs&quot;: 537,
+            &quot;escalation_rate&quot;: 0.0817,
+            &quot;abandoned&quot;: 379,
+            &quot;abandon_rate&quot;: 0.0577
           },
           &quot;promo_apply&quot;: {
+            &quot;sessions&quot;: 4123,
+            &quot;sessions_with_cost&quot;: 4123,
             &quot;cost_usd&quot;: 204.9626,
             &quot;resolved&quot;: 2765,
-            &quot;cost_per_resolved&quot;: 0.0741
+            &quot;resolved_with_cost&quot;: 2765,
+            &quot;cost_per_resolved&quot;: 0.0741,
+            &quot;cost_to_resolve&quot;: 0.0741,
+            &quot;cost_state&quot;: &quot;ok&quot;,
+            &quot;unplanned_handoffs&quot;: 706,
+            &quot;escalation_rate&quot;: 0.1712,
+            &quot;abandoned&quot;: 263,
+            &quot;abandon_rate&quot;: 0.0638
           },
           &quot;refund_status&quot;: {
+            &quot;sessions&quot;: 6126,
+            &quot;sessions_with_cost&quot;: 6126,
             &quot;cost_usd&quot;: 264.2752,
             &quot;resolved&quot;: 4838,
-            &quot;cost_per_resolved&quot;: 0.0546
+            &quot;resolved_with_cost&quot;: 4838,
+            &quot;cost_per_resolved&quot;: 0.0546,
+            &quot;cost_to_resolve&quot;: 0.0546,
+            &quot;cost_state&quot;: &quot;ok&quot;,
+            &quot;unplanned_handoffs&quot;: 615,
+            &quot;escalation_rate&quot;: 0.1004,
+            &quot;abandoned&quot;: 346,
+            &quot;abandon_rate&quot;: 0.0565
           },
           &quot;return_initiate&quot;: {
+            &quot;sessions&quot;: 7203,
+            &quot;sessions_with_cost&quot;: 7203,
             &quot;cost_usd&quot;: 444.3466,
             &quot;resolved&quot;: 5424,
-            &quot;cost_per_resolved&quot;: 0.0819
+            &quot;resolved_with_cost&quot;: 5424,
+            &quot;cost_per_resolved&quot;: 0.0819,
+            &quot;cost_to_resolve&quot;: 0.0819,
+            &quot;cost_state&quot;: &quot;ok&quot;,
+            &quot;unplanned_handoffs&quot;: 907,
+            &quot;escalation_rate&quot;: 0.1259,
+            &quot;abandoned&quot;: 408,
+            &quot;abandon_rate&quot;: 0.0566
           },
           &quot;sizing_help&quot;: {
+            &quot;sessions&quot;: 3546,
+            &quot;sessions_with_cost&quot;: 3546,
             &quot;cost_usd&quot;: 159.1797,
             &quot;resolved&quot;: 2617,
-            &quot;cost_per_resolved&quot;: 0.0608
+            &quot;resolved_with_cost&quot;: 2617,
+            &quot;cost_per_resolved&quot;: 0.0608,
+            &quot;cost_to_resolve&quot;: 0.0608,
+            &quot;cost_state&quot;: &quot;ok&quot;,
+            &quot;unplanned_handoffs&quot;: 430,
+            &quot;escalation_rate&quot;: 0.1213,
+            &quot;abandoned&quot;: 212,
+            &quot;abandon_rate&quot;: 0.0598
           }
         },
+        &quot;unbounded_intents&quot;: [],
+        &quot;cost_unavailable_intents&quot;: [],
         &quot;cost_by_agent_kind&quot;: {
           &quot;v2_flow&quot;: 166.9313,
           &quot;v3_agent&quot;: 2064.2107
@@ -1239,9 +1413,9 @@ Findings this run: 3 regressions, 3 explicit non-regressions.</p></div></div>
         &quot;filter&quot;: &quot;SUM(cost_usd) WHERE tenant = &#x27;northwind-retail&#x27; GROUP BY 28-day month&quot;,
         &quot;denominator&quot;: &quot;n/a \u2014 a total; recorded llm_call cost rolled up to session grain, nothing imputed&quot;,
         &quot;breakdowns&quot;: [
+          &quot;month&quot;,
           &quot;intent&quot;,
-          &quot;agent_id&quot;,
-          &quot;model&quot;
+          &quot;agent_id&quot;
         ],
         &quot;alternatives_offered&quot;: [
           &quot;human handling cost is NOT included: no price constant exists in the corpus, so handoffs are reported as counts, never as dollars&quot;
@@ -1321,9 +1495,9 @@ Findings this run: 3 regressions, 3 explicit non-regressions.</p></div></div>
         &quot;filter&quot;: &quot;intent whose catalog journey is the returns journey; share of sessions reaching each milestone in order&quot;,
         &quot;denominator&quot;: &quot;all sessions of the intent&quot;,
         &quot;breakdowns&quot;: [
+          &quot;intent&quot;,
           &quot;milestone&quot;,
-          &quot;channel&quot;,
-          &quot;agent_id&quot;
+          &quot;reach_rate&quot;
         ]
       },
       &quot;value_note&quot;: &quot;returns journey selected structurally by a returns-like milestone; falls back to the largest drop-off; all journeys in breakdown&quot;,
@@ -1651,9 +1825,8 @@ Findings this run: 3 regressions, 3 explicit non-regressions.</p></div></div>
         &quot;filter&quot;: &quot;kb_hit = true&quot;,
         &quot;denominator&quot;: &quot;all kb_lookup steps per tenant&quot;,
         &quot;breakdowns&quot;: [
-          &quot;intent&quot;,
-          &quot;kb_version&quot;,
-          &quot;agent_id&quot;
+          &quot;tenant&quot;,
+          &quot;intent&quot;
         ],
         &quot;alternatives_offered&quot;: [
           &quot;&#x27;actually answering&#x27; has a judged reading \u2014 see m_quality_judged, segmented by judge_version&quot;
@@ -1728,12 +1901,10 @@ Findings this run: 3 regressions, 3 explicit non-regressions.</p></div></div>
         &quot;filter&quot;: &quot;quality_score SEGMENTED BY judge_version \u2014 never trended across the boundary&quot;,
         &quot;denominator&quot;: &quot;sessions within one judge_version&quot;,
         &quot;breakdowns&quot;: [
-          &quot;judge_version&quot;,
-          &quot;intent&quot;,
-          &quot;tenant&quot;
+          &quot;judge_version&quot;
         ],
         &quot;alternatives_offered&quot;: [
-          &quot;csat is measured but present on a small, not-missing-at-random subset; reported alongside, never blended&quot;
+          &quot;csat is nullable and present on a small, not-missing-at-random subset of sessions; we do not blend it into quality and do not publish a headline for it&quot;
         ]
       },
       &quot;value_note&quot;: &quot;calibration = share of human-labelled sessions where |human - judge| &lt;= 1 on the 1-5 rubric, per-version detail in breakdown&quot;,
@@ -1827,10 +1998,7 @@ Findings this run: 3 regressions, 3 explicit non-regressions.</p></div></div>
         &quot;source&quot;: &quot;corpus/sessions.jsonl.gz JOIN corpus/config_timeline.csv WHERE kind = &#x27;model&#x27;&quot;,
         &quot;filter&quot;: &quot;agent_id = change.target, 7 days before vs 7 days after change.day&quot;,
         &quot;denominator&quot;: &quot;sessions of the upgraded agent in each 7-day window&quot;,
-        &quot;breakdowns&quot;: [
-          &quot;intent&quot;,
-          &quot;channel&quot;
-        ],
+        &quot;breakdowns&quot;: [],
         &quot;alternatives_offered&quot;: [
           &quot;judged quality is only included when both windows share one judge_version&quot;,
           &quot;windows overlapping a detected fault or decoy are marked confounded and left null&quot;
@@ -1864,8 +2032,8 @@ Findings this run: 3 regressions, 3 explicit non-regressions.</p></div></div>
         &quot;denominator&quot;: &quot;n/a \u2014 a queue&quot;,
         &quot;breakdowns&quot;: [
           &quot;tenant&quot;,
-          &quot;reason&quot;,
-          &quot;intent&quot;
+          &quot;intent&quot;,
+          &quot;reason&quot;
         ],
         &quot;alternatives_offered&quot;: [
           &quot;ordering by a judged score is a judged reading; the SCOPE itself is deterministic&quot;
@@ -2444,10 +2612,10 @@ Findings this run: 3 regressions, 3 explicit non-regressions.</p></div></div>
       &quot;expected&quot;: 0.8462,
       &quot;evidence&quot;: [
         &quot;branch_locator share of tenant traffic 0.130 -&gt; 0.437 (x3.4) on days 22-31&quot;,
-        &quot;aggregate containment 0.8462 -&gt; 0.8656; stratified by intent: balance_enquiry 0.865-&gt;0.853, branch_locator 0.906-&gt;0.899, card_block 0.815-&gt;0.810, employment_letter 0.693-&gt;0.680, fx_rate 0.859-&gt;0.855, loan_status 0.791-&gt;0.800, product_info 0.751-&gt;0.724, statement_request 0.848-&gt;0.851, txn_dispute 0.634-&gt;0.625&quot;,
+        &quot;aggregate containment 0.8462 -&gt; 0.8656; stratified by intent: balance_enquiry 0.883-&gt;0.877, branch_locator 0.919-&gt;0.908, card_block 0.858-&gt;0.844, employment_letter 0.771-&gt;0.759, fx_rate 0.870-&gt;0.870, loan_status 0.840-&gt;0.847, product_info 0.825-&gt;0.795, statement_request 0.872-&gt;0.879, txn_dispute 0.757-&gt;0.762&quot;,
         &quot;config changes in the tenant during the window \u2014 none touches branch_locator&#x27;s rate: day 23 prompt acme_cards_v3; day 28 judge quality_rubric&quot;
       ],
-      &quot;not_a_regression_because&quot;: &quot;aggregate containment moves +1.9pt on days 22-31 only because branch_locator&#x27;s share of traffic goes from 13% to 44%. Every per-intent resolution rate is flat within 5pt. This is a mix shift, not a quality change in either direction.&quot;,
+      &quot;not_a_regression_because&quot;: &quot;aggregate containment moves +1.9pt on days 22-31 only because branch_locator&#x27;s share of traffic goes from 13% to 44%. Every per-intent containment rate is flat within 5pt. This is a mix shift, not a quality change in either direction.&quot;,
       &quot;severity&quot;: &quot;low&quot;,
       &quot;headline&quot;: &quot;Traffic mix shift, not a quality change&quot;
     },
