@@ -94,7 +94,9 @@ report, and the report must stay schema-valid.
 
 The operator screen is **one page, not a dashboard**. It exists so a reviewer can
 answer the eight questions from the report without recomputing anything in the
-browser.
+browser. The psychology behind the tracing-console layout — working memory,
+recognition, trust calibration, why Reject is easy — is in
+[`docs/ux-psychology.md`](ux-psychology.md).
 
 **Regions (live screen):**
 

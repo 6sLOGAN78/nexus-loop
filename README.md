@@ -55,7 +55,7 @@ question for the organisers; the solution reports measured coverage regardless.
 |---|---|
 | `nexus_loop/` | The solution package: ingestion, features, detectors, asks, report, replay client, decision screen |
 | `run.py` | The one-command entrypoint that produces `loop-report.json` |
-| `docs/` | Problem statement, brief, verified findings, deliverables/replay/demo guide, submission note, edge-cases, solution overview, UI handoff |
+| `docs/` | Problem statement, brief, verified findings, deliverables/replay/demo guide, submission note, edge-cases, solution overview, UI handoff, UX psychology |
 | `examples/` | A sample `loop-report.json` (final solution, practice kit) and a standalone lo-fi `demo.html` wireframe |
 | `kit/` | The practice dataset (sessions, steps, turns, config timeline, labels, catalog, asks, ground truth, ~33 MB) |
 | `tools/nexus-loop-kit/` | Organiser tooling: generator, starter, scorer, replay service, schema, reference reports |
@@ -151,8 +151,9 @@ New to the repo, read in this order:
 7. `docs/submission-note.md` — real / stubbed / simulated / breaks at 100×.
 8. `docs/edge-cases.md` — the non-obvious traps and how we handle them (judge Q&A).
 9. `docs/ui-handoff.md` — what the UI/product team needs.
-10. `examples/demo.html` — the lo-fi wireframe + sample report (open the file directly, no server).
-11. `tools/testbed/README.md` — how to evaluate a candidate.
+10. `docs/ux-psychology.md` — why the screen is a tracing console (operator cognition).
+11. `examples/demo.html` — the lo-fi wireframe + sample report (open the file directly, no server).
+12. `tools/testbed/README.md` — how to evaluate a candidate.
 
 ---
 

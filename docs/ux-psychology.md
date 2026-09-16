@@ -1,0 +1,172 @@
+# Why the operator screen is a tracing console
+
+This is the psychology behind [`nexus_loop/static/index.html`](../nexus_loop/static/index.html). It is not a style note. It is the argument that the layout, colour, and what we hide are how an operator makes a *better Monday-morning call*, not how we make a prettier page.
+
+The scored job of the screen is decision quality (18), readability (15), and framing (12). Those are human scores. They reward the same things cognitive psychology has names for: limited working memory, recognition over recall, calibrated trust, and a decision that has been thought, not clicked.
+
+The contract in [`docs/ui-handoff.md`](ui-handoff.md) is unchanged: every figure is copied from `loop-report.json`. Psychology here is about *what the eye meets first* and *what the hand is asked to do*. It never invents a number.
+
+---
+
+## 1. The person in the chair
+
+The user is not exploring a corpus. They are an operator who was not on the team, opening the page on a Monday morning, and they have to answer eight questions:
+
+1. what broke?
+2. who was affected?
+3. how bad is it?
+4. why do we think it happened?
+5. who needs to fix it?
+6. what are we asking permission to change?
+7. what could go wrong if the diagnosis is wrong?
+8. did the replay test say the fix helped?
+
+That is a **single high-stakes decision under uncertainty**, with a named owner, a named risk, and a written reason. It is closer to signing a change ticket than to using Grafana.
+
+Two failure modes follow from that job:
+
+- **Exploration trap.** An 80k-session dashboard invites browsing. Browsing feels like diligence and delays the call. Hick’s law: more choices, slower (and worse) decisions.
+- **Narrative trap.** A paper “brief” reads like journalism. It is pleasant and it hides that this person already thinks in *traces, spans, and annotations* — Phoenix, Langfuse, Helicone. Asking them to learn a new genre on the scored screen spends working memory on the chrome, not on the finding.
+
+The console is built against both. One finding is selected. The loop of that finding is a four-span waterfall. The human act is labelled **Annotate**, because that is what tracing products already call a human score on a trace.
+
+---
+
+## 2. Working memory is the budget
+
+Miller’s classic bound (about seven chunks) is a ceiling, not a target. Sweller’s cognitive-load theory is the practical rule: germane load is the diagnosis; extraneous load is everything competing with it.
+
+So the screen is three regions with three jobs, and nothing else:
+
+| Region | Psychological job |
+|---|---|
+| Trace list | **Orient.** Which problem is in front of me? Open / Ignored / Refused is a filter, not a dashboard. |
+| Waterfall | **Understand.** Observe → diagnose → prescribe → verify is the causal story in the order the loop actually ran. |
+| Annotate | **Commit.** The ask, the risk, the signature. |
+
+Evidence, baseline working, honesty notes, and risk/no-ship sit under disclosures. That is **progressive disclosure** (Nielsen): experts can open them; strangers are not forced to parse a wall of logs before they know what broke. The first screen is claim, harm, owner, change, replay — the eight questions in spatial order, not a questionnaire.
+
+We do not number the eight questions on the page. Numbered questionnaires trigger “fill this in” behaviour. The operator should *notice they can already answer them*, which is a stronger test of the layout than a labelled form.
+
+---
+
+## 3. Recognition, not a new language
+
+Operators who have used Phoenix, Langfuse, or Helicone already have a schema:
+
+- a **list of traces** (root requests / conversations)
+- a **span waterfall** (what happened, in order, with status)
+- **human annotation** (a score or a verdict on that trace)
+
+Using that schema is **recognition over recall** (Nielsen’s heuristic 6). We are not teaching “Nexus Loop.” We are reusing a mental model the industry already trained.
+
+The mapping is deliberate and bounded:
+
+| Tracing product | What we took | What we refused |
+|---|---|---|
+| Phoenix Traces / Spans / Sessions | Open / Ignored / Refused | A table of every session |
+| Langfuse span tree + scores | Four named spans + fidelity chips | Token/latency chrome we do not have |
+| Helicone session paths | `/tenant/intent/tool` | Fake durations or invented steps |
+| Annotation / human review | Accept / Reject / Defer + required reason | A like/dislike that writes nothing |
+
+The waterfall bars plot **report values** (observed vs expected, predicted from → to, replay before → after). They are Cleveland–McGill position encodings, not decoration. Dual coding (Paivio): the number stays visible next to the bar so the visual comparison cannot drift from the report. If a bar and a number ever disagreed, the screen would be wrong.
+
+We do not invent span durations. A fake timeline would be the most tempting lie in this genre, and it would violate the report contract.
+
+---
+
+## 4. Colour is a decision primer, not a brand
+
+The previous screen was paper and navy: a brief to sign. That is a legitimate editorial move. It also primed **reading**, and it used a warm-cream + serif cluster that currently reads as generic generated UI.
+
+The console is **graphite + copper**.
+
+- Graphite (not pure black, not acid-green-on-black) is industrial/utilitarian: an ops surface, not a magazine, not a “dark dashboard” cliché. Dark `color-scheme` also matches how tracing products are actually used — long sessions, less glare.
+- **Copper is the decision lamp.** It is the colour of “a human must act.” It is *not* sage. Sage is reserved for measured coverage, dismissed lookalikes, and a recorded accept. If Accept were green in a sea of green “healthy” chips, colour would **prime confirmation**: the page would feel like it wants a yes. Prospect theory: people overweight the frame. We frame the gate as a choice, not a celebration.
+- Coral is reserved for high/critical severity, Reject, and “now / before” bars that are the worse side of a comparison. It is a signal, used sparingly, so it still means something (von Restorff: isolation makes it memorable).
+
+Accept is the filled copper button because it is the primary *action*, not because it is the morally preferred outcome. Reject is destructive (coral). Defer is ghost. All three are full-width, equally easy to hit (Fitts: target size). A rejection with a reason is a successful product decision; the styling must not punish it.
+
+---
+
+## 5. Harm before the ask
+
+The annotate pane is on the right. The harm KPIs are in the middle, *before* the buttons. That order is the argument.
+
+**Loss aversion.** “2,686 conversations” and “213 would have resolved” are losses already incurred. Putting them above the signature makes inaction feel like a choice, not a default. The sentence of `if_nothing_changes` sits next to the named `audience[]` so the cost is concrete (low construal: *this cohort, this week*) and socially addressed (*who* must act). A bare metric with no owner is a number someone else will worry about.
+
+We always show impact, owner, and consequence of inaction together. A finding is a decision, not a chart. That is also how the problem statement defines it.
+
+---
+
+## 6. Trust is designed as Stage 1 transparency
+
+Relationship-design’s trust ladder starts at **transparency**, not autonomy. This product never auto-ships a prompt. The human is the loop. So the screen must show its work without turning into an essay.
+
+- Coverage and fidelity chips in the header (A01 measured, A04 measured, judged if present) are **passports on the numbers**, not badges of quality. They answer “can I believe this denominator?” before the operator reads the claim.
+- REAL / STUBBED / SIMULATED is one disclosure. Framing score 12 wants honesty spoken out loud; it does not want a header wall that burns the first ten seconds.
+- The replay span states, in muted type, that replay `before` is the endpoint’s simulated baseline, not our corpus number. That is **trust calibration**: if we let those two numbers look like confirmation of each other, we would be teaching a false correlation.
+
+The rule “never recompute in JavaScript” is psychological as well as scoring. If the screen and the report diverge, the operator’s memory becomes a second source of truth. Dual sources produce **authority confusion**. One source, copied, is how the page stays honest when a judge asks “where did that 2,686 come from?”
+
+---
+
+## 7. The reason box is the thinking
+
+A verdict without a reason is a 400. That is a schema rule. It is also **elaboration**: writing a sentence is slower than clicking, and slower here is the point. People generate better justifications when they know the justification will be stored (`prescriptions[].approval.reason`, `decisions.log`). That is implementation-intention adjacent: “I am accepting *because*…” rather than “I am accepting.”
+
+Empty-reason feedback is inline, `aria-invalid`, and the field is focused. Errors name the fix (“A reason is required”), not a mood. No apology, no toast that vanishes.
+
+After save, the page re-fetches `/report.json` and the recorded verdict appears in the annotate pane (sage for accept, coral for reject, copper for defer). Closing the loop on the same screen is **immediate feedback** (Norman): the operator sees that the world changed. They do not have to trust that a POST happened.
+
+---
+
+## 8. Lookalikes and refusals are there to fight bias
+
+The kit plants three false alarms. Flagging one as a regression costs more than missing a real problem. The **Ignored** group exists so the operator (and the judge) can see the near-miss *and* the dismissal in the same genre as the real findings. That counters **confirmation bias** (“show me only the bad news”) and **availability** (“I only remember the tool break”). Explicit dismissal is the product behaviour the scorer rewards; the UI has to make it findable in one click, not a footnote.
+
+**Refused**, with A11 first, is the memorable beat the problem statement asks for. We render a refusal as a **missing span**: “No event to count,” required event in mono, and why retry is not failover. Tracing UIs already treat a missing or error span as first-class. Using that vernacular makes absence *visible*. A footer paragraph about A11 would be honest and forgettable. An empty observation with a spec is honest and sticky (peak-end + isolation).
+
+A refusal is not a change request. The annotate pane says so. That prevents the operator from “approving” a gap because the buttons were still there — an affordance error.
+
+---
+
+## 9. Default selection is a recommended path, not a dark pattern
+
+On load we select the verification’s prescription, else `tool.contract_break`. That is **sensible defaults** (Nielsen), aligned with the loop: the finding that has replay evidence is the one a stranger can decide. Hash deep-links (`#f01_…`, `#gap:A11`) exist so a reviewer can point at a row without describing it. Shared attention is a coordination problem; the URL is the cheapest fix.
+
+We do not auto-Accept. We do not hide Reject. We do not pre-fill the reason. Defaults may choose *which story to read*. They must not choose *the verdict*.
+
+---
+
+## 10. What we refused, on purpose
+
+| Temptation | Why it was dropped |
+|---|---|
+| A dashboard of sessions | Exploration trap; 80k rows are not a decision |
+| Charts we compute in the browser | Second source of truth |
+| Green primary / “success” Accept | Primes yes |
+| Paper + serif brief | Wrong genre for this operator; currently a generated-UI tell |
+| Fake waterfall durations | Invented telemetry |
+| Labelling the eight questions | Turns a brief into a form |
+| Putting A11 in the footer | Honest, not memorable |
+| Making Reject harder to click | Punishes a valid outcome |
+| Sticky gate covering the waterfall on a phone | Fitts at the cost of the claim — the claim has to be readable first |
+
+---
+
+## 11. How this maps to the human score
+
+| Rubric | What the psychology is aiming at |
+|---|---|
+| Decision quality (18) | Harm, owner, inaction, risk, and a written reason on one view. Traceable numbers. Named baseline. |
+| The screen (15) | A stranger can read it. Tracing schema is already learned. Evidence is one click away, not in the way. Approve / reject / defer all work. |
+| Framing (12) | Opens on the problem (default = verified finding). Shows the lookalike. Shows the refusal as a missing span. States coverage as chips. Admits simulated replay under a disclosure. |
+
+If a judge can sit down, answer the eight questions without scrolling past a wall of evidence, dismiss a lookalike, read A11, and record a reasoned verdict, the psychology did its job. If they have to hunt, or if they feel the page wanted a yes, it did not.
+
+---
+
+## 12. One sentence
+
+Treat the finding as a trace, the loop as spans, and the human as an annotator — because that is how this person already thinks, and because a signature on a short causal story beats a dashboard they will not finish.
