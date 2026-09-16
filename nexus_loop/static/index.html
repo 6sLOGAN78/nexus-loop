@@ -128,6 +128,7 @@
       padding: var(--space-3) var(--space-5);
       border-bottom: 1px solid var(--color-border);
       background: var(--ds-surface);
+      min-width: 0;
     }
     .brand-wrap { display: flex; align-items: center; gap: var(--space-2); }
     .mark {
@@ -145,12 +146,17 @@
       color: var(--ds-text-subtlest);
       font-size: var(--fs-xs);
     }
-    header.top .spacer { flex: 1; }
+    header.top .spacer { flex: 1 1 0; min-width: 0; }
     .honesty {
-      display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2);
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end;
+      gap: var(--space-2);
+      flex: 1 1 18rem;
+      min-width: 0;
       font-size: var(--fs-xs); color: var(--ds-text-subtle);
     }
-    .honesty details summary { cursor: pointer; color: var(--ds-brand); font-weight: 600; }
+    .honesty .badge { max-width: 100%; }
+    .honesty details { min-width: 0; }
+    .honesty details summary { cursor: pointer; color: var(--ds-brand); font-weight: 600; white-space: nowrap; }
     .honesty details .note {
       margin: var(--space-2) 0 0;
       max-width: 72ch;
@@ -194,6 +200,7 @@
       background: var(--ds-neutral);
       border-radius: var(--radius-lg);
       border-bottom: 0;
+      overflow-x: auto;
     }
     .seg {
       appearance: none; border: 0; cursor: pointer;
@@ -203,6 +210,8 @@
       font-weight: 600;
       padding: var(--space-2) var(--space-3);
       border-radius: var(--radius-md);
+      white-space: nowrap;
+      flex: 1 1 auto;
     }
     .seg:hover { background: var(--ds-surface); color: var(--ds-text); }
     .seg.is-on { background: var(--ds-surface); color: var(--ds-text); box-shadow: var(--ds-shadow-raised); }
