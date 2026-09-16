@@ -1,0 +1,116 @@
+[
+  {
+    "name": "kb_design_ui",
+    "type": "Knowledge Base",
+    "description": "Search curated design ui guidance ported from Cursor Agent Skills. Covers: frontend-design, ui-ux-pro-max, ux-controlled, ux-innovative, ux-impact, design-audit, relationship-design, typography, web-design-guidelines, brand, design, design-system, ui-styling, slides, banner-design. Use when the user's question matches design, UI, React, accessibility, writing, engineering, or marketing topics in this domain.",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "The user question or task to find relevant guidance for"
+      }
+    },
+    "kb_config": {
+      "filter_by_metadata": {
+        "category": "design-ui"
+      },
+      "confidence_threshold": 0.7,
+      "use_conversation_history": true
+    },
+    "kb_files_glob": "knowledge-base/design-ui/*.md"
+  },
+  {
+    "name": "kb_react_vercel",
+    "type": "Knowledge Base",
+    "description": "Search curated react vercel guidance ported from Cursor Agent Skills. Covers: react-perf, react-native, react-composition, react-transitions, vercel-deploy, vercel-cli, vercel-optimize. Use when the user's question matches design, UI, React, accessibility, writing, engineering, or marketing topics in this domain.",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "The user question or task to find relevant guidance for"
+      }
+    },
+    "kb_config": {
+      "filter_by_metadata": {
+        "category": "react-vercel"
+      },
+      "confidence_threshold": 0.7,
+      "use_conversation_history": true
+    },
+    "kb_files_glob": "knowledge-base/react-vercel/*.md"
+  },
+  {
+    "name": "kb_accessibility",
+    "type": "Knowledge Base",
+    "description": "Search curated accessibility guidance ported from Cursor Agent Skills. Covers: accessibility-scan, accessibility-inspect, accessibility-audit, accessibility-fix, accessibility-diff. Use when the user's question matches design, UI, React, accessibility, writing, engineering, or marketing topics in this domain.",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "The user question or task to find relevant guidance for"
+      }
+    },
+    "kb_config": {
+      "filter_by_metadata": {
+        "category": "accessibility"
+      },
+      "confidence_threshold": 0.7,
+      "use_conversation_history": true
+    },
+    "kb_files_glob": "knowledge-base/accessibility/*.md"
+  },
+  {
+    "name": "kb_writing",
+    "type": "Knowledge Base",
+    "description": "Search curated writing guidance ported from Cursor Agent Skills. Covers: writing-guidelines, adaptive-communication, hungarian-humanizer. Use when the user's question matches design, UI, React, accessibility, writing, engineering, or marketing topics in this domain.",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "The user question or task to find relevant guidance for"
+      }
+    },
+    "kb_config": {
+      "filter_by_metadata": {
+        "category": "writing"
+      },
+      "confidence_threshold": 0.7,
+      "use_conversation_history": true
+    },
+    "kb_files_glob": "knowledge-base/writing/*.md"
+  },
+  {
+    "name": "kb_engineering",
+    "type": "Knowledge Base",
+    "description": "Search curated engineering guidance ported from Cursor Agent Skills. Covers: code-conventions, renaissance-architecture, human-architect-mindset, vanity-engineering-review, negentropy-lens, eu-ai-act-reviewer. Use when the user's question matches design, UI, React, accessibility, writing, engineering, or marketing topics in this domain.",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "The user question or task to find relevant guidance for"
+      }
+    },
+    "kb_config": {
+      "filter_by_metadata": {
+        "category": "engineering"
+      },
+      "confidence_threshold": 0.7,
+      "use_conversation_history": true
+    },
+    "kb_files_glob": "knowledge-base/engineering/*.md"
+  },
+  {
+    "name": "kb_marketing",
+    "type": "Knowledge Base",
+    "description": "Search curated marketing guidance ported from Cursor Agent Skills. Covers: insurgent-campaign, bencium-aeo. Use when the user's question matches design, UI, React, accessibility, writing, engineering, or marketing topics in this domain.",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "The user question or task to find relevant guidance for"
+      }
+    },
+    "kb_config": {
+      "filter_by_metadata": {
+        "category": "marketing"
+      },
+      "confidence_threshold": 0.7,
+      "use_conversation_history": true
+    },
+    "kb_files_glob": "knowledge-base/marketing/*.md"
+  }
+]
