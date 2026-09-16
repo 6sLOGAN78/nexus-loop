@@ -423,10 +423,24 @@ def build(corpus: Corpus, cov: Coverage, kit_catalog: dict,
             SESSIONS, "quality_score SEGMENTED BY judge_version — never trended across the boundary",
             "sessions within one judge_version", breakdowns=["judge_version"],
             calibration=cal,
-            alternatives=["csat is measured but present on a small, not-missing-at-random subset; reported "
-                          "alongside, never blended"],
+            alternatives=["csat is nullable and present on a small, not-missing-at-random subset of sessions; "
+                          "we do not blend it into quality and do not publish a headline for it"],
             value_note="calibration = share of human-labelled sessions where |human - judge| <= 1 on the 1-5 "
                        "rubric, per-version detail in breakdown", breakdown=cal_detail))
+    else:
+        # no judged reading is published, so say so rather than let A06's judged
+        # half disappear without explanation (the measured kb_hit half still ships)
+        gaps.append(gap(
+            "A06", "REQUIRES_NEW_JUDGE",
+            "the judged reading of whether the KB actually answers needs a calibration against human labels; "
+            "fewer than 10 human rubric labels joined to sessions in this corpus, so no judged quality metric "
+            "is published rather than report one without a calibration.",
+            nearest_proxy="the measured kb_hit rate (m_kb_hit_rate)",
+            why_the_proxy_misleads="kb_hit is whether retrieval returned a confident document, not whether the "
+                                   "answer was good; a confident but wrong document still counts as a hit",
+            required_event={"name": "quality_calibration_set", "grain": "session",
+                            "fields": ["judge_version", "human_quality", "calibration_set_id"],
+                            "owner": "quality-judging"}))
     extras["quality_calibration"] = cal
 
     # ---------------------------------------------------------------- A07 --
