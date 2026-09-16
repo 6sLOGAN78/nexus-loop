@@ -158,6 +158,19 @@ class ScreenHttp(unittest.TestCase):
         saved = json.loads(Path(self.report).read_text())
         self.assertEqual(saved["prescriptions"][0]["approval"]["reason"], payload["reason"])
 
+    def test_tech_names_are_a_visible_story_footer(self):
+        st, _, body = self._json("GET", "/")
+        page = body.decode()
+        self.assertEqual(st, 200)
+        self.assertIn('class="tech-foot"', page)
+        self.assertIn("function pinStoryLayout", page)
+        self.assertIn(".story-scroll", page)
+        self.assertIn("flex-direction: column", page)
+        self.assertNotIn('details("Technical names"', page)
+        self.assertIn("min-height: 10rem", page)
+        self.assertIn('{ k: "fields", v: (ev.fields || []).join(", ") }', page)
+        self.assertIn("overflow-x: auto", page)
+
 
 if __name__ == "__main__":
     unittest.main()

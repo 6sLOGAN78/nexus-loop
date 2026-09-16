@@ -107,7 +107,7 @@
     * { box-sizing: border-box; }
     html, body {
       margin: 0; padding: 0; height: 100%;
-      overflow-x: hidden;
+      overflow: hidden;
       background: var(--color-bg);
       color: var(--color-fg);
       font-family: var(--font-sans);
@@ -129,9 +129,11 @@
     .skip:focus { left: var(--space-2); top: var(--space-2); z-index: 20; }
 
     .app {
-      min-height: 100%;
+      height: 100%;
+      min-height: 0;
       display: grid;
-      grid-template-rows: auto 1fr auto;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      overflow: hidden;
     }
     header.top {
       display: flex;
@@ -186,22 +188,38 @@
       gap: var(--space-4);
       padding: var(--space-4);
       min-height: 0;
+      min-width: 0;
+      overflow: hidden;
+      align-items: stretch;
       background: var(--ds-sunken);
     }
     @media (max-width: 1100px) {
-      .shell { grid-template-columns: minmax(14rem, 17rem) minmax(0, 1fr); }
-      .gate-col { grid-column: 1 / -1; position: static; }
+      .shell {
+        grid-template-columns: minmax(14rem, 17rem) minmax(0, 1fr);
+        grid-template-rows: minmax(12rem, 1fr) auto;
+      }
+      .gate-col {
+        grid-column: 1 / -1;
+        position: static;
+        max-height: min(14rem, 36vh);
+      }
     }
     @media (max-width: 720px) {
-      .shell { grid-template-columns: 1fr; padding: var(--space-2); }
-      .list-col { max-height: 14rem; }
+      .shell {
+        grid-template-columns: 1fr;
+        grid-template-rows: minmax(10rem, 30%) minmax(12rem, 1fr) minmax(8rem, 28%);
+        padding: var(--space-2);
+      }
+      .list-col { max-height: none; }
+      .gate-col { max-height: none; }
     }
 
     .list-col {
       background: var(--ds-surface);
-      overflow-x: hidden;
+      overflow-x: auto;
       overflow-y: auto;
-      min-width: 0;
+      min-width: 14rem;
+      min-height: 10rem;
       border: 1px solid var(--ds-border);
       border-radius: var(--radius-xl);
       box-shadow: var(--ds-shadow-raised);
@@ -258,17 +276,19 @@
     .trace {
       display: grid;
       grid-template-columns: auto minmax(0, 1fr) auto;
-      gap: var(--space-3);
-      align-items: start;
-      width: calc(100% - 1rem);
-      margin: 0 var(--space-2) var(--space-1);
+      gap: var(--space-2);
+      align-items: center;
+      width: calc(100% - 0.5rem);
+      margin: 0 var(--space-1);
       text-align: left;
       border: 1px solid transparent;
-      border-radius: var(--radius-lg);
+      border-radius: var(--radius-md);
       background: transparent;
       color: inherit;
-      padding: var(--space-3);
+      padding: 0.45rem 0.6rem;
       cursor: pointer;
+      content-visibility: auto;
+      contain-intrinsic-size: auto 2.75rem;
     }
     .trace:hover { background: var(--ds-neutral-hovered); }
     .trace.is-on {
@@ -298,8 +318,8 @@
       box-shadow: inset 3px 0 0 var(--ds-text-subtle), 0 0 0 var(--ring) var(--ds-border-focused);
     }
     .dot {
-      width: 0.5rem; height: 0.5rem; min-height: 0;
-      margin-top: 0.4rem;
+      width: 0.45rem; height: 0.45rem; min-height: 0;
+      margin-top: 0;
       border-radius: var(--radius-full);
       background: var(--ds-text-subtlest);
     }
@@ -336,14 +356,40 @@
     }
 
     .detail {
-      overflow: auto;
-      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
       min-width: 0;
-      padding: var(--space-5) var(--space-5) var(--space-8);
+      min-height: 12rem;
+      overflow: hidden;
+      padding: 0;
       background: var(--ds-surface);
       border: 1px solid var(--ds-border);
       border-radius: var(--radius-xl);
       box-shadow: var(--ds-shadow-raised);
+    }
+    .story-scroll {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: var(--space-5) var(--space-5) var(--space-4);
+    }
+    .tech-foot {
+      flex: none;
+      max-height: 45%;
+      overflow-x: auto;
+      overflow-y: auto;
+      padding: var(--space-3) var(--space-5) var(--space-4);
+      border-top: 1px solid var(--ds-border);
+      background: var(--ds-sunken);
+    }
+    .tech-head {
+      margin: 0 0 var(--space-2);
+      font-family: var(--font-sans);
+      font-size: var(--fs-xs);
+      font-weight: 600;
+      color: var(--ds-brand);
+      letter-spacing: var(--tracking-body);
     }
     .kicker {
       font-size: var(--fs-2xs);
@@ -447,7 +493,7 @@
       line-height: 1.2;
     }
 
-    .lede { margin: 0 0 var(--space-2); max-width: 68ch; }
+    .lede { margin: 0 0 var(--space-3); max-width: 52ch; font-size: var(--fs-sm); line-height: 1.4; }
     .defn { margin: 0 0 var(--space-5); max-width: 68ch; font-size: var(--fs-xs); color: var(--ds-text-subtle); }
     .lead-ev {
       margin: 0 0 var(--space-4);
@@ -476,10 +522,18 @@
       margin: 0 0 var(--space-2);
     }
     .who .inaction { margin: 0; }
-    .tech { display: grid; grid-template-columns: 9rem minmax(0, 1fr); gap: var(--space-2); padding: 0.35rem 0; border-bottom: 1px dashed var(--ds-border); font-size: var(--fs-xs); }
+    .tech {
+      display: grid;
+      grid-template-columns: minmax(5rem, 9rem) minmax(0, 1fr);
+      gap: var(--space-2);
+      padding: 0.35rem 0;
+      border-bottom: 1px dashed var(--ds-border);
+      font-size: var(--fs-xs);
+      overflow: visible;
+    }
     .tech:last-child { border-bottom: 0; }
-    .tech .tk { color: var(--ds-text-subtlest); }
-    .tech code { overflow-wrap: anywhere; }
+    .tech .tk { color: var(--ds-text-subtlest); overflow-wrap: anywhere; }
+    .tech code { overflow-wrap: anywhere; overflow: visible; }
 
     .spans {
       border: 1px solid var(--ds-border);
@@ -590,6 +644,9 @@
       background: var(--ds-surface);
       padding: var(--space-5);
       min-width: 0;
+      min-height: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
       border: 1px solid var(--ds-border);
       border-radius: var(--radius-xl);
       box-shadow: var(--ds-shadow-overlay);
@@ -769,9 +826,23 @@
     function techBlock(rows) {
       const bits = (rows || []).filter((r) => r && r.v != null && String(r.v) !== "");
       if (!bits.length) return "";
-      return details("Technical names", bits.map((r) =>
-        `<div class="tech"><span class="tk">${esc(r.k)}</span><code translate="no">${esc(r.v)}</code></div>`
-      ).join(""));
+      return `<footer class="tech-foot">
+        <h2 class="tech-head">Technical names</h2>
+        ${bits.map((r) =>
+          `<div class="tech"><span class="tk">${esc(r.k)}</span><code translate="no">${esc(r.v)}</code></div>`
+        ).join("")}
+      </footer>`;
+    }
+    function pinStoryLayout(el) {
+      if (!el || el.querySelector(".story-scroll")) return;
+      const foot = el.querySelector(".tech-foot");
+      const wrap = document.createElement("div");
+      wrap.className = "story-scroll";
+      Array.from(el.childNodes).forEach((n) => {
+        if (n !== foot) wrap.appendChild(n);
+      });
+      if (foot) el.insertBefore(wrap, foot);
+      else el.appendChild(wrap);
     }
     function matchStandard(rep, f) {
       if (!f) return null;
@@ -1054,6 +1125,9 @@
           { k: "verdict", v: g.verdict },
           { k: "nearest proxy", v: g.nearest_proxy },
           { k: "event", v: ev.name },
+          { k: "grain", v: ev.grain },
+          { k: "fields", v: (ev.fields || []).join(", ") },
+          { k: "owner", v: ev.owner },
         ])}`;
     }
 
@@ -1177,13 +1251,11 @@
     }
 
     function renderDetail(rep, pack) {
-      if (pack.kind === "gap") return renderGap(pack.gap || {});
-      if (!pack.f) {
-        $("detail").innerHTML = `<p class="idle">No findings in this report.</p>`;
-        return;
-      }
-      if (pack.kind === "dismissed") return renderDismissed(pack);
-      return renderRegression(rep, pack);
+      if (pack.kind === "gap") renderGap(pack.gap || {});
+      else if (!pack.f) $("detail").innerHTML = `<p class="idle">No findings in this report.</p>`;
+      else if (pack.kind === "dismissed") renderDismissed(pack);
+      else renderRegression(rep, pack);
+      pinStoryLayout($("detail"));
     }
 
     function idleGateCopy(pack) {
