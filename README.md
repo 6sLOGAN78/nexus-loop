@@ -153,8 +153,7 @@ New to the repo, read in this order:
 8. `docs/edge-cases.md` — the non-obvious traps and how we handle them (judge Q&A).
 9. `docs/ui-handoff.md` — what the UI/product team needs.
 10. `docs/ux-psychology.md` — why the screen is a tracing console (operator cognition).
-10a. `docs/operator-screen-report.md` — UI/product sections for the TECHQUEST endterm report.
-11. `docs/operator-screen-report.md` — paste-ready TECHQUEST sections for the operator screen only.
+11. `docs/operator-screen-report.md` — UI/product justification for the TECHQUEST endterm report (section-aligned paste).
 12. `examples/demo.html` — the lo-fi wireframe + sample report (open the file directly, no server).
 13. `tools/testbed/README.md` — how to evaluate a candidate.
 
