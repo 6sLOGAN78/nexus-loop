@@ -117,8 +117,6 @@ The desk follows the **Atlassian Design System (light)**: a sunken `#F7F8F9` can
 
 Accept is success-bold because it must mean *proceed* before the word is read. Reject is danger-bold because it must mean *stop*. Defer is subtle because it must mean *not now*.
 
-Span titles are headings, not sentences. “Share we finished” at the same weight as the note under it read as a shrug. The name is now 700, navy, sentence case, on an 8px sunken chip; the step label is uppercase tracking. The observed value beside it stays tabular and bold. Title and body have to look like different speech acts.
-
 ---
 
 ## 6. Harm before the ask
