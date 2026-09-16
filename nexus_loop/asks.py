@@ -143,16 +143,23 @@ def build(corpus: Corpus, cov: Coverage, kit_catalog: dict,
                                                 median([s["turns"] for s in b if resolved(s)])],
                     "share": [r4(len(a) / float(len(m1))), r4(len(b) / float(len(m2)))],
                 }
-        # mix-adjusted: hold month-1 intent shares, apply month-2 per-intent rates.
-        # This answers "if the mix had not changed, what would this month's rate
-        # be?" — so a mix shift does not read as a quality change.
+        # mix-adjusted: hold month-1 intent shares and apply month-2 per-intent
+        # rates, over the intents that exist in BOTH months. Both ends of the
+        # comparison sit on that same common-intent scope, so "change beyond mix"
+        # is not contaminated by an intent entering or leaving the cohort.
         common = sorted(by_intent)               # already requires >= 30 in both months
         n1 = {it: sum(1 for s in m1 if s["intent"] == it) for it in common}
         n2 = {it: sum(1 for s in m2 if s["intent"] == it) for it in common}
         tot1 = sum(n1.values())
         weights = {it: (n1[it] / float(tot1)) for it in common} if tot1 else {}
+        common_set = set(common)
         r1_raw = rate(sum(1 for s in m1 if resolved(s)), len(m1))
         r2_raw = rate(sum(1 for s in m2 if resolved(s)), len(m2))
+        r1_common = (rate(sum(1 for s in m1 if s["intent"] in common_set and resolved(s)), tot1)
+                     if tot1 else None)
+        tot2 = sum(n2.values())
+        r2_common = (rate(sum(1 for s in m2 if s["intent"] in common_set and resolved(s)), tot2)
+                     if tot2 else None)
         r2_adj = None
         if common and tot1:
             r2_adj = sum(weights[it] * (rate(sum(1 for s in m2 if s["intent"] == it and resolved(s)), n2[it]) or 0.0)
@@ -161,22 +168,28 @@ def build(corpus: Corpus, cov: Coverage, kit_catalog: dict,
         excluded = [{"intent": it,
                      "n_month1": sum(1 for s in m1 if s["intent"] == it),
                      "n_month2": sum(1 for s in m2 if s["intent"] == it)}
-                    for it in all_intents if it not in set(common)]
+                    for it in all_intents if it not in common_set]
+        born_in_month2 = [e["intent"] for e in excluded if e["n_month1"] == 0 and e["n_month2"] > 0]
         conf = sorted(set(_window_confounds(t, 0, half, regressions, decoys)
                           + _window_confounds(t, half, D, regressions, decoys)))
         adj[t] = {
-            "raw": [r4(r1_raw), r4(r2_raw)],
-            "adjusted": [r4(r1_raw), r4(r2_adj)] if r2_adj is not None else None,
-            "mix_effect": (r4(r2_raw - r2_adj) if (r2_raw is not None and r2_adj is not None) else None),
-            "change_beyond_mix": (r4(r2_adj - r1_raw) if (r2_adj is not None and r1_raw is not None) else None),
+            "raw_all_intents": [r4(r1_raw), r4(r2_raw)],
+            "common": [r4(r1_common), r4(r2_common)],
+            "adjusted": [r4(r1_common), r4(r2_adj)] if (r1_common is not None and r2_adj is not None) else None,
+            "mix_effect": (r4(r2_common - r2_adj) if (r2_common is not None and r2_adj is not None) else None),
+            "change_beyond_mix": (r4(r2_adj - r1_common) if (r2_adj is not None and r1_common is not None) else None),
         }
         adj_detail[t] = {
             "weights_month1": {k: r4(v) for k, v in weights.items()},
             "common_intents": common,
             "excluded_intents": excluded,
+            "born_in_month2": born_in_month2,
             "confounded_by": conf,
             "reading": ("not reliable as a trend: detected event(s) overlap a month window (%s)" % ", ".join(conf)
-                        if conf else "mix held at month-1 shares; change_beyond_mix is the agent"),
+                        if conf else "mix held at month-1 shares over the common intents; change_beyond_mix is the agent"),
+            "caveat": (("a cohort born in month 2 (%s) has no month-1 share and is excluded from the adjusted "
+                        "comparison; a regression that arrives as a brand-new cohort shows in the raw per-intent "
+                        "table, not here") % ", ".join(born_in_month2)) if born_in_month2 else None,
         }
         mom[t] = {
             "resolution": [r4(rate(sum(1 for s in m1 if resolved(s)), len(m1))),
@@ -205,16 +218,22 @@ def build(corpus: Corpus, cov: Coverage, kit_catalog: dict,
         metrics.append(metric(
             "m_mom_resolution_adjusted", "Month-over-month resolution, mix held at month-1 shares", "A02",
             "session", "derived",
-            {t: {"raw": v["raw"], "adjusted": v["adjusted"], "mix_effect": v["mix_effect"],
+            {t: {"raw_all_intents": v["raw_all_intents"], "common": v["common"],
+                 "adjusted": v["adjusted"], "mix_effect": v["mix_effect"],
                  "change_beyond_mix": v["change_beyond_mix"]} for t, v in adj.items()},
-            1.0, "session_end is present on every session; the adjusted figure is computed from per-intent "
-                 "rates and month-1 shares of the common intents (conversation shares, not people)",
-            SESSIONS, "weight month-2 per-intent resolution by month-1 intent shares, common intents only, renormalised",
+            1.0, "session_end is present on every session; both ends of the adjusted comparison are on the "
+                 "common-intent scope (month-1 shares held, month-2 per-intent rates)",
+            SESSIONS, "weight month-2 per-intent resolution by month-1 intent shares, over the common intents only, "
+                      "renormalised; the month-1 end is the common-intent rate on that same scope",
             "sessions of the common intents in each month", breakdowns=["tenant", "intent"],
-            alternatives=["m_mom_resolution is the raw, unadjusted comparison; the gap between raw and adjusted is the mix effect",
-                          "intents present in only one month, or with fewer than 30 sessions in a month, are excluded and listed"],
-            value_note="derived: raw vs adjusted resolution, the mix effect, and the change beyond mix; the breakdown "
-                       "lists the excluded intents and any detected events that overlap a month window",
+            alternatives=["raw_all_intents is the aggregate over every intent and is shown beside it; a gap between "
+                          "raw_all_intents and adjusted mixes a true mix effect with intents entering or leaving the cohort",
+                          "intents present in only one month, or with fewer than 30 sessions in a month, are excluded and listed",
+                          "a cohort born in month 2 cannot be mix-held and is excluded; a regression delivered as a "
+                          "new cohort is found in m_mom_resolution per intent, not here"],
+            value_note="derived: raw_all_intents, the common-intent rates, the mix effect and the change beyond mix. "
+                       "Both adjusted ends are on the common-intent scope, so change_beyond_mix is not a scope change; "
+                       "the breakdown lists excluded intents, those born in month 2, and overlapping events",
             breakdown=adj_detail))
     # The measured abandonment rate is reported inside the A09 gap rather than as
     # a standalone metric: A09 is answered by a REQUIRES_NEW_JUDGE gap, and a
