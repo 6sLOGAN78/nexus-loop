@@ -99,9 +99,9 @@ We do not invent span durations. A fake timeline would be the most tempting lie 
 
 The previous screen was paper and navy: a brief to sign. That is a legitimate editorial move. It also primed **reading**, and it used a warm-cream + serif cluster that currently reads as generic generated UI.
 
-The console is **graphite + copper**.
+The desk is **cool paper + ink**, with **copper as the decision lamp**.
 
-- Graphite (not pure black, not acid-green-on-black) is industrial/utilitarian: an ops surface, not a magazine, not a “dark dashboard” cliché. Dark `color-scheme` also matches how tracing products are actually used — long sessions, less glare.
+- Cool paper (not cream, not night-shift black) is a change ticket a manager can sign on Monday morning. It is not a log, not a magazine, not acid-green-on-black.
 - **Copper is the decision lamp.** It is the colour of “a human must act.” It is *not* sage. Sage is reserved for measured coverage, dismissed lookalikes, and a recorded accept. If Accept were green in a sea of green “healthy” chips, colour would **prime confirmation**: the page would feel like it wants a yes. Prospect theory: people overweight the frame. We frame the gate as a choice, not a celebration.
 - Coral is reserved for high/critical severity, Reject, and “now / before” bars that are the worse side of a comparison. It is a signal, used sparingly, so it still means something (von Restorff: isolation makes it memorable).
 

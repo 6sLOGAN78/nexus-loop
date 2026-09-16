@@ -71,8 +71,8 @@ A sample is written by any `run.py`; the practice corpus produces a rich one.
 |---|---|
 | `GET /` | The screen (`static/index.html`) |
 | `GET /report.json` | The current report, verbatim |
-| `GET /health` | `{ok, report}` |
-| `POST /decision` | Record a human decision |
+| `GET /health` | `{ok, report}` booleans. Does not leak a filesystem path. |
+| `POST /decision` | Record a human decision. Wrong method → 405. Body > 64KiB → 413. |
 
 `POST /decision` body:
 
@@ -112,13 +112,13 @@ scrolling through evidence.
 | Header | Quiet title, corpus, coverage/fidelity chips. REAL / STUBBED / SIMULATED sit under a disclosure — Framing 12 without a wall of notes. |
 | List | To decide / Not a problem / We would not guess (A11 first, titled “We will not invent a failover rate”). Each row: headline, tenant, days, conversations. Default selection is the verification’s prescription, else `tool.contract_break`. Hash deep-links the selected id. |
 | Story | Four steps copied from the report: what changed, why we think so, what we would change, did the test help. A matching `standard[]` sentence sits under what changed. Bars plot report values. Evidence under a disclosure. Codes under Technical names. |
-| Your decision | The ask, then risk/no-ship under a disclosure, then Accept / Reject / Defer and a required reason. After save, the page re-fetches `/report.json`. |
+| Your decision | The ask, a one-line risk, then full risk/no-ship under a disclosure, then Accept / Reject / Defer and a required reason. After save, the page re-fetches `/report.json`. |
 
 **Styles:** CSS follows the ui-ux-pro-max **design-system skill** (primitive →
 semantic → component tokens; Button / Card / Badge / Input / Alert specs and
 states). Hex exists only in the primitive layer. Numbers still come **only**
-from the report — tokens do not invent charts or metrics. Dark graphite + copper
-signal is the tracing-console vernacular, not a paper brief.
+from the report — tokens do not invent charts or metrics. Cool paper + ink, with
+copper as the decision lamp.
 
 ---
 
@@ -200,9 +200,10 @@ the screen only maps it.
 - The loop is four English steps: what changed, why we think so, what we would change, did the test help. A matching `standard[]` sentence sits under what changed.
 - Hybrid disclosure: `cause_class`, `change_type`, metric id, `replay_run_id`, ask ids, gap verdicts sit under Technical names. The prescription description and `asking_approval_for` stay in the open story and decision.
 - A11 is a first-class list row. The claim is “We will not invent a failover rate.” The required event stays on the page.
-- `coverage` / `fidelity` are chips; REAL / STUBBED / SIMULATED is one disclosure,
-  not a header essay.
-- Graphite console + copper decision signal. Accept is primary; Reject is
+- `coverage` / `fidelity` chips in English (coverage named as coverage; judged
+  chips show calibration, never a bare 100%). REAL / STUBBED / SIMULATED / 100×
+  sit under one disclosure.
+- Cool paper + ink, copper decision lamp. Accept is primary; Reject is
   destructive (a valid outcome); a recorded accept is success.
 
 **Do not**: recompute metrics client-side, invent values, change the report shape

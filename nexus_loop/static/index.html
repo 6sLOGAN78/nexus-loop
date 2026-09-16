@@ -3,30 +3,34 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="dark">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#E8EDF4">
   <title>Nexus Loop — one decision</title>
   <style>
     /*
-      Operator console, tracing vernacular.
-      Phoenix/Langfuse/Helicone: traces list + span waterfall + human annotation.
-      This is still one decision, not an 80k-session dashboard. Every figure
-      is copied from loop-report.json. Hex only in primitives. No webfonts.
+      Change-ticket desk, not a dashboard.
+      Cool paper + ink + one copper lamp (the human must act).
+      Primitive → semantic → component. Hex only here. No webfonts.
+      Every figure is copied from loop-report.json.
     */
 
     :root {
-      --ink-950: #12151c;
-      --ink-900: #181c25;
-      --ink-800: #1f2530;
-      --ink-700: #2c3340;
-      --paper: #e7ecf4;
-      --muted: #8d97a8;
-      --copper: #d39a4a;
-      --copper-dim: #8a6230;
-      --sage: #6fbf9a;
-      --sage-dim: #2d5a48;
-      --coral: #e06c6c;
-      --coral-dim: #6a2e2e;
-      --sky: #7aa2e3;
+      --slate-50: #e8edf4;
+      --slate-100: #dde3ee;
+      --slate-200: #c9d2e0;
+      --white: #f7f8fb;
+      --card: #ffffff;
+      --ink: #1c2430;
+      --muted: #5b6778;
+      --copper: #b56b1e;
+      --copper-hot: #c87c2a;
+      --copper-dim: #8a5216;
+      --sage: #1f7a5c;
+      --sage-dim: #c6e6d8;
+      --coral: #c44747;
+      --coral-dim: #f3d0d0;
+      --sky: #2f5f9a;
+      --sky-dim: #d5e3f5;
       --space-1: 0.25rem;
       --space-2: 0.5rem;
       --space-3: 0.75rem;
@@ -35,8 +39,9 @@
       --space-6: 1.5rem;
       --space-8: 2rem;
       --radius-sm: 0.25rem;
-      --radius-md: 0.375rem;
-      --shadow-sm: 0 1px 0 rgb(0 0 0 / 0.35);
+      --radius-md: 0.5rem;
+      --shadow-sm: 0 1px 0 rgb(28 36 48 / 0.06);
+      --shadow-md: 0 8px 24px rgb(28 36 48 / 0.06);
       --duration: 120ms;
       --font-sans: ui-sans-serif, system-ui, "Segoe UI", sans-serif;
       --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -44,36 +49,36 @@
       --fs-xs: 0.75rem;
       --fs-sm: 0.8125rem;
       --fs-base: 0.9375rem;
-      --fs-lg: 1.125rem;
-      --fs-xl: 1.375rem;
-      --leading-tight: 1.25;
-      --leading: 1.45;
+      --fs-lg: 1.25rem;
+      --fs-xl: 1.625rem;
+      --leading-tight: 1.22;
+      --leading: 1.5;
       --ring: 2px;
       --ring-off: 2px;
     }
     :root {
-      --color-bg: var(--ink-950);
-      --color-fg: var(--paper);
-      --color-surface: var(--ink-900);
-      --color-surface-2: var(--ink-800);
-      --color-border: var(--ink-700);
+      --color-bg: var(--slate-50);
+      --color-fg: var(--ink);
+      --color-surface: var(--white);
+      --color-surface-2: var(--card);
+      --color-border: var(--slate-200);
       --color-muted: var(--muted);
       --color-accent: var(--copper);
-      --color-accent-hover: #e0b15a;
+      --color-accent-hover: var(--copper-hot);
       --color-ok: var(--sage);
       --color-bad: var(--coral);
       --color-info: var(--sky);
       --color-ring: var(--copper);
       --button-bg: var(--copper);
-      --button-fg: #1a140c;
-      --button-hover: var(--color-accent-hover);
+      --button-fg: #fff8ef;
+      --button-hover: var(--copper-hot);
       --button-bad-bg: var(--coral);
-      --button-bad-fg: #1a0c0c;
-      --button-ghost-bg: var(--ink-800);
-      --button-ghost-fg: var(--paper);
-      --input-bg: var(--ink-950);
-      --input-border: var(--ink-700);
-      --input-fg: var(--paper);
+      --button-bad-fg: #fff8f8;
+      --button-ghost-bg: var(--card);
+      --button-ghost-fg: var(--ink);
+      --input-bg: var(--card);
+      --input-border: var(--slate-200);
+      --input-fg: var(--ink);
     }
 
     * { box-sizing: border-box; }
@@ -100,20 +105,27 @@
     .app {
       min-height: 100%;
       display: grid;
-      grid-template-rows: auto 1fr;
+      grid-template-rows: auto 1fr auto;
     }
     header.top {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       gap: var(--space-3) var(--space-4);
-      padding: var(--space-3) var(--space-4);
+      padding: var(--space-3) var(--space-5);
       border-bottom: 1px solid var(--color-border);
-      background: var(--color-surface);
+      background: var(--color-surface-2);
+    }
+    .brand-wrap { display: flex; align-items: center; gap: var(--space-2); }
+    .mark {
+      width: 0.7rem; height: 0.7rem;
+      background: var(--color-accent);
+      border-radius: 2px;
+      box-shadow: 0 0 0 3px rgb(181 107 30 / 0.18);
     }
     header.top .brand {
       font-weight: 650;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.03em;
       margin: 0;
       font-size: var(--fs-base);
     }
@@ -126,11 +138,12 @@
       display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2);
       font-size: var(--fs-xs); color: var(--color-muted);
     }
-    .honesty details .note { margin: var(--space-2) 0 0; max-width: 72ch; }
+    .honesty details summary { cursor: pointer; color: var(--color-accent); }
+    .honesty details .note { margin: var(--space-2) 0 0; max-width: 72ch; color: var(--color-fg); }
 
     .shell {
       display: grid;
-      grid-template-columns: minmax(16rem, 20rem) minmax(0, 1fr) minmax(16rem, 19rem);
+      grid-template-columns: minmax(16rem, 20rem) minmax(0, 1fr) minmax(17rem, 20rem);
       min-height: 0;
     }
     @media (max-width: 1100px) {
@@ -144,7 +157,7 @@
 
     .list-col {
       border-right: 1px solid var(--color-border);
-      background: var(--color-surface);
+      background: var(--slate-100);
       overflow-x: hidden;
       overflow-y: auto;
       min-width: 0;
@@ -153,7 +166,7 @@
       position: sticky; top: 0; z-index: 1;
       display: flex; gap: 2px;
       padding: var(--space-2);
-      background: var(--color-surface);
+      background: var(--slate-100);
       border-bottom: 1px solid var(--color-border);
     }
     .seg {
@@ -165,16 +178,16 @@
       padding: var(--space-2) var(--space-3);
       border-radius: var(--radius-sm);
     }
-    .seg:hover { background: var(--color-surface-2); color: var(--color-fg); }
-    .seg.is-on { background: var(--color-surface-2); color: var(--color-fg); }
+    .seg:hover { background: var(--card); color: var(--color-fg); }
+    .seg.is-on { background: var(--card); color: var(--color-fg); box-shadow: var(--shadow-sm); }
     .seg:focus-visible {
       outline: none;
-      box-shadow: 0 0 0 var(--ring-off) var(--color-surface),
+      box-shadow: 0 0 0 var(--ring-off) var(--slate-100),
                   0 0 0 calc(var(--ring-off) + var(--ring)) var(--color-ring);
     }
     .trace {
       display: grid;
-      grid-template-columns: 0.4rem minmax(0, 1fr) auto;
+      grid-template-columns: 0.35rem minmax(0, 1fr) auto;
       gap: var(--space-2);
       align-items: start;
       width: 100%;
@@ -186,8 +199,11 @@
       padding: var(--space-3);
       cursor: pointer;
     }
-    .trace:hover { background: var(--color-surface-2); }
-    .trace.is-on { background: var(--ink-800); }
+    .trace:hover { background: var(--white); }
+    .trace.is-on {
+      background: var(--card);
+      box-shadow: inset 3px 0 0 var(--color-accent);
+    }
     .trace:focus-visible {
       outline: none;
       box-shadow: inset 0 0 0 2px var(--color-ring);
@@ -222,7 +238,8 @@
       overflow: auto;
       overflow-x: hidden;
       min-width: 0;
-      padding: var(--space-5) var(--space-6) var(--space-8);
+      padding: var(--space-6) var(--space-6) var(--space-8);
+      background: var(--color-bg);
     }
     .path {
       font-family: var(--font-mono);
@@ -234,7 +251,7 @@
       font-size: var(--fs-xl);
       line-height: var(--leading-tight);
       font-weight: 650;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.03em;
       text-wrap: pretty;
       margin: 0 0 var(--space-3);
     }
@@ -244,42 +261,54 @@
       font-size: var(--fs-2xs);
       font-weight: 600;
       border: 1px solid var(--color-border);
-      background: var(--color-surface-2);
+      background: var(--card);
       color: var(--color-fg);
       border-radius: 99px;
-      padding: 0.15rem 0.55rem;
+      padding: 0.2rem 0.6rem;
     }
-    .badge.bad { color: var(--color-bad); border-color: var(--coral-dim); }
-    .badge.ok { color: var(--color-ok); border-color: var(--sage-dim); }
-    .badge.warn { color: var(--color-accent); border-color: var(--copper-dim); }
+    .badge.bad { color: var(--color-bad); background: var(--coral-dim); border-color: transparent; }
+    .badge.ok { color: var(--color-ok); background: var(--sage-dim); border-color: transparent; }
+    .badge.warn { color: var(--copper-dim); background: #f4e4cc; border-color: transparent; }
     .badge.ghost { color: var(--color-muted); }
 
     .kpis {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
       gap: var(--space-3);
       margin: 0 0 var(--space-5);
     }
     @media (max-width: 860px) { .kpis { grid-template-columns: 1fr 1fr; } }
     .kpi {
       border: 1px solid var(--color-border);
-      background: var(--color-surface);
+      background: var(--card);
       border-radius: var(--radius-md);
-      padding: var(--space-3);
+      padding: var(--space-3) var(--space-4);
       min-width: 0;
+      box-shadow: var(--shadow-sm);
     }
     .kpi .k { font-size: var(--fs-2xs); color: var(--color-muted); }
     .kpi .v {
       font-size: var(--fs-lg);
       font-weight: 650;
       font-variant-numeric: tabular-nums;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.03em;
       overflow-wrap: anywhere;
     }
     .kpi .s { font-size: var(--fs-2xs); color: var(--color-muted); }
 
-    .lede { margin: 0 0 var(--space-5); max-width: 68ch; }
-    .who { margin: 0 0 var(--space-5); color: var(--color-fg); font-size: var(--fs-base); max-width: 68ch; }
+    .lede { margin: 0 0 var(--space-2); max-width: 68ch; }
+    .defn { margin: 0 0 var(--space-5); max-width: 68ch; font-size: var(--fs-xs); color: var(--color-muted); }
+    .lead-ev { margin: 0 0 var(--space-4); max-width: 68ch; font-size: var(--fs-sm); padding-left: var(--space-3); border-left: 3px solid var(--color-accent); }
+    .who {
+      margin: 0 0 var(--space-5);
+      color: var(--color-fg);
+      font-size: var(--fs-base);
+      max-width: 68ch;
+      padding: var(--space-4);
+      background: var(--card);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+    }
     .who .owner { font-weight: 650; margin: 0 0 var(--space-2); }
     .who .inaction { margin: 0; }
     .tech { display: grid; grid-template-columns: 9rem minmax(0, 1fr); gap: var(--space-2); padding: 0.35rem 0; border-bottom: 1px dashed var(--color-border); font-size: var(--fs-xs); }
@@ -291,15 +320,16 @@
       border: 1px solid var(--color-border);
       border-radius: var(--radius-md);
       overflow: hidden;
-      background: var(--color-surface);
+      background: var(--card);
       margin: 0 0 var(--space-5);
+      box-shadow: var(--shadow-sm);
     }
     .span {
       display: grid;
       grid-template-columns: 8.75rem minmax(0, 1fr) auto;
       gap: var(--space-3);
       align-items: center;
-      padding: var(--space-3) var(--space-4);
+      padding: var(--space-4);
       border-top: 1px solid var(--color-border);
     }
     .span:first-child { border-top: 0; }
@@ -324,7 +354,7 @@
     .barrow { display: grid; grid-template-columns: 7.2rem 1fr 4.4rem; gap: var(--space-2); align-items: center; }
     .barrow .bl { font-size: var(--fs-2xs); color: var(--color-muted); text-align: right; }
     .barrow .bv { font-size: var(--fs-2xs); font-variant-numeric: tabular-nums; color: var(--color-muted); }
-    .track { height: 7px; background: var(--ink-700); border-radius: 99px; overflow: hidden; }
+    .track { height: 8px; background: var(--slate-100); border-radius: 99px; overflow: hidden; }
     .track > i { display: block; height: 100%; border-radius: 99px; background: var(--color-info); }
     .track > i.bad { background: var(--color-bad); }
     .track > i.ok { background: var(--color-ok); }
@@ -332,15 +362,15 @@
 
     .alert {
       border: 1px solid var(--color-border);
-      background: var(--color-surface);
+      background: var(--card);
       border-radius: var(--radius-md);
       padding: var(--space-4);
       margin: 0 0 var(--space-4);
     }
-    .alert.miss { border-color: var(--color-info); }
-    .alert.ok { border-color: var(--sage-dim); }
-    .alert.bad { border-color: var(--coral-dim); }
-    .alert.warn { border-color: var(--copper-dim); }
+    .alert.miss { border-color: var(--sky); background: var(--sky-dim); }
+    .alert.ok { border-color: var(--sage); background: var(--sage-dim); }
+    .alert.bad { border-color: var(--coral); background: var(--coral-dim); }
+    .alert.warn { border-color: var(--copper); background: #f4e4cc; }
     .alert p { margin: 0 0 var(--space-2); }
     .alert p:last-child { margin: 0; }
 
@@ -362,15 +392,17 @@
 
     .gate-col {
       border-left: 1px solid var(--color-border);
-      background: var(--color-surface);
+      background: var(--card);
       padding: var(--space-5);
       min-width: 0;
+      box-shadow: inset 0 3px 0 var(--color-accent);
     }
     @media (max-width: 1100px) {
       .gate-col { border-left: 0; border-top: 1px solid var(--color-border); }
     }
-    .gate-col .eyebrow { font-size: var(--fs-2xs); color: var(--color-muted); margin: 0 0 var(--space-2); }
-    .ask { font-size: var(--fs-sm); margin: 0 0 var(--space-4); }
+    .gate-col .eyebrow { font-size: var(--fs-2xs); color: var(--color-muted); margin: 0 0 var(--space-2); letter-spacing: 0.04em; }
+    .ask { font-size: var(--fs-sm); margin: 0 0 var(--space-3); }
+    .risk { font-size: var(--fs-xs); color: var(--color-muted); margin: 0 0 var(--space-4); max-width: 40ch; }
     label.field {
       display: block;
       font-size: var(--fs-xs);
@@ -387,7 +419,7 @@
     .input:focus, .input:focus-visible {
       outline: none;
       border-color: var(--color-ring);
-      box-shadow: 0 0 0 var(--ring-off) var(--color-surface),
+      box-shadow: 0 0 0 var(--ring-off) var(--card),
                   0 0 0 calc(var(--ring-off) + var(--ring)) var(--color-ring);
     }
     .input[aria-invalid="true"] { border-color: var(--color-bad); }
@@ -400,7 +432,7 @@
       color: var(--button-fg);
       border: 1px solid transparent;
       border-radius: var(--radius-md);
-      padding: var(--space-2) var(--space-4);
+      padding: 0.6rem var(--space-4);
       font-size: var(--fs-sm);
       font-weight: 650;
       cursor: pointer;
@@ -408,14 +440,14 @@
     .btn:hover { background: var(--button-hover); }
     .btn:focus-visible {
       outline: none;
-      box-shadow: 0 0 0 var(--ring-off) var(--color-surface),
+      box-shadow: 0 0 0 var(--ring-off) var(--card),
                   0 0 0 calc(var(--ring-off) + var(--ring)) var(--color-ring);
     }
     .btn:disabled { opacity: 0.5; pointer-events: none; }
     .btn-bad { background: var(--button-bad-bg); color: var(--button-bad-fg); }
-    .btn-bad:hover { background: #c85a5a; }
+    .btn-bad:hover { background: #a83838; }
     .btn-ghost { background: var(--button-ghost-bg); color: var(--button-ghost-fg); border-color: var(--color-border); }
-    .btn-ghost:hover { background: var(--ink-700); }
+    .btn-ghost:hover { background: var(--slate-100); }
     .flash { font-size: var(--fs-xs); margin-top: var(--space-2); min-height: 1.2em; }
     .flash.err { color: var(--color-bad); }
     .flash.ok { color: var(--color-ok); }
@@ -425,8 +457,9 @@
       grid-column: 1 / -1;
       font-size: var(--fs-2xs);
       color: var(--color-muted);
-      padding: var(--space-3) var(--space-4);
+      padding: var(--space-3) var(--space-5);
       border-top: 1px solid var(--color-border);
+      background: var(--color-surface-2);
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -438,7 +471,10 @@
   <a class="skip" href="#detail">Skip to the finding</a>
   <div class="app">
     <header class="top">
-      <h2 class="brand">Nexus Loop</h2>
+      <div class="brand-wrap">
+        <span class="mark" aria-hidden="true"></span>
+        <h2 class="brand">Nexus Loop</h2>
+      </div>
       <div class="meta" id="hdr">Loading report…</div>
       <div class="spacer"></div>
       <div class="honesty" id="honesty"></div>
@@ -539,6 +575,39 @@
       return `<span class="track"><i class="${cls || ""}" style="width:${w}%"></i></span>`;
     };
 
+    const SAFE_KEY = /^(gap:[A-Z0-9]+|[A-Za-z0-9._-]+)$/;
+    async function api(path, opts) {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 15000);
+      const extra = opts || {};
+      const hdrs = Object.assign(
+        { Accept: "application/json" },
+        extra.body ? { "Content-Type": "application/json" } : {},
+        extra.headers || {}
+      );
+      try {
+        const res = await fetch(path, {
+          credentials: "same-origin",
+          signal: ctrl.signal,
+          method: extra.method || "GET",
+          headers: hdrs,
+          body: extra.body,
+        });
+        const text = await res.text();
+        let data = null;
+        if (text) {
+          try { data = JSON.parse(text); }
+          catch { throw new Error("The server returned something we could not read."); }
+        }
+        if (!res.ok) {
+          const msg = (data && (data.detail || data.error)) || res.statusText || "request failed";
+          throw new Error(String(msg));
+        }
+        return data;
+      } finally {
+        clearTimeout(t);
+      }
+    }
     let selectedKey = null;
     let listFilter = "open";
 
@@ -570,9 +639,20 @@
       const regs = findings.filter((x) => x.is_regression);
       return regs.find((x) => (byFid[x.id] || {}).cause_class === "tool.contract_break") || regs[0] || findings[0] || null;
     }
+    const ASK = {
+      A01: "Handled end to end",
+      A04: "Tool calls that failed",
+      A06: "Knowledge base answers",
+      A09: "Gave up frustrated",
+      A11: "Failover rate",
+    };
     function keyFromHash() {
-      const h = (location.hash || "").replace(/^#/, "");
-      return h || null;
+      try {
+        const h = decodeURIComponent((location.hash || "").replace(/^#/, ""));
+        return SAFE_KEY.test(h) ? h : null;
+      } catch (e) {
+        return null;
+      }
     }
     function currentPack(rep) {
       if (!selectedKey) selectedKey = keyFromHash();
@@ -587,6 +667,7 @@
       return packForFinding(rep, f);
     }
     function select(key) {
+      if (key && !SAFE_KEY.test(key)) return selectedKey;
       selectedKey = key;
       if (key) history.replaceState(null, "", "#" + key);
       return selectedKey;
@@ -598,28 +679,42 @@
     }
     function metricChip(m) {
       if (!m) return "";
-      const cov = (m.coverage && m.coverage.value != null) ? pct(m.coverage.value) : "—";
       const fid = m.fidelity || "unknown";
+      const name = (fid === "judged")
+        ? "Scorecard quality"
+        : (ASK[m.ask_id] || m.name || m.ask_id || m.id);
+      const cal = m.calibration || {};
       const basis = (m.coverage && m.coverage.basis) || "";
-      return `<span class="badge ${fidelityClass(fid)}" title="${esc(basis)} coverage ${esc(cov)}">${esc(m.ask_id || m.id)} ${esc(fid)} · ${esc(cov)}</span>`;
+      let rest = "";
+      if (fid === "judged" && cal.agreement != null) {
+        rest = `agrees ${pct(cal.agreement)} (n=${esc(cal.n)})`;
+      } else if (m.coverage && m.coverage.value != null) {
+        rest = `coverage ${pct(m.coverage.value)}`;
+      }
+      const title = [fid, basis].filter(Boolean).join(" · ");
+      return `<span class="badge ${fidelityClass(fid)}" title="${esc(title)}">${esc(name)} · ${esc(fid)}${rest ? " · " + rest : ""}</span>`;
     }
     function shortNotes(notes) {
       const text = typeof notes === "string" ? notes : JSON.stringify(notes || "");
       const bits = [];
-      ["REAL", "STUBBED", "SIMULATED"].forEach((label) => {
-        const re = new RegExp(label + ":\\s*([\\s\\S]*?)(?=REAL:|STUBBED:|SIMULATED:|BREAKS AT|$)");
+      [
+        ["REAL", /REAL:\s*([\s\S]*?)(?=REAL:|STUBBED:|SIMULATED:|BREAKS AT|$)/],
+        ["STUBBED", /STUBBED:\s*([\s\S]*?)(?=REAL:|STUBBED:|SIMULATED:|BREAKS AT|$)/],
+        ["SIMULATED", /SIMULATED:\s*([\s\S]*?)(?=REAL:|STUBBED:|SIMULATED:|BREAKS AT|$)/],
+        ["Breaks at 100×", /BREAKS AT(?: 100x)?:\s*([\s\S]*?)(?=REAL:|STUBBED:|SIMULATED:|BREAKS AT|$)/],
+      ].forEach(([label, re]) => {
         const m = text.match(re);
         if (!m) return;
         let s = m[1].replace(/\s+/g, " ").trim();
         if (s.length > 220) s = s.slice(0, 217) + "…";
-        bits.push(`<p class="note"><strong>${label}.</strong> ${esc(s)}</p>`);
+        bits.push(`<p class="note"><strong>${esc(label)}.</strong> ${esc(s)}</p>`);
       });
       return bits.join("");
     }
     function renderHonesty(rep) {
       const metrics = rep.metrics || [];
-      const pick = ["A01", "A04"].map((id) => metrics.find((m) => m.ask_id === id)).filter(Boolean);
-      const judged = metrics.find((m) => m.fidelity === "judged");
+      const pick = ["A01", "A04"].map((id) => metrics.find((x) => x.ask_id === id)).filter(Boolean);
+      const judged = metrics.find((x) => x.fidelity === "judged");
       if (judged && !pick.includes(judged)) pick.push(judged);
       const notes = shortNotes(rep.system_notes);
       $("honesty").innerHTML = `${pick.map(metricChip).join("")}${notes ? `<details><summary>What is real, stubbed, simulated</summary>${notes}</details>` : ""}`;
@@ -789,15 +884,27 @@
           : [fmt(down.resolved_conversations_slowed, 0), "resolved, slowed", "outcomes flat"],
         [down.extra_turns != null ? fmt(down.extra_turns, 0) : fmt(down.unplanned_handoffs, 0),
           down.extra_turns != null ? "extra turns" : "unplanned handoffs", ""],
-        [imp.cost_usd == null ? "—" : "$" + fmt(imp.cost_usd), "recorded cost", windowLbl(f.window)],
       ];
+      if (down.abandoned != null) kpis.push([fmt(down.abandoned, 0), "abandoned", "left without resolving"]);
+      kpis.push([
+        imp.cost_usd == null ? "—" : "$" + fmt(imp.cost_usd),
+        "recorded cost",
+        imp.days_running != null ? `${fmt(imp.days_running, 0)} days running` : windowLbl(f.window),
+      ]);
       const observeBars = pairBars("Now", f.observed, "Before this broke", f.expected, "bad", "ok");
       const predBars = pairBars("Today", pd.from, "If we change it", pd.to, "bad", "ok");
       const replayBars = v ? pairBars("Test before", v.before, "Test after", v.after, "bad", "ok") : "";
-      const evInner = `<ul class="evidence">${(f.evidence || []).map((e) => `<li>${esc(e)}</li>`).join("")}${(d && d.evidence || []).map((e) => `<li>${esc(e)}</li>`).join("")}</ul>`;
+      const evList = [].concat(f.evidence || [], (d && d.evidence) || []);
+      const ev0 = evList[0] || "";
+      const evRest = evList.slice(1);
+      const evInner = evRest.length
+        ? `<ul class="evidence">${evRest.map((e) => `<li>${esc(e)}</li>`).join("")}</ul>`
+        : "";
       const std = matchStandard(rep, f);
       const stdHint = std ? `<p class="hint">${esc(standardLine(std, f.metric))}</p>` : "";
       const showVal = (n) => (typeof n === "number" && n <= 1 && n >= 0 ? pct(n) : fmt(n, 4));
+      const defn = (imp.derivation || f.baseline || "").trim();
+      const defnShort = defn.length > 220 ? defn.slice(0, 217) + "…" : defn;
       $("detail").innerHTML = `
         <p class="path">${esc(cohortPath(f))}</p>
         <h1 class="claim">${esc(f.headline || metricLbl(f.metric))}</h1>
@@ -807,11 +914,13 @@
           ${windowLbl(f.window) ? `<span class="badge ghost">${esc(windowLbl(f.window))}</span>` : ""}
         </div>
         <p class="lede">${esc(metricLbl(f.metric))} is ${showVal(f.observed)} against ${showVal(f.expected)} before this broke.${f.baseline ? ` <span class="idle">(${esc(f.baseline)})</span>` : ""}</p>
+        ${defnShort ? `<p class="defn">${esc(defnShort)}</p>` : ""}
         <div class="kpis">${kpis.map(([val, k, s]) => `<div class="kpi"><div class="k">${esc(k)}</div><div class="v">${esc(val)}</div><div class="s">${esc(s)}</div></div>`).join("")}</div>
         <div class="who">
           <p class="owner">${esc(who)} needs to act.</p>
           <p class="inaction">${esc(f.if_nothing_changes || "")}</p>
         </div>
+        ${ev0 ? `<p class="lead-ev">${esc(ev0)}</p>` : ""}
         <div class="spans">
           <div class="span">
             <span class="kind">What changed</span>
@@ -835,7 +944,7 @@
             <span class="val">${v ? showVal(v.after) : "—"}</span>
           </div>
         </div>
-        ${details("Evidence and why this baseline is fair", `<p class="idle">${esc(extra.join(" · "))}. ${esc(imp.derivation || "—")}</p>${evInner}`)}
+        ${details("More evidence and why this baseline is fair", `<p class="idle">${esc(extra.join(" · "))}. ${esc(imp.derivation || "—")}</p>${evInner}`)}
         ${techBlock([
           { k: "cause", v: d && d.cause_class },
           { k: "metric", v: f.metric },
@@ -866,17 +975,20 @@
       const a = p.approval || {};
       const recCls = a.verdict === "accepted" ? "ok" : a.verdict === "rejected" ? "bad" : a.verdict === "deferred" ? "warn" : "";
       const recorded = a.verdict ? `<div class="alert ${recCls}"><p><strong>Recorded ${esc(a.verdict)}</strong></p><p>${esc(a.reason || "")}</p></div>` : "";
+      const risk = (dec.risk_if_diagnosis_wrong || "").trim();
+      const riskLine = risk.length > 160 ? risk.slice(0, 157) + "…" : risk;
       $("gate").innerHTML = `
         <p class="eyebrow">Your decision</p>
         ${recorded}
         <p class="ask">${esc(dec.asking_approval_for || "")}</p>
-        ${details("Risk if this is wrong, and when we would not ship",
+        ${riskLine ? `<p class="risk"><strong>If we are wrong.</strong> ${esc(riskLine)}</p>` : ""}
+        ${details("Full risk and when we would not ship",
           `<p><strong>Risk.</strong> ${esc(dec.risk_if_diagnosis_wrong || "—")}</p>
            <p><strong>Would not ship if.</strong> ${esc(dec.would_not_ship_if || "—")}</p>`)}
         <form id="decform">
           <input type="hidden" name="decided_by" value="operator">
           <label class="field" for="why">Reason</label>
-          <textarea class="input" id="why" name="reason" required autocomplete="off" placeholder="Why you are making this call…"></textarea>
+          <textarea class="input" id="why" name="reason" required maxlength="4000" autocomplete="off" placeholder="Why you are making this call…"></textarea>
           <div class="btn-row">
             <button class="btn" type="submit" name="verdict" value="accepted">Accept</button>
             <button class="btn btn-bad" type="submit" name="verdict" value="rejected">Reject</button>
@@ -908,14 +1020,11 @@
         $("flash").className = "flash";
         $("flash").textContent = "Saving…";
         try {
-          const res = await fetch("/decision", {
+          await api("/decision", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
           });
-          const body = await res.json();
-          if (!res.ok) throw new Error(body.detail || body.error || res.statusText);
-          const next = await (await fetch("/report.json")).json();
+          const next = await api("/report.json");
           window.__rep = next;
           render(next);
         } catch (e) {
@@ -945,10 +1054,7 @@
       if (window.__rep) render(window.__rep, { alignFilter: true });
     });
 
-    fetch("/report.json").then((r) => {
-      if (!r.ok) throw new Error("report missing — run python3 run.py first");
-      return r.json();
-    }).then((rep) => {
+    api("/report.json").then((rep) => {
       window.__rep = rep;
       render(rep, { alignFilter: true });
     }).catch((e) => {
