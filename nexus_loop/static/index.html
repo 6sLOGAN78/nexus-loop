@@ -210,43 +210,54 @@
         grid-template-rows: minmax(10rem, 30%) minmax(12rem, 1fr) minmax(8rem, 28%);
         padding: var(--space-2);
       }
-      .list-col { max-height: none; }
+      .list-col { max-height: none; min-height: 10rem; }
       .gate-col { max-height: none; }
     }
 
     .list-col {
+      display: flex;
+      flex-direction: column;
       background: var(--ds-surface);
-      overflow-x: auto;
-      overflow-y: auto;
+      overflow: hidden;
       min-width: 14rem;
-      min-height: 10rem;
+      min-height: 0;
       border: 1px solid var(--ds-border);
       border-radius: var(--radius-xl);
       box-shadow: var(--ds-shadow-raised);
     }
     .list-head {
+      flex: none;
       position: sticky; top: 0; z-index: 1;
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
       gap: var(--space-1);
-      padding: var(--space-2);
+      padding: var(--space-1);
       margin: var(--space-2);
       background: var(--ds-neutral);
       border-radius: var(--radius-lg);
       border-bottom: 0;
     }
+    .list-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding-bottom: var(--space-2);
+    }
     .seg {
       appearance: none; border: 0; cursor: pointer;
       background: transparent;
       color: var(--ds-text-subtle);
-      font-size: var(--fs-xs);
+      font-size: var(--fs-2xs);
       font-weight: 600;
-      padding: var(--space-2) var(--space-1);
+      padding: 0.4rem 0.2rem;
       border-radius: var(--radius-md);
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
       text-align: center;
       line-height: 1.2;
-      min-height: 2.25rem;
+      min-height: 2rem;
       flex: unset;
       --seg-accent: var(--ds-danger);
       --seg-fill: var(--ds-danger-bg);
@@ -329,17 +340,15 @@
     .dot.miss { background: var(--ds-brand); }
     .t-main { min-width: 0; overflow: hidden; }
     .t-title {
-      display: -webkit-box;
-      -webkit-box-orient: vertical;
-      -webkit-line-clamp: 2;
+      display: block;
       font-family: var(--font-sans);
-      font-size: var(--fs-sm);
+      font-size: var(--fs-xs);
       font-weight: 600;
       letter-spacing: var(--tracking-display);
       line-height: 1.25;
-      white-space: normal;
+      white-space: nowrap;
       overflow: hidden;
-      overflow-wrap: break-word;
+      text-overflow: ellipsis;
     }
     .t-sub {
       display: block;
@@ -753,7 +762,7 @@
       <div class="honesty" id="honesty"></div>
     </header>
     <div class="shell">
-      <nav class="list-col" id="list" aria-label="Findings"></nav>
+      <nav class="list-col" id="list" aria-label="Findings" tabindex="0"></nav>
       <article class="detail" id="detail">
         <p class="idle">Waiting for <code>loop-report.json</code>.</p>
       </article>
@@ -813,10 +822,26 @@
     const gapClaim = (g) => {
       if (!g) return "We will not invent this number";
       if (g.ask_id === "A11") return "We will not invent a failover rate";
-      if (g.ask_id === "A09") return "We will not guess why people left";
+      if (g.ask_id === "A09") return "We will not invent why people left";
       if (g.ask_id === "A02") return "We will not break this down by customer";
       return "We will not invent this number";
     };
+    const GAP_LEDE = {
+      A11: "Failover does not exist here. There is no rate to show.",
+      A09: "We count who left. We will not invent why.",
+      A02: "Too many distinct customers to split this list.",
+    };
+    function firstBeat(s, max) {
+      const t = String(s || "").replace(/\s+/g, " ").trim();
+      if (!t) return "";
+      const cut = t.split(/(?<=[.!?])\s+|:\s+|;\s+/)[0] || t;
+      const cap = max || 140;
+      return cut.length <= cap ? cut : cut.slice(0, cap - 1) + "…";
+    }
+    function gapLede(g) {
+      if (g && GAP_LEDE[g.ask_id]) return GAP_LEDE[g.ask_id];
+      return firstBeat(g && g.why, 140) || "We will not invent this number.";
+    }
     const replayLbl = (v) => {
       if (!v) return "No test this run";
       if (v.verdict === "improved") return "The test got better";
@@ -1048,19 +1073,22 @@
         const sev = f.severity || "";
         const dot = kind === "dismissed" ? "ok" : (sev === "critical" || sev === "high") ? "bad" : "warn";
         const sub = `${esc(f.tenant || "—")} · ${esc(windowLbl(f.window) || "—")}`;
-        const stat = kind === "dismissed" ? "all clear" : (imp.conversations_affected != null ? fmt(imp.conversations_affected, 0) + " conv." : "");
-        items.push(`<button type="button" class="trace${selectedKey === f.id ? " is-on" : ""}" data-key="${esc(f.id)}" aria-current="${selectedKey === f.id ? "true" : "false"}">
+        const n = imp.conversations_affected;
+        const title = f.headline || f.metric || f.id;
+        const stat = kind === "dismissed" ? "clear" : (n != null ? fmt(n, 0) : "");
+        items.push(`<button type="button" class="trace${kind === "dismissed" ? " ok" : ""}${selectedKey === f.id ? " is-on" : ""}" data-key="${esc(f.id)}" title="${esc(title)}" aria-current="${selectedKey === f.id ? "true" : "false"}">
           <span class="dot ${dot}" aria-hidden="true"></span>
-          <span class="t-main"><span class="t-title">${esc(f.headline || f.metric || f.id)}</span><span class="t-sub">${sub}</span></span>
+          <span class="t-main"><span class="t-title">${esc(title)}</span><span class="t-sub">${sub}</span></span>
           <span class="t-stat">${esc(stat)}</span>
         </button>`);
       };
       const pushGap = (g) => {
         const key = "gap:" + g.ask_id;
-        items.push(`<button type="button" class="trace${selectedKey === key ? " is-on" : ""}" data-key="${esc(key)}" aria-current="${selectedKey === key ? "true" : "false"}">
+        const title = gapClaim(g);
+        items.push(`<button type="button" class="trace miss${selectedKey === key ? " is-on" : ""}" data-key="${esc(key)}" title="${esc(title)}" aria-current="${selectedKey === key ? "true" : "false"}">
           <span class="dot miss" aria-hidden="true"></span>
-          <span class="t-main"><span class="t-title">${esc(gapClaim(g))}</span><span class="t-sub">No measurement</span></span>
-          <span class="t-stat">no number</span>
+          <span class="t-main"><span class="t-title">${esc(title)}</span><span class="t-sub">${esc(g.ask_id || "gap")}</span></span>
+          <span class="t-stat"></span>
         </button>`);
       };
       if (listFilter === "open") regs.forEach((f) => pushFinding(f, "regression"));
@@ -1069,7 +1097,7 @@
 
       $("list").innerHTML = `<div class="list-head" role="tablist" aria-label="Findings">${
         segs.map(([id, label]) => `<button type="button" class="seg${listFilter === id ? " is-on" : ""}" data-filter="${id}" role="tab" aria-selected="${listFilter === id}">${esc(label)}</button>`).join("")
-      }</div>${items.join("") || `<p class="idle" style="padding:1rem">Nothing in this group.</p>`}`;
+      }</div><div class="list-body">${items.join("") || `<p class="idle" style="padding:1rem">Nothing in this group.</p>`}</div>`;
       $("list").querySelectorAll("[data-filter]").forEach((btn) => {
         btn.addEventListener("click", () => {
           listFilter = btn.getAttribute("data-filter");
@@ -1096,38 +1124,61 @@
           render(rep);
         });
       });
+      const on = $("list").querySelector(".trace.is-on");
+      if (on) on.scrollIntoView({ block: "nearest" });
+      bindListKeys(rep);
+    }
+    let listKeysBound = false;
+    function bindListKeys(rep) {
+      if (listKeysBound) return;
+      listKeysBound = true;
+      $("list").addEventListener("keydown", (ev) => {
+        if (ev.key !== "ArrowDown" && ev.key !== "ArrowUp" && ev.key !== "Home" && ev.key !== "End") return;
+        const keys = [...$("list").querySelectorAll("[data-key]")];
+        if (!keys.length) return;
+        ev.preventDefault();
+        let i = keys.findIndex((b) => b.getAttribute("data-key") === selectedKey);
+        if (i < 0) i = 0;
+        if (ev.key === "ArrowDown") i = Math.min(keys.length - 1, i + 1);
+        else if (ev.key === "ArrowUp") i = Math.max(0, i - 1);
+        else if (ev.key === "Home") i = 0;
+        else i = keys.length - 1;
+        const key = keys[i].getAttribute("data-key");
+        select(key);
+        const pack = currentPack(window.__rep || rep);
+        listFilter = filterForPack(pack);
+        render(window.__rep || rep);
+        const btn = $("list").querySelector(".trace.is-on");
+        if (btn) btn.focus();
+      });
     }
 
     function renderGap(g) {
       const ev = g.required_event || {};
-      const why = (g.why || "—").replace(/\s*Required event:[\s\S]*$/i, "").trim() || (g.why || "—");
-        const retry = g.why_the_proxy_misleads
-        ? `<div class="span"><span class="kind">Lookalike</span><div class="body"><h2 class="name">Why a retry is not failover</h2><div class="hint">${esc(g.why_the_proxy_misleads)}</div></div><span class="val">not the same</span></div>`
+      const whyFull = (g.why || "").replace(/\s*Required event:[\s\S]*$/i, "").trim();
+      const retry = g.why_the_proxy_misleads
+        ? `<div class="span"><span class="kind">Lookalike</span><div class="body"><h2 class="name">A retry is not failover</h2><div class="hint">${esc(firstBeat(g.why_the_proxy_misleads, 160))}</div></div><span class="val">not the same</span></div>`
         : "";
       $("detail").innerHTML = `
         <h1 class="claim">${esc(gapClaim(g))}</h1>
         <div class="chips"><span class="badge ghost">no number</span></div>
-        <p class="lede">${esc(why)}</p>
+        <p class="lede">${esc(gapLede(g))}</p>
         <div class="spans">
           <div class="span">
             <span class="kind">What changed</span>
-            <div class="body"><h2 class="name">There is nothing to count</h2><div class="hint">The system never records this event, so a rate would be a guess.</div></div>
+            <div class="body"><h2 class="name">There is nothing to count</h2><div class="hint">The system never records this event.</div></div>
             <span class="val">—</span>
           </div>
           ${retry}
         </div>
-        <div class="alert miss">
-          <p><strong>To measure this later we would need</strong> <code translate="no">${esc(ev.name || "—")}</code> at <code>${esc(ev.grain || "—")}</code> grain.</p>
-          <p>Fields: <code translate="no">${esc((ev.fields || []).join(", ") || "—")}</code> · Owner: <code>${esc(ev.owner || "—")}</code></p>
-        </div>
+        ${ev.name ? `<div class="alert miss"><p>To count it later: <code translate="no">${esc(ev.name)}</code> (${esc(ev.grain || "—")}).</p></div>` : ""}
+        ${whyFull ? details("Full reason", `<p>${esc(whyFull)}</p>`) : ""}
         ${techBlock([
           { k: "ask", v: g.ask_id },
           { k: "verdict", v: g.verdict },
           { k: "nearest proxy", v: g.nearest_proxy },
           { k: "event", v: ev.name },
-          { k: "grain", v: ev.grain },
           { k: "fields", v: (ev.fields || []).join(", ") },
-          { k: "owner", v: ev.owner },
         ])}`;
     }
 
@@ -1141,7 +1192,7 @@
           ${f.tenant ? `<span class="badge ghost">${esc(f.tenant)}</span>` : ""}
           ${windowLbl(f.window) ? `<span class="badge ghost">${esc(windowLbl(f.window))}</span>` : ""}
         </div>
-        <p class="lede">${esc(f.not_a_regression_because || "—")}</p>
+        <p class="lede">${esc(firstBeat(f.not_a_regression_because, 140) || "This is all clear.")}</p>
         ${details("Evidence", `<ul class="evidence">${(f.evidence || []).map((e) => `<li>${esc(e)}</li>`).join("")}</ul>`)}
         ${techBlock([
           { k: "cause", v: d && d.cause_class },
@@ -1208,7 +1259,7 @@
           ${f.tenant ? `<span class="badge ghost">${esc(f.tenant)}</span>` : ""}
           ${windowLbl(f.window) ? `<span class="badge ghost">${esc(windowLbl(f.window))}</span>` : ""}
         </div>
-        <p class="lede">${esc(metricLbl(f.metric))} is ${showVal(f.observed)} against ${showVal(f.expected)} before this broke.${f.baseline ? ` <span class="idle">(${esc(f.baseline)})</span>` : ""}</p>
+        <p class="lede">${esc(metricLbl(f.metric))} is ${showVal(f.observed)} against ${showVal(f.expected)} before this broke.</p>
         ${defnShort ? `<p class="defn">${esc(defnShort)}</p>` : ""}
         <div class="kpis">${kpis.map(([val, k, s, tone]) => `<div class="kpi${tone ? " " + tone : ""}"><div class="k">${esc(k)}</div><div class="v">${esc(val)}</div><div class="s">${esc(s)}</div></div>`).join("")}</div>
         <div class="who">

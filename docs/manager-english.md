@@ -57,17 +57,35 @@ A11 is `NOT_MEASURABLE`. The list title is the claim, not `A11`.
 | Ask | On the screen |
 |---|---|
 | A11 | We will not invent a failover rate |
-| A09 | We will not guess why people left |
+| A09 | We will not invent why people left |
 | A02 | We will not break this down by customer |
 | any other gap | We will not invent this number |
 
 A11’s story also states **Why a retry is not failover** (from
 `why_the_proxy_misleads`) and **There is nothing to count**. The required
 event stays on the page. The decision pane is two mutually exclusive idle
-lines, chosen from the selected tab: **No number** (`gaps[]`, including A11)
-says **Nothing to approve. We will not invent this number.** **All clear**
-(dismissed lookalike, `is_regression: false`) says **Nothing to approve.
-This is all clear.** The two never mix.
+lines, chosen from the selected finding’s kind — never blended:
+
+| Selected kind | Idle gate |
+|---|---|
+| All clear (dismissed lookalike) | **Nothing to approve. This is all clear.** |
+| No number (`gaps[]`, including A11) | **Nothing to approve. We will not invent this number.** |
+
+The two never mix. The long report `why` is not the idle line.
+
+### Story lede (keep it short)
+
+The open paragraph is one or two sentences. The full report `why` sits
+under **Full reason**.
+
+| Ask | Lede |
+|---|---|
+| A11 | Failover does not exist here. There is no rate to show. |
+| A09 | We count who left. We will not invent why. |
+| A02 | Too many distinct customers to split this list. |
+
+All-clear ledes take the first beat of `not_a_regression_because` (about
+140 characters). To-decide ledes are “{metric} is {now} against {before}.”
 
 ---
 
@@ -96,15 +114,18 @@ when the report has it. Judged chips show calibration, never a bare 100%.
 | `gaps[]` | No number |
 
 Only **To decide** is a work queue (Accept / Reject / Defer). **All clear**
-and **No number** need no decision.
+and **No number** need no decision. Tabs stay one line; the row list
+scrolls inside the pane so a long queue stays usable.
 
-Row copy:
+Row copy (one line each; full title on hover):
 
-| Situation | Subtitle / stat / chip |
+| Situation | Subtitle / stat |
 |---|---|
-| a gap | No measurement / **no number** |
-| a dismissal | **all clear** |
-| a regression | conversation count from `impact.conversations_affected` |
+| a gap | ask id (`A11`) under the claim |
+| a dismissal | **clear** |
+| a regression | conversation count (number only) |
+
+Arrow keys, Home, and End move the selection.
 
 ---
 
@@ -163,8 +184,8 @@ Each card is label / figure / caption. Tones match the live CSS:
 | `would_not_ship_if` | Would not ship if. (under a disclosure) |
 | `accepted` / `rejected` / `deferred` | Accept / Reject / Defer |
 | empty reason | A reason is required. |
-| No number tab (`gaps[]`, including A11) | Nothing to approve. We will not invent this number. |
-| All clear tab (dismissal, `is_regression: false`) | Nothing to approve. This is all clear. |
+| a gap (`idleGateCopy`) | Nothing to approve. We will not invent this number. |
+| a dismissal | Nothing to approve. This is all clear. |
 
 Codes (`cause_class`, `change_type`, metric id, `replay_run_id`, ask ids,
 gap verdicts) sit under **Technical names**. The prescription description

@@ -199,7 +199,10 @@ pointers in that list. The kit plants three lookalikes; **All clear**
 exists so the operator (and a judge) can see the near-miss and the dismissal
 in the same genre as the real findings. That counters confirmation bias and
 availability. **No number** places A11 first. The claim on the row is
-“We will not invent a failover rate.” The required event stays on the page.
+“We will not invent a failover rate.” Rows are one line so a long queue
+stays scannable; the list body scrolls under sticky tabs. The story lede
+is one or two sentences (A11: “Failover does not exist here. There is no
+rate to show.”); the full report `why` sits under Full reason. The required event stays on the page.
 Absence is visible. A footer paragraph about A11 would be honest and
 forgettable; a first-class row is honest and sticky.
 

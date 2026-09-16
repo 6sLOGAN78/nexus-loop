@@ -94,7 +94,10 @@ class ScreenHttp(unittest.TestCase):
         self.assertIn('pack.kind === "gap"', page)
         self.assertIn('pack.kind === "dismissed"', page)
         self.assertIn("white-space: nowrap;", page)
-        self.assertIn("-webkit-line-clamp: 2;", page)
+        self.assertIn("content-visibility: auto", page)
+        self.assertIn("list-body", page)
+        self.assertIn("Failover does not exist here. There is no rate to show.", page)
+        self.assertNotIn("-webkit-line-clamp: 2;", page)
 
     def test_get_page_and_security_headers(self):
         st, hdrs, body = self._json("GET", "/")
