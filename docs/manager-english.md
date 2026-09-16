@@ -69,10 +69,13 @@ idle lines, chosen from the selected finding’s kind — never blended:
 
 | Selected kind | Idle gate |
 |---|---|
-| All clear (dismissed lookalike) | **Nothing to approve. This is all clear.** |
-| No number (`gaps[]`, including A11) | **Nothing to approve. We will not invent this number.** |
+| dismissed lookalike (`is_regression: false`) | **Nothing to approve. This is not a problem.** |
+| A11 | **Nothing to approve. We will not invent a failover rate.** |
+| A09 | **Nothing to approve. We will not invent why people left.** |
+| A02 | **Nothing to approve. We will not break this down by customer.** |
+| any other gap | **Nothing to approve. We will not invent this number.** |
 
-The two never mix. The long report `why` is not the idle line.
+The two buckets never mix. Gap idle uses `gapClaim` so A11 names failover. The long report `why` is not the idle line.
 
 ### Story lede (keep it short)
 
@@ -111,21 +114,21 @@ when the report has it. Judged chips show calibration, never a bare 100%.
 | Internal group | Tab on the screen |
 |---|---|
 | regressions (`is_regression: true`) | To decide |
-| dismissed lookalikes (`is_regression: false`) | All clear |
-| `gaps[]` | No number |
+| dismissed lookalikes (`is_regression: false`) | Not a problem |
+| `gaps[]` | We will not invent |
 
-Only **To decide** is a work queue (Accept / Reject / Defer). **All clear**
-and **No number** need no decision. Tabs stay one line and stick to the top
-of the list card; `.list-body` scrolls underneath so a long queue stays
-usable.
+Only **To decide** is a work queue (Accept / Reject / Defer). **Not a
+problem** is a closed mint all-clear. **We will not invent** is a grey
+refusal. They do not share idle copy or chips. List titles wrap two lines.
+`.list-body` scrolls underneath sticky tabs.
 
-Row copy (one line each; full title on hover):
+Row copy:
 
-| Situation | Subtitle / stat |
+| Situation | Subtitle / stat / chip |
 |---|---|
-| a gap | ask id (`A11`) under the claim; no stat column |
-| a dismissal | tenant · days; stat **clear**; story chip **all clear** |
-| a regression | tenant · days; stat is conversation count (number only) |
+| a gap | No measurement / **we will not invent** |
+| a dismissal | tenant · days; chip **not a problem** |
+| a regression | tenant · days; conversation count |
 
 ArrowUp, ArrowDown, Home, and End move the selection while the list has
 focus.
@@ -197,8 +200,8 @@ Each card is label / figure / caption. Tones match the live CSS:
 | `would_not_ship_if` | Would not ship if. (under a disclosure) |
 | `accepted` / `rejected` / `deferred` | Accept / Reject / Defer |
 | empty reason | A reason is required. |
-| a gap (`idleGateCopy`) | Nothing to approve. We will not invent this number. |
-| a dismissal | Nothing to approve. This is all clear. |
+| a gap (`idleGateCopy` + `gapClaim`) | Nothing to approve. We will not invent a failover rate. (A11; other gaps name their claim or “this number”.) |
+| a dismissal | Nothing to approve. This is not a problem. |
 
 Codes (`cause_class`, `change_type`, metric id, `replay_run_id`, ask ids,
 gap verdicts) sit under **Technical names** in a `.tech-foot` footer pinned

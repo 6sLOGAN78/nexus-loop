@@ -138,7 +138,7 @@
     header.top {
       display: flex;
       flex-wrap: wrap;
-      align-items: center;
+      align-items: start;
       gap: var(--space-3) var(--space-4);
       padding: var(--space-3) var(--space-5);
       border-bottom: 1px solid var(--color-border);
@@ -252,9 +252,8 @@
       font-weight: 600;
       padding: 0.4rem 0.2rem;
       border-radius: var(--radius-md);
-      white-space: nowrap;
+      white-space: normal;
       overflow: hidden;
-      text-overflow: ellipsis;
       text-align: center;
       line-height: 1.2;
       min-height: 2rem;
@@ -267,8 +266,8 @@
       --seg-fill: var(--ds-success-bg);
     }
     .seg[data-filter="refused"] {
-      --seg-accent: var(--ds-information);
-      --seg-fill: var(--ds-info-bg);
+      --seg-accent: var(--ds-text-subtle);
+      --seg-fill: var(--ds-neutral);
     }
     .seg:hover { background: var(--ds-surface); color: var(--ds-text); }
     .seg.is-on {
@@ -337,32 +336,38 @@
     .dot.bad { background: var(--ds-danger); }
     .dot.warn { background: var(--ds-warning); }
     .dot.ok { background: var(--ds-success); }
-    .dot.miss { background: var(--ds-brand); }
+    .dot.miss { background: var(--ds-text-subtle); }
     .t-main { min-width: 0; overflow: hidden; }
     .t-title {
-      display: block;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
       font-family: var(--font-sans);
       font-size: var(--fs-xs);
       font-weight: 600;
       letter-spacing: var(--tracking-display);
       line-height: 1.25;
-      white-space: nowrap;
+      max-height: 2.6em;
+      white-space: normal;
       overflow: hidden;
-      text-overflow: ellipsis;
+      overflow-wrap: break-word;
     }
     .t-sub {
       display: block;
       font-size: var(--fs-2xs);
       color: var(--color-muted);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      white-space: normal;
+      overflow-wrap: anywhere;
     }
     .t-stat {
       font-size: var(--fs-2xs);
       color: var(--color-muted);
       text-align: right;
       font-variant-numeric: tabular-nums;
-      white-space: nowrap;
+      white-space: normal;
+      max-width: 6.75rem;
     }
+    .t-stat .badge { white-space: normal; text-align: center; }
 
     .detail {
       display: flex;
@@ -803,6 +808,7 @@
       turns_to_resolve: "Turns to finish",
       tool_p95_latency_ms: "Tool wait time",
       containment_rate: "Share we handled end to end",
+      quality_score: "Scorecard quality",
     };
     const CAUSE = {
       "tool.contract_break": "The tool said success but sent an empty answer",
@@ -838,6 +844,25 @@
       ["containment rate", "Share we handled end to end"],
       ["Resolution is flat", "Share we finished is flat"],
     ];
+    const CAUSE_AUDIENCE = {
+      load: ["platform_owner"],
+      traffic_mix: ["business_owner"],
+      judge_change: ["platform_owner"],
+      "tool.outage": ["platform_owner"],
+      "routing.error": ["platform_owner"],
+      "kb.gap": ["agent_builder", "business_owner"],
+      "tool.contract_break": ["agent_builder", "platform_owner"],
+      "prompt.regression": ["agent_builder"],
+      "model.change": ["agent_builder", "platform_owner"],
+      unknown: ["agent_builder", "platform_owner"],
+    };
+    function audienceFor(pack) {
+      const f = pack && pack.f;
+      if (f && f.audience && f.audience.length) return audienceLbl(f.audience);
+      const cause = pack && pack.d && pack.d.cause_class;
+      return audienceLbl(CAUSE_AUDIENCE[cause] || []);
+    }
+    const showVal = (n) => (typeof n === "number" && n <= 1 && n >= 0 ? pct(n) : fmt(n, 4));
     function toManagerEnglish(s) {
       if (s == null) return "";
       let out = String(s);
@@ -1102,22 +1127,25 @@
       const rest = gaps.filter((g) => g.ask_id !== "A11");
       const segs = [
         ["open", `To decide (${regs.length})`],
-        ["ignored", `All clear (${dismissed.length})`],
-        ["refused", `No number (${gaps.length})`],
+        ["ignored", `Not a problem (${dismissed.length})`],
+        ["refused", `We will not invent (${gaps.length})`],
       ];
       const items = [];
       const pushFinding = (f, kind) => {
         const imp = f.impact || {};
         const sev = f.severity || "";
         const dot = kind === "dismissed" ? "ok" : (sev === "critical" || sev === "high") ? "bad" : "warn";
+        const tone = kind === "dismissed" ? " ok" : "";
         const sub = `${esc(f.tenant || "—")} · ${esc(windowLbl(f.window) || "—")}`;
-        const n = imp.conversations_affected;
         const title = f.headline || f.metric || f.id;
-        const stat = kind === "dismissed" ? "clear" : (n != null ? fmt(n, 0) : "");
-        items.push(`<button type="button" class="trace${kind === "dismissed" ? " ok" : ""}${selectedKey === f.id ? " is-on" : ""}" data-key="${esc(f.id)}" title="${esc(title)}" aria-current="${selectedKey === f.id ? "true" : "false"}">
+        const n = imp.conversations_affected;
+        const stat = kind === "dismissed"
+          ? `<span class="badge ok">not a problem</span>`
+          : (n != null ? esc(fmt(n, 0) + " conv.") : "");
+        items.push(`<button type="button" class="trace${tone}${selectedKey === f.id ? " is-on" : ""}" data-key="${esc(f.id)}" title="${esc(title)}" aria-current="${selectedKey === f.id ? "true" : "false"}">
           <span class="dot ${dot}" aria-hidden="true"></span>
           <span class="t-main"><span class="t-title">${esc(title)}</span><span class="t-sub">${sub}</span></span>
-          <span class="t-stat">${esc(stat)}</span>
+          <span class="t-stat">${stat}</span>
         </button>`);
       };
       const pushGap = (g) => {
@@ -1125,8 +1153,8 @@
         const title = gapClaim(g);
         items.push(`<button type="button" class="trace miss${selectedKey === key ? " is-on" : ""}" data-key="${esc(key)}" title="${esc(title)}" aria-current="${selectedKey === key ? "true" : "false"}">
           <span class="dot miss" aria-hidden="true"></span>
-          <span class="t-main"><span class="t-title">${esc(title)}</span><span class="t-sub">${esc(g.ask_id || "gap")}</span></span>
-          <span class="t-stat"></span>
+          <span class="t-main"><span class="t-title">${esc(title)}</span><span class="t-sub">No measurement</span></span>
+          <span class="t-stat"><span class="badge ghost">we will not invent</span></span>
         </button>`);
       };
       if (listFilter === "open") regs.forEach((f) => pushFinding(f, "regression"));
@@ -1193,45 +1221,77 @@
 
     function renderGap(g) {
       const ev = g.required_event || {};
-      const whyFull = (g.why || "").replace(/\s*Required event:[\s\S]*$/i, "").trim();
+      const whyRaw = (g.why || "—").replace(/\s*Required event:[\s\S]*$/i, "").trim() || (g.why || "—");
+      const why = toManagerEnglish(whyRaw);
       const retry = g.why_the_proxy_misleads
-        ? `<div class="span"><span class="kind">Lookalike</span><div class="body"><h2 class="name">A retry is not failover</h2><div class="hint">${esc(toManagerEnglish(firstBeat(g.why_the_proxy_misleads, 160)))}</div></div><span class="val">not the same</span></div>`
+        ? `<div class="span"><span class="kind">Lookalike</span><div class="body"><h2 class="name">Why a retry is not failover</h2><div class="hint">${esc(toManagerEnglish(g.why_the_proxy_misleads))}</div></div><span class="val">not the same</span></div>`
         : "";
       $("detail").innerHTML = `
+        <p class="kicker miss">We will not invent</p>
         <h1 class="claim">${esc(gapClaim(g))}</h1>
-        <div class="chips"><span class="badge ghost">no number</span></div>
+        <div class="chips"><span class="badge ghost">we will not invent</span></div>
+        <div class="alert miss">
+          <p><strong>${esc(idleGateCopy({ kind: "gap", gap: g }))}</strong></p>
+        </div>
         <p class="lede">${esc(gapLede(g))}</p>
         <div class="spans">
           <div class="span">
             <span class="kind">What changed</span>
-            <div class="body"><h2 class="name">There is nothing to count</h2><div class="hint">The system never records this event.</div></div>
+            <div class="body"><h2 class="name">There is nothing to count</h2><div class="hint">The system never records this event, so a rate would be invented.</div></div>
             <span class="val">—</span>
           </div>
           ${retry}
         </div>
-        ${ev.name ? `<div class="alert miss"><p>To count it later: <code translate="no">${esc(ev.name)}</code> (${esc(ev.grain || "—")}).</p></div>` : ""}
-        ${whyFull ? details("Full reason", `<p>${esc(whyFull)}</p>`) : ""}
+        ${ev.name ? `<div class="alert miss"><p>If this were counted, the event would be <code translate="no">${esc(ev.name)}</code> at ${esc(ev.grain || "—")} grain, owned by ${esc(ev.owner || "—")}.</p></div>` : ""}
         ${techBlock([
           { k: "ask", v: g.ask_id },
           { k: "verdict", v: g.verdict },
           { k: "nearest proxy", v: g.nearest_proxy },
           { k: "event", v: ev.name },
+          { k: "grain", v: ev.grain },
           { k: "fields", v: (ev.fields || []).join(", ") },
+          { k: "owner", v: ev.owner },
         ])}`;
     }
 
     function renderDismissed(pack) {
       const { f, d } = pack;
+      const who = audienceFor(pack);
+      const claim = toManagerEnglish(f.not_a_regression_because || "—");
+      const ev = (f.evidence || []).map((e) => toManagerEnglish(e));
+      const observeBars = (f.observed != null && f.expected != null)
+        ? pairBars("This window", f.observed, "Usual", f.expected, "warn", "ok")
+        : "";
       $("detail").innerHTML = `
+        <p class="kicker ok">Not a problem</p>
         <p class="path">${esc(cohortPath(f))}</p>
-        <h1 class="claim">${esc(f.headline || f.metric || f.id)}</h1>
+        <h1 class="claim">${esc(f.headline || metricLbl(f.metric) || f.id)}</h1>
         <div class="chips">
-          <span class="badge ok">all clear</span>
+          <span class="badge ok">not a problem</span>
+          ${who && who !== "—" ? `<span class="badge ok">${esc(who)}</span>` : ""}
           ${f.tenant ? `<span class="badge ghost">${esc(f.tenant)}</span>` : ""}
           ${windowLbl(f.window) ? `<span class="badge ghost">${esc(windowLbl(f.window))}</span>` : ""}
         </div>
-        <p class="lede">${esc(firstBeat(f.not_a_regression_because, 140) || "This is all clear.")}</p>
-        ${details("Evidence", `<ul class="evidence">${(f.evidence || []).map((e) => `<li>${esc(toManagerEnglish(e))}</li>`).join("")}</ul>`)}
+        <div class="alert ok">
+          <p><strong>This is not a problem.</strong>${who && who !== "—" ? ` A closed all-clear for the ${esc(who)}.` : ""}</p>
+        </div>
+        <p class="lede">${esc(claim)}</p>
+        <div class="spans">
+          <div class="span">
+            <span class="kind">What we checked</span>
+            <div class="body"><h2 class="name">${esc(metricLbl(f.metric))}</h2>
+              <div class="hint">Copied from the report. This is not a quality regression.</div>
+              ${observeBars}</div>
+            <span class="val">${showVal(f.observed)}</span>
+          </div>
+          <div class="span">
+            <span class="kind">Why we are sure</span>
+            <div class="body"><h2 class="name">${esc(causeLbl(d && d.cause_class))}</h2>
+              <div class="hint">${who && who !== "—" ? `For the ${esc(who)} — nothing to approve.` : "Nothing to approve."}</div></div>
+            <span class="val">closed</span>
+          </div>
+        </div>
+        ${details("Evidence", `<ul class="evidence">${ev.map((e) => `<li>${esc(e)}</li>`).join("")}</ul>`)}
         ${techBlock([
           { k: "cause", v: d && d.cause_class },
           { k: "metric", v: f.metric },
@@ -1286,7 +1346,6 @@
         : "";
       const std = matchStandard(rep, f);
       const stdHint = std ? `<p class="hint">${esc(standardLine(std, f.metric))}</p>` : "";
-      const showVal = (n) => (typeof n === "number" && n <= 1 && n >= 0 ? pct(n) : fmt(n, 4));
       const defn = (imp.derivation || f.baseline || "").trim();
       const defnShort = defn.length > 220 ? defn.slice(0, 217) + "…" : defn;
       $("detail").innerHTML = `
@@ -1349,10 +1408,10 @@
 
     function idleGateCopy(pack) {
       if (pack && pack.kind === "gap") {
-        return "Nothing to approve. We will not invent this number.";
+        return "Nothing to approve. " + gapClaim(pack.gap) + ".";
       }
       if (pack && pack.kind === "dismissed") {
-        return "Nothing to approve. This is all clear.";
+        return "Nothing to approve. This is not a problem.";
       }
       if (pack && !pack.p) {
         return "Nothing to approve on this finding.";
@@ -1361,7 +1420,8 @@
     }
     function renderGate(pack) {
       if (pack.kind === "gap" || pack.kind === "dismissed" || !pack.p) {
-        $("gate").innerHTML = `<p class="idle">${esc(idleGateCopy(pack))}</p>`;
+        const tone = pack.kind === "dismissed" ? "ok" : pack.kind === "gap" ? "miss" : "";
+        $("gate").innerHTML = `<div class="alert ${tone}"><p class="idle">${esc(idleGateCopy(pack))}</p></div>`;
         return;
       }
       const p = pack.p;
