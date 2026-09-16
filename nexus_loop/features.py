@@ -177,12 +177,32 @@ def resolved(s: dict) -> bool:
     return s.get("session_end") == "resolved"
 
 
+def by_design_handoff(s: dict) -> bool:
+    """Session field when present, else the step-grain flag folded at load.
+    A null in both places is treated as NOT by-design (conservative: it counts
+    as an unplanned handoff), matching the previous behaviour for a missing
+    session field."""
+    v = s.get("handoff_by_design")
+    if v is None:
+        v = (s.get("derived") or {}).get("handoff_by_design_step")
+    return bool(v)
+
+
+def milestones_of(s: dict) -> list:
+    """Session milestone rollup when present, else the list folded from turn
+    steps at load time."""
+    ms = s.get("milestones_reached")
+    if ms is None:
+        ms = (s.get("derived") or {}).get("milestones") or []
+    return ms
+
+
 def contained(s: dict) -> bool:
-    return resolved(s) or (s.get("session_end") == "handoff" and bool(s.get("handoff_by_design")))
+    return resolved(s) or (s.get("session_end") == "handoff" and by_design_handoff(s))
 
 
 def unplanned_handoff(s: dict) -> bool:
-    return s.get("session_end") == "handoff" and not s.get("handoff_by_design")
+    return s.get("session_end") == "handoff" and not by_design_handoff(s)
 
 
 def abandoned(s: dict) -> bool:

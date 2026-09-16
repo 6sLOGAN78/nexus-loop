@@ -10,8 +10,8 @@ from collections import Counter, defaultdict
 from typing import Dict, List, Optional, Tuple
 
 from .coverage import Coverage
-from .features import (Corpus, abandoned, contained, mean, median, percentile, rate,
-                       resolved, unplanned_handoff)
+from .features import (Corpus, abandoned, contained, mean, median, milestones_of,
+                       percentile, rate, resolved, unplanned_handoff)
 from .metrics import gap, metric, r4
 
 SESSIONS = "corpus/sessions.jsonl.gz"
@@ -83,7 +83,8 @@ def build(corpus: Corpus, cov: Coverage, kit_catalog: dict,
     metrics.append(metric(
         "m_containment", "Containment rate", "A01", "session", "measured",
         r4(rate(sum(1 for s in all_rows if contained(s)), len(all_rows))),
-        1.0, "session_end and handoff_by_design are present on every session, every agent_kind",
+        1.0, "session_end is on every session; handoff_by_design is read from the session with the "
+             "step-grain flag as fallback, so containment is checkable for every agent_kind",
         SESSIONS, "session_end = 'resolved' OR (session_end = 'handoff' AND handoff_by_design = true)",
         "all sessions in scope", breakdowns=["tenant"],
         alternatives=["resolution_rate — excludes by-design handoffs entirely"],
@@ -354,7 +355,7 @@ def build(corpus: Corpus, cov: Coverage, kit_catalog: dict,
                 continue
             reach = []
             for ms in steps:
-                reach.append(r4(rate(sum(1 for s in rows if ms in (s.get("milestones_reached") or [])), len(rows))))
+                reach.append(r4(rate(sum(1 for s in rows if ms in milestones_of(s)), len(rows))))
             drops = [(steps[i], (reach[i - 1] or 0) - (reach[i] or 0)) for i in range(1, len(steps))]
             worst = max(drops, key=lambda kv: kv[1]) if drops else None
             dropoff[t + "/" + it] = {"milestones": steps, "reach_rate": reach, "n": len(rows),
@@ -368,7 +369,8 @@ def build(corpus: Corpus, cov: Coverage, kit_catalog: dict,
         headline = max(dropoff.values(), key=lambda v: (v.get("largest_drop") if v.get("largest_drop") is not None else -1.0))
     metrics.append(metric(
         "m_returns_dropoff", "Milestone drop-off in the returns journey", "A05", "session", "measured",
-        headline, 1.0, "milestones_reached is present on every session; journeys come from catalog.milestones",
+        headline, 1.0, "milestones_reached is read from the session with the turn-step milestones as "
+                       "fallback; journeys come from catalog.milestones",
         SESSIONS, "intent whose catalog journey is the returns journey; share of sessions reaching each milestone in order",
         "all sessions of the intent", breakdowns=["intent", "milestone", "reach_rate"],
         value_note="returns journey selected structurally by a returns-like milestone; falls back to the largest drop-off; all journeys in breakdown",
