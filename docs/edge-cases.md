@@ -231,7 +231,7 @@ our corpus number, and we say so.
 |---|---|
 | Cost read at session grain (would need a roll-up if it moved to steps) | [handled caveat] |
 | In-memory session map (~80k sessions comfortable; tens of millions need an on-disk grain) | [handled caveat] |
-| Report JSON is a single-writer store (atomic replace, not multi-approver) | [handled caveat] |
+| Report JSON is one file rather than a multi-user database; concurrent decisions are serialized by a lock and written atomically, and the server caps body size, validates the id and reason, and sets a restrictive CSP | [handled] |
 | Detector bars are statistical; a sealed corpus under the lift/z floors won't fire (a miss, not a false calm) | [handled caveat] |
 
 ---
