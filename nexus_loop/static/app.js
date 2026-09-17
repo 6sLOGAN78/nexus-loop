@@ -861,36 +861,6 @@
     $("banner").innerHTML = msg ? `<div class="callout error" role="alert">${I.alert}<p>${esc(msg)}</p></div>` : "";
   }
 
-  /* Optional demo action: re-run the pipeline into the same report, then reload.
-     Only offered when the server started with generate enabled (/health). */
-  async function checkGenerate() {
-    const btn = $("generate");
-    if (!btn) return;
-    try {
-      const r = await fetch("/health", { cache: "no-store" });
-      const b = await r.json();
-      if (b && b.generate) { btn.hidden = false; btn.addEventListener("click", generate); }
-    } catch (e) { /* leave hidden */ }
-  }
-  async function generate() {
-    const btn = $("generate");
-    const label = btn.textContent;
-    btn.disabled = true;
-    btn.textContent = "Generating…";
-    try {
-      const r = await fetch("/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
-      const body = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(body.detail || body.error || "HTTP " + r.status);
-      toast("Report regenerated");
-      await load();
-    } catch (e) {
-      toast("Generate failed: " + e.message);
-    } finally {
-      btn.disabled = false;
-      btn.textContent = label;
-    }
-  }
-
   async function submitDecision(form, verdict, btn) {
     const reasonEl = $("reason"), whoEl = $("who");
     const reason = reasonEl.value.trim();
@@ -975,5 +945,4 @@
 
   readHash();
   load();
-  checkGenerate();
 })();

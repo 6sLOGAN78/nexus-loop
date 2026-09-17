@@ -310,18 +310,14 @@ class ScreenHttp(unittest.TestCase):
             tmp.cleanup()
 
 
-    def test_console_has_generate_action_and_copy_note(self):
-        st, _, page = self._json("GET", "/")
+    def test_console_has_copy_decision_note(self):
+        st, _, js = self._json("GET", "/static/app.js")
         self.assertEqual(st, 200)
-        html = page.decode()
-        self.assertIn('id="generate"', html)
-        self.assertIn("Generate report", html)
-        st2, _, js = self._json("GET", "/static/app.js")
-        self.assertEqual(st2, 200)
         code = js.decode()
         self.assertIn("function decisionNote(", code)
         self.assertIn("function allDecisionsNote(", code)
-        self.assertIn('fetch("/generate"', code)
+        self.assertNotIn('id="generate"', self._json("GET", "/")[2].decode())
+        self.assertNotIn('fetch("/generate"', code)
 
 
 if __name__ == "__main__":
