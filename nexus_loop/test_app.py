@@ -236,6 +236,56 @@ class ScreenHttp(unittest.TestCase):
         self.assertNotIn("`No number (${gaps.length})`", page)
         self.assertNotIn("We would not guess", page)
 
+    def test_corrupt_report_returns_error_not_drop(self):
+        Path(self.report).write_text("{ not json", encoding="utf-8")
+        st, _, data = self._json("GET", "/report.json")
+        self.assertEqual(st, 500)
+        self.assertEqual(json.loads(data)["error"], "report_invalid")
+
+    def test_concurrent_decisions_both_persist(self):
+        two = json.loads(json.dumps(MIN_REPORT))
+        two["prescriptions"].append({
+            "id": "p02_ok",
+            "diagnosis_id": "d1",
+            "change_type": "kb.add",
+            "target": "t2",
+            "description": "d2",
+            "predicted_delta": {"metric": "resolution_rate", "from": 0.1, "to": 0.2},
+            "decision": {
+                "asking_approval_for": "x",
+                "risk_if_diagnosis_wrong": "y",
+                "would_not_ship_if": "z",
+            },
+            "cohort": {},
+        })
+        Path(self.report).write_text(json.dumps(two), encoding="utf-8")
+
+        results = []
+        results_lock = threading.Lock()
+
+        def post(pid):
+            st, _, _ = self._json("POST", "/decision", {
+                "prescription_id": pid, "verdict": "accepted",
+                "decided_by": "judge", "reason": "concurrent",
+            })
+            with results_lock:
+                results.append(st)
+
+        threads = [threading.Thread(target=post, args=(pid,))
+                   for pid in ("p01_ok", "p02_ok")]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        self.assertEqual(results, [200, 200])
+        saved = json.loads(Path(self.report).read_text())
+        by_id = {p["id"]: p.get("approval") for p in saved["prescriptions"]}
+        self.assertEqual(by_id["p01_ok"]["verdict"], "accepted")
+        self.assertEqual(by_id["p02_ok"]["verdict"], "accepted")
+        log = Path(os.path.join(self.tmp.name, "decisions.log")).read_text().splitlines()
+        self.assertEqual(len([line for line in log if line.strip()]), 2)
+
 
 if __name__ == "__main__":
     unittest.main()
