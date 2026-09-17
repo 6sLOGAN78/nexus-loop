@@ -15,7 +15,7 @@
 {"session_id": "s_acme_023335", "tenant": "acme-bank", "day": 44, "intent": "product_info", "channel": "web", "human_resolved": true, "human_handoff_by_design": null, "labeller": "h3"}
 {"session_id": "s_nort_064375", "tenant": "northwind-retail", "day": 35, "intent": "promo_apply", "channel": "web", "human_resolved": true, "human_handoff_by_design": null, "labeller": "h1"}
 {"session_id": "s_acme_017651", "tenant": "acme-bank", "day": 32, "intent": "txn_dispute", "channel": "whatsapp", "human_resolved": true, "human_handoff_by_design": null, "labeller": "h3"}
-{"session_id": "s_no/home/logan78/Desktop/yellow-ai/tools/nexus-loop-kit/README.mdrt_042184", "tenant": "northwind-retail", "day": 13, "intent": "delivery_reschedule", "channel": "whatsapp", "human_resolved": true, "human_handoff_by_design": null, "labeller": "h2"}
+{"session_id": "s_nort_042184", "tenant": "northwind-retail", "day": 13, "intent": "delivery_reschedule", "channel": "whatsapp", "human_resolved": true, "human_handoff_by_design": null, "labeller": "h2"}
 {"session_id": "s_nort_051279", "tenant": "northwind-retail", "day": 18, "intent": "refund_status", "channel": "whatsapp", "human_resolved": true, "human_handoff_by_design": null, "labeller": "h1"}
 {"session_id": "s_nort_072891", "tenant": "northwind-retail", "day": 45, "intent": "product_availability", "channel": "whatsapp", "human_resolved": true, "human_handoff_by_design": null, "labeller": "h2"}
 {"session_id": "s_acme_005500", "tenant": "acme-bank", "day": 10, "intent": "employment_letter", "channel": "web", "human_resolved": true, "human_handoff_by_design": null, "labeller": "h4"}
