@@ -149,8 +149,11 @@ only — “Nothing to approve. This is not a problem.” or “Nothing to appro
 will not invent a failover rate.” Detector codes sit in a **Technical names**
 footer pinned at the bottom of the story pane. Impact KPIs sit on a 5-column
 strip (label / figure / caption): conversations info, would-have-resolved warn,
-handoffs/abandoned bad, cost warn. Mode labels, idle gates, ledes, and row
-copy are catalogued in **`docs/manager-english.md`**.
+handoffs/abandoned bad, cost warn — plus report-backed pair bars (now vs
+before, predicted, replay), conversation weight, and a harm comparison figure.
+Story panels rise in on selection; bar fills grow once; reduced motion is
+respected. Mode labels, idle gates, ledes, and row copy are catalogued in
+**`docs/manager-english.md`**.
 
 ### Signed copy (after the verdict)
 
