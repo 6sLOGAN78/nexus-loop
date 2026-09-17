@@ -1170,14 +1170,14 @@
       if (d === 0) return "No change";
       return (d > 0 ? "+" : "−") + body;
     }
-    function pairBars(aLbl, aVal, bLbl, bVal, aCls, bCls, title) {
+    function pairBars(aLbl, aVal, bLbl, bVal, aCls, bCls, title, forceTone) {
       if (aVal == null || bVal == null) return "";
       const a = Number(aVal), b = Number(bVal);
       const asRate = a >= 0 && b >= 0 && a <= 1 && b <= 1;
       const max = Math.max(a, b, asRate ? 1 : 0.0001);
       const show = (n) => asRate ? pct(n) : fmt(n, 4);
       const higherIsWorse = aCls === "bad" ? (a > b) : (!asRate && Math.max(a, b) > 1);
-      const tone = (aCls === "ok" && bCls === "ok") ? "ok" : deltaTone(a, b, higherIsWorse);
+      const tone = forceTone || ((aCls === "ok" && bCls === "ok") ? "ok" : deltaTone(a, b, higherIsWorse));
       const delta = formatDelta(a, b, asRate);
       const aria = `${aLbl} ${show(a)}, ${bLbl} ${show(b)}${delta ? ", delta " + delta : ""}`;
       return `<div class="pair-fig" role="img" aria-label="${esc(aria)}">
@@ -1205,11 +1205,17 @@
     }
     function clearCompare(observed, expected) {
       if (observed == null || expected == null) return "";
-      return `<div class="clear-strip" role="img" aria-label="${esc("This window " + showVal(observed) + " near usual " + showVal(expected))}">
+      return `<div class="clear-strip" role="img" aria-label="${esc("This window " + showVal(observed) + ", usual " + showVal(expected))}">
         <div class="clear-col"><span class="clear-lbl">This window</span><span class="clear-val">${esc(showVal(observed))}</span></div>
-        <span class="clear-mid">near</span>
+        <span class="clear-mid">vs</span>
         <div class="clear-col"><span class="clear-lbl">Usual</span><span class="clear-val">${esc(showVal(expected))}</span></div>
       </div>`;
+    }
+    function valuesNear(a, b) {
+      const x = Number(a), y = Number(b);
+      if (!Number.isFinite(x) || !Number.isFinite(y)) return false;
+      const scale = Math.max(Math.abs(x), Math.abs(y), 1e-9);
+      return Math.abs(x - y) / scale <= 0.12;
     }
     function inventBlock() {
       return `<div class="state-meter" aria-hidden="true"><span class="state-block">No rate to plot</span></div>`;
@@ -1513,8 +1519,12 @@
       const claim = toManagerEnglish(f.not_a_regression_because || "—");
       const ev = (f.evidence || []).map((e) => toManagerEnglish(e));
       const observeBars = (f.observed != null && f.expected != null)
-        ? pairBars("This window", f.observed, "Usual", f.expected, "ok", "ok", "Checked against usual")
+        ? pairBars("This window", f.observed, "Usual", f.expected, "ok", "ok", "Checked against usual", "ok")
         : "";
+      const near = valuesNear(f.observed, f.expected);
+      const clearLine = near
+        ? " Observed stays near usual — nothing to approve."
+        : " The move is explained without a quality regression — nothing to approve.";
       $("detail").innerHTML = `
         <p class="kicker ok">Not a problem</p>
         <p class="path">${esc(cohortPath(f))}</p>
@@ -1527,7 +1537,7 @@
         </div>
         <div class="state-fig ok">
           ${clearCompare(f.observed, f.expected)}
-          <p class="state-cap"><strong>This is not a problem.</strong>${who && who !== "—" ? ` A closed all-clear for the ${esc(who)}.` : ""} Observed stays near usual — nothing to approve.</p>
+          <p class="state-cap"><strong>This is not a problem.</strong>${who && who !== "—" ? ` A closed all-clear for the ${esc(who)}.` : ""}${clearLine}</p>
         </div>
         <p class="lede">${esc(claim)}</p>
         <div class="spans">
