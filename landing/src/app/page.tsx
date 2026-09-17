@@ -19,8 +19,8 @@ export default function Home() {
           <a href="#impact" className="hover:text-slate-gray transition-colors py-[2px]">Impact</a>
         </div>
         <div className="flex items-center gap-4">
-          <a href="#" className="font-sohne text-[16px] text-ink-black hover:underline underline-offset-4 py-5 md:py-[2px]">Log in →</a>
-          <a href="#" className="font-sohne text-[16px] bg-ink-black text-paper-white px-5 py-2.5 rounded-full border border-ink-black transition-transform hover:scale-105">
+          <a href="#" className="font-sohne text-[16px] text-ink-black hover:underline underline-offset-4 py-5">Log in →</a>
+          <a href="#" className="font-sohne text-[16px] bg-ink-black text-paper-white px-5 py-0 rounded-full border border-ink-black transition-transform hover:scale-105">
             Get started
           </a>
         </div>
@@ -51,10 +51,10 @@ export default function Home() {
           transition={{ delay: 0.4 }}
           className="flex flex-wrap justify-center gap-4 mt-10 z-10"
         >
-          <a href="#" className="font-sohne text-[16px] bg-ink-black text-paper-white px-5 py-2.5 rounded-full flex items-center hover:bg-gray-800 transition-colors">
+          <a href="#" className="font-sohne text-[16px] bg-ink-black text-paper-white px-5 py-0 rounded-full flex items-center hover:bg-gray-800 transition-colors">
             View the Demo
           </a>
-          <a href="#" className="font-sohne text-[16px] bg-transparent text-ink-black border border-ink-black px-5 py-2.5 rounded-full flex items-center hover:bg-mist-gray transition-colors">
+          <a href="#" className="font-sohne text-[16px] bg-transparent text-ink-black border border-ink-black px-5 py-0 rounded-full flex items-center hover:bg-mist-gray transition-colors">
             Read Docs
           </a>
         </motion.div>
@@ -210,7 +210,7 @@ export default function Home() {
             <div className="bg-paper-white rounded-2xl-2 pt-4 pr-5 pb-3 pl-3 shadow-subtle-2 border border-mist-gray">
               <div className="flex justify-between items-center border-b border-mist-gray pb-4 mb-4">
                 <div className="font-sohne text-[14px] text-ash-gray">Signed Copy Handoff</div>
-                <button className="font-sohne text-[14px] bg-ink-black text-paper-white px-5 py-2.5 rounded-full leading-none">Copy</button>
+                <button className="font-sohne text-[14px] bg-ink-black text-paper-white px-5 py-0 rounded-full leading-none">Copy</button>
               </div>
               <div className="font-mono text-[13px] text-ink-black leading-relaxed bg-mist-gray p-4 rounded-xl">
                 [DECISION: REJECT]<br/><br/>
@@ -233,7 +233,7 @@ export default function Home() {
           <p className="font-sohne text-[20px] text-slate-gray mb-10">
             Explore the repository to run the cold pipeline and spin up the Operator Desk locally.
           </p>
-          <a href="https://github.com/6sLOGAN78/yellow-ai" className="inline-block font-sohne text-[16px] bg-ink-black text-paper-white px-5 py-2.5 rounded-full transition-transform hover:scale-105">
+          <a href="https://github.com/6sLOGAN78/yellow-ai" className="inline-block font-sohne text-[16px] bg-ink-black text-paper-white px-5 py-0 rounded-full transition-transform hover:scale-105">
             Explore GitHub Repository
           </a>
           
