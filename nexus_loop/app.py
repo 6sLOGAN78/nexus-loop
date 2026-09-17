@@ -43,10 +43,10 @@ SECURITY_HEADERS = (
     ("Referrer-Policy", "no-referrer"),
     ("Cache-Control", "no-store"),
     ("Content-Security-Policy",
-     "default-src 'none'; script-src 'self' 'unsafe-inline'; "
-     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
-     "font-src https://fonts.gstatic.com; "
-     "img-src 'none'; connect-src 'self'; form-action 'self'; "
+     "default-src 'none'; script-src 'self'; "
+     "style-src 'self'; "
+     "font-src 'self'; "
+     "img-src 'self' data:; connect-src 'self'; form-action 'self'; "
      "base-uri 'none'; frame-ancestors 'none'"),
 )
 
@@ -56,6 +56,15 @@ SIGNED_COPY_MIME = {
     ".css": "text/css; charset=utf-8",
     ".map": "application/json; charset=utf-8",
 }
+# the operator console's own assets (app.js, app.css, bundled fonts)
+STATIC_TYPES = {
+    ".css": "text/css; charset=utf-8",
+    ".js": "text/javascript; charset=utf-8",
+    ".woff2": "font/woff2",
+    ".svg": "image/svg+xml",
+    ".txt": "text/plain; charset=utf-8",
+}
+SAFE_STATIC = re.compile(r"^(?:fonts/)?[A-Za-z0-9][\w.-]{0,80}$")
 
 
 def _safe_signed_copy_path(url_path: str) -> Optional[str]:
@@ -256,6 +265,18 @@ def make_handler(store: ReportStore):
         def _allow(self, code: int, allow: str, obj: dict) -> None:
             self._json(code, obj, extra=(("Allow", allow),))
 
+        def _static(self, name: str):
+            # whitelist extensions, no traversal, only STATIC_DIR (and fonts/)
+            ext = os.path.splitext(name)[1].lower()
+            if ext not in STATIC_TYPES or not SAFE_STATIC.match(name) or ".." in name:
+                return self._json(404, {"error": "not_found"})
+            try:
+                with open(os.path.join(STATIC_DIR, *name.split("/")), "rb") as fh:
+                    body = fh.read()
+            except OSError:
+                return self._json(404, {"error": "not_found"})
+            return self._send(200, body, STATIC_TYPES[ext])
+
         def do_GET(self):
             path = urlparse(self.path).path
             if path in ("/decision", "/generate"):
@@ -286,6 +307,8 @@ def make_handler(store: ReportStore):
                     "report": present,
                     "generate": store.generate_enabled,
                 })
+            if path.startswith("/static/"):
+                return self._static(path[len("/static/"):])
             signed = _safe_signed_copy_path(path)
             if signed is not None:
                 ext = os.path.splitext(signed)[1].lower()
@@ -307,6 +330,7 @@ def make_handler(store: ReportStore):
             allow = "GET" if (
                 path in ("/", "/index.html", "/report.json", "/health")
                 or path.startswith("/signed-copy/")
+                or path.startswith("/static/")
             ) else "GET, POST"
             return self._allow(405, allow, {"error": "method_not_allowed"})
 
