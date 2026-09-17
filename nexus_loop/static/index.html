@@ -805,8 +805,8 @@
       max-width: 52ch;
     }
     .state-meter {
-      height: 16px;
-      border-radius: var(--radius-sm);
+      height: 3.25rem;
+      border-radius: var(--radius-md);
       background: repeating-linear-gradient(
         -45deg,
         #091e4214 0 6px,
@@ -815,13 +815,14 @@
       border: 1px dashed var(--ds-border);
       position: relative;
       overflow: hidden;
+      animation: rise-in 480ms ease-out both;
     }
     .state-meter .state-block {
       position: absolute;
       inset: 0;
       display: grid;
       place-items: center;
-      font-size: var(--fs-2xs);
+      font-size: var(--fs-xs);
       font-weight: 700;
       letter-spacing: var(--tracking-label);
       text-transform: uppercase;
@@ -864,6 +865,72 @@
     @keyframes bar-grow {
       from { transform: scaleX(0.04); opacity: 0.55; }
       to { transform: scaleX(1); opacity: 1; }
+    }
+    @keyframes rise-in {
+      from { opacity: 0; transform: translateY(0.45rem); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes kpi-rise {
+      from { opacity: 0; transform: translateY(0.35rem); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes soft-flash {
+      from { box-shadow: 0 0 0 0 transparent; }
+      40% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--ds-brand) 28%, transparent); }
+      to { box-shadow: var(--ds-shadow-raised); }
+    }
+
+    .detail.story-enter > .kicker,
+    .detail.story-enter > .path,
+    .detail.story-enter > .claim,
+    .detail.story-enter > .chips,
+    .detail.story-enter > .lede,
+    .detail.story-enter > .impact-viz,
+    .detail.story-enter > .state-fig,
+    .detail.story-enter > .who,
+    .detail.story-enter > .spans {
+      animation: rise-in 420ms ease-out both;
+    }
+    .detail.story-enter > .path { animation-delay: 40ms; }
+    .detail.story-enter > .claim { animation-delay: 70ms; }
+    .detail.story-enter > .chips { animation-delay: 100ms; }
+    .detail.story-enter > .lede { animation-delay: 120ms; }
+    .detail.story-enter > .impact-viz,
+    .detail.story-enter > .state-fig { animation-delay: 150ms; }
+    .detail.story-enter > .who { animation-delay: 190ms; }
+    .detail.story-enter > .spans { animation-delay: 220ms; }
+
+    .kpi {
+      animation: kpi-rise 440ms ease-out both;
+    }
+    .kpi:nth-child(1) { animation-delay: 80ms; }
+    .kpi:nth-child(2) { animation-delay: 120ms; }
+    .kpi:nth-child(3) { animation-delay: 160ms; }
+    .kpi:nth-child(4) { animation-delay: 200ms; }
+    .kpi:nth-child(5) { animation-delay: 240ms; }
+
+    .harm-fig {
+      background: var(--ds-surface);
+      border: 1px solid var(--ds-border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-3) var(--space-4);
+    }
+    .harm-fig .pair-title { margin-bottom: var(--space-2); }
+
+    .seg {
+      transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+    }
+    .seg.is-on {
+      transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+    }
+    .trace {
+      transition: background 140ms ease, border-color 140ms ease;
+    }
+    .trace.is-on {
+      animation: soft-flash 520ms ease-out;
+    }
+    .gate-col .alert {
+      animation: rise-in 360ms ease-out both;
     }
 
     .alert {
@@ -1277,7 +1344,37 @@
       return Math.abs(x - y) / scale <= 0.12;
     }
     function inventBlock() {
-      return `<div class="state-meter" aria-hidden="true"><span class="state-block">No rate to plot</span></div>`;
+      return `<div class="state-meter" role="img" aria-label="No rate to plot"><span class="state-block">No rate to plot</span></div>`;
+    }
+    function harmStack(imp) {
+      const down = (imp && imp.downstream) || {};
+      const rows = [];
+      if (imp && imp.conversations_affected != null) {
+        rows.push(["Conversations", Number(imp.conversations_affected), "info"]);
+      }
+      if (down.would_have_resolved_at_baseline != null) {
+        rows.push(["Would have resolved", Number(down.would_have_resolved_at_baseline), "warn"]);
+      } else if (down.resolved_conversations_slowed != null) {
+        rows.push(["Resolved, slowed", Number(down.resolved_conversations_slowed), "warn"]);
+      }
+      if (down.extra_turns != null) rows.push(["Extra turns", Number(down.extra_turns), "bad"]);
+      else if (down.unplanned_handoffs != null) rows.push(["Unplanned handoffs", Number(down.unplanned_handoffs), "bad"]);
+      if (down.abandoned != null) rows.push(["Abandoned", Number(down.abandoned), "bad"]);
+      if (rows.length < 2) return "";
+      const max = Math.max(...rows.map((r) => r[1]), 0.0001);
+      const bars = rows.map(([lbl, n, cls]) =>
+        `<div class="barrow"><span class="bl">${esc(lbl)}</span>${rateBar(n / max, cls)}<span class="bv">${esc(fmt(n, 0))}</span></div>`
+      ).join("");
+      return `<div class="harm-fig pair-fig" role="img" aria-label="Harm copied from the report">
+        <div class="pair-head"><span class="pair-title">Harm in this finding</span></div>
+        <div class="bars">${bars}</div>
+      </div>`;
+    }
+    function markStoryEnter(el) {
+      if (!el) return;
+      el.classList.remove("story-enter");
+      void el.offsetWidth;
+      el.classList.add("story-enter");
     }
 
     const SAFE_KEY = /^(gap:[A-Z0-9]+|[A-Za-z0-9._-]+)$/;
@@ -1683,6 +1780,7 @@
       const predBars = pairBars("Today", pd.from, "If we change it", pd.to, "bad", "ok", "Today vs if we change it");
       const replayBars = v ? pairBars("Test before", v.before, "Test after", v.after, "bad", "ok", "Test before / after") : "";
       const weight = shareWeight(imp.share_of_traffic, f.tenant);
+      const harm = harmStack(imp);
       const evList = [].concat(f.evidence || [], (d && d.evidence) || []);
       const ev0 = evList[0] ? toManagerEnglish(evList[0]) : "";
       const evRest = evList.slice(1);
@@ -1707,6 +1805,7 @@
         <div class="impact-viz">
           <div class="kpis">${kpis.map(([val, k, s, tone]) => `<div class="kpi${tone ? " " + tone : ""}"><div class="k">${esc(k)}</div><div class="v">${esc(val)}</div><div class="s">${esc(s)}</div></div>`).join("")}</div>
           ${weight}
+          ${harm}
         </div>
         <div class="who">
           <p class="owner">${esc(who)} needs to act.</p>
@@ -1753,6 +1852,7 @@
       else if (pack.kind === "dismissed") renderDismissed(pack);
       else renderRegression(rep, pack);
       pinStoryLayout($("detail"));
+      markStoryEnter($("detail"));
     }
 
     function idleGateCopy(pack) {
