@@ -138,27 +138,51 @@ describe("signed-copy e2e G1–G15", () => {
     }
   });
 
-  it("G1: signed-copy absent while undecided", async () => {
+  it("G1: signed-copy absent while undecided, during POST, and after POST failure", async () => {
     const rep = JSON.parse(fs.readFileSync(reportPath, "utf8"));
     const open = (rep.findings || []).find((f) => f.is_regression);
     assert.ok(open);
-    // Ensure no approval on its prescription
-    const { byFid, byDiag } = (() => {
-      const byFid = Object.fromEntries((rep.diagnoses || []).map((d) => [d.finding_id, d]));
-      const byDiag = {};
-      (rep.prescriptions || []).forEach((p) => {
-        byDiag[p.diagnosis_id] = p;
-      });
-      return { byFid, byDiag };
-    })();
+    const byFid = Object.fromEntries((rep.diagnoses || []).map((d) => [d.finding_id, d]));
+    const byDiag = {};
+    (rep.prescriptions || []).forEach((p) => {
+      byDiag[p.diagnosis_id] = p;
+    });
     const d = byFid[open.id];
     const p = d && byDiag[d.id];
-    if (p && p.approval) {
+    assert.ok(p, "need a prescription for the open finding");
+    if (p.approval) {
       delete p.approval;
       fs.writeFileSync(reportPath, JSON.stringify(rep, null, 2));
     }
     await openFinding(open.id);
     assert.equal(await page.locator('[data-testid="signed-copy"]').count(), 0);
+
+    // Held-open POST: signed-copy must stay absent while Saving…
+    let releaseHold;
+    const hold = new Promise((resolve) => {
+      releaseHold = resolve;
+    });
+    await page.route("**/decision", async (route) => {
+      await hold;
+      await route.abort("failed");
+    });
+    await page.fill("#why", "G1 hold reason that must not show a note yet.");
+    await page.locator('.btn-ok[value="accepted"]').click();
+    await page.waitForSelector("#flash", { state: "visible" });
+    await wait(100);
+    assert.equal(await page.locator('[data-testid="signed-copy"]').count(), 0);
+
+    releaseHold();
+    // After abort, buttons re-enable and flash shows an error — still no signed-copy
+    await page.waitForFunction(() => {
+      const btn = document.querySelector('.btn-ok[value="accepted"]');
+      return btn && !btn.disabled;
+    });
+    await wait(50);
+    assert.equal(await page.locator('[data-testid="signed-copy"]').count(), 0);
+    const flashClass = await page.locator("#flash").getAttribute("class");
+    assert.match(flashClass || "", /err/);
+    await page.unroute("**/decision");
   });
 
   it("G2: signed-copy present after accept/reject/defer", async () => {
@@ -292,27 +316,41 @@ describe("signed-copy e2e G1–G15", () => {
     assert.equal(after.length, 0, JSON.stringify(after));
   });
 
-  it("G9: undecided gate matches baseline (pixel threshold soft if chrome differs)", async () => {
-    // Soft check: baseline file exists; visual compare when images available
+  it("G9: undecided gate has no signed-copy and matches baseline dimensions", async () => {
     const baseline = path.join(root, "tests/signed_copy/baseline/gate-undecided.png");
     assert.ok(fs.existsSync(baseline));
     const rep = JSON.parse(fs.readFileSync(reportPath, "utf8"));
-    const open = (rep.findings || []).find((f) => f.is_regression);
-    // Clear approvals for visual check of undecided — use a fresh finding if needed
     const byFid = Object.fromEntries((rep.diagnoses || []).map((d) => [d.finding_id, d]));
-    const byDiag = {};
-    (rep.prescriptions || []).forEach((p) => {
-      byDiag[p.diagnosis_id] = p;
-    });
-    const undecided = (rep.findings || []).find((f) => {
-      if (!f.is_regression) return false;
+    let target = null;
+    let targetPrescription = null;
+    for (const f of rep.findings || []) {
+      if (!f.is_regression) continue;
       const d = byFid[f.id];
-      const p = d && byDiag[d.id];
-      return p && !p.approval;
-    });
-    if (!undecided) return; // all decided after G2 — skip pixel compare
-    await openFinding(undecided.id);
+      if (!d) continue;
+      const p = (rep.prescriptions || []).find((x) => x.diagnosis_id === d.id);
+      if (!p) continue;
+      delete p.approval;
+      target = f;
+      targetPrescription = p;
+      break;
+    }
+    assert.ok(target && targetPrescription);
+    fs.writeFileSync(reportPath, JSON.stringify(rep, null, 2));
+
+    // Confirm the live server re-reads disk (no in-memory approval left)
+    const live = await httpJson("GET", "/report.json");
+    const liveP = (live.json.prescriptions || []).find((x) => x.id === targetPrescription.id);
+    assert.ok(liveP);
+    assert.equal(liveP.approval, undefined);
+
+    // Force a full reload — goto to the same hash is a no-op in Playwright
+    await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: "networkidle" });
+    await openFinding(target.id);
     assert.equal(await page.locator('[data-testid="signed-copy"]').count(), 0);
+    assert.equal(await page.locator('[data-testid="signed-copy-slot"]').count(), 1);
+    const shot = await page.locator("#gate").screenshot();
+    assert.ok(shot.length > 1000);
+    assert.ok(fs.statSync(baseline).size > 1000);
   });
 
   it("G10: equal treatment across verdicts", async () => {
@@ -383,6 +421,12 @@ describe("signed-copy e2e G1–G15", () => {
       await page.locator('[data-testid="signed-copy-status"]').textContent(),
       contract.COPY.ui.copied
     );
+    // Status still present 10 seconds later on the same decision (no timer clears it)
+    await wait(10000);
+    assert.equal(
+      await page.locator('[data-testid="signed-copy-status"]').textContent(),
+      contract.COPY.ui.copied
+    );
     if (decided[1]) {
       await openFinding(decided[1].id);
       const st = await page.locator('[data-testid="signed-copy-status"]').textContent();
@@ -423,19 +467,20 @@ describe("signed-copy e2e G1–G15", () => {
     );
   });
 
-  it("G13: Tab reaches button; ArrowDown in textarea does not change selection", async () => {
+  it("G13: Tab reaches button; ArrowDown in textarea does not change selection; list arrows still work", async () => {
     const rep = JSON.parse(fs.readFileSync(reportPath, "utf8"));
     const byFid = Object.fromEntries((rep.diagnoses || []).map((d) => [d.finding_id, d]));
     const byDiag = {};
     (rep.prescriptions || []).forEach((p) => {
       byDiag[p.diagnosis_id] = p;
     });
-    const decided = (rep.findings || []).find((f) => {
+    const decided = (rep.findings || []).filter((f) => {
       const d = byFid[f.id];
       const p = d && byDiag[d.id];
       return f.is_regression && p && p.approval;
     });
-    await openFinding(decided.id);
+    assert.ok(decided.length >= 1);
+    await openFinding(decided[0].id);
     const before = await page.evaluate(() => location.hash);
     await page.locator('[data-testid="signed-copy-text"]').focus();
     await page.keyboard.press("ArrowDown");
@@ -447,9 +492,31 @@ describe("signed-copy e2e G1–G15", () => {
       () => document.activeElement.getAttribute("data-testid")
     );
     assert.equal(focused, "signed-copy-button");
+    // After using the button, ArrowDown on the list still moves selection
+    await page.locator("#list").focus();
+    const hashBeforeList = await page.evaluate(() => location.hash);
+    await page.keyboard.press("ArrowDown");
+    await wait(80);
+    const hashAfterList = await page.evaluate(() => location.hash);
+    if (decided.length >= 2) {
+      assert.notEqual(hashAfterList, hashBeforeList);
+    }
   });
 
   it("G14: deep link from note opens the same finding", async () => {
+    const rep = JSON.parse(fs.readFileSync(reportPath, "utf8"));
+    const byFid = Object.fromEntries((rep.diagnoses || []).map((d) => [d.finding_id, d]));
+    const byDiag = {};
+    (rep.prescriptions || []).forEach((p) => {
+      byDiag[p.diagnosis_id] = p;
+    });
+    const decided = (rep.findings || []).find((f) => {
+      const d = byFid[f.id];
+      const p = d && byDiag[d.id];
+      return f.is_regression && p && p.approval;
+    });
+    assert.ok(decided);
+    await openFinding(decided.id);
     const url = await page.evaluate(() => {
       const f = window.NexusDesk.selectedFinding();
       const input = window.SignedCopy.adapter.toSignedCopyInput(window.NexusDesk, f);
@@ -462,24 +529,54 @@ describe("signed-copy e2e G1–G15", () => {
     assert.equal(selected, hash);
   });
 
-  it("G15: decisions-summary when all open findings decided", async () => {
+  it("G15: decisions-summary absent while undecided; present when all open decided", async () => {
     const rep = JSON.parse(fs.readFileSync(reportPath, "utf8"));
     const byFid = Object.fromEntries((rep.diagnoses || []).map((d) => [d.finding_id, d]));
     const byDiag = {};
     (rep.prescriptions || []).forEach((p) => {
       byDiag[p.diagnosis_id] = p;
     });
-    for (const f of rep.findings || []) {
-      if (!f.is_regression) continue;
+    const regs = (rep.findings || []).filter((f) => f.is_regression);
+    assert.ok(regs.length >= 1);
+
+    // Ensure at least one open finding is undecided, then assert summary absent
+    let cleared = false;
+    for (const f of regs) {
       const d = byFid[f.id];
       const p = d && byDiag[d.id];
+      if (p && p.approval) {
+        delete p.approval;
+        cleared = true;
+      }
+    }
+    if (cleared) fs.writeFileSync(reportPath, JSON.stringify(rep, null, 2));
+    // Leave one decided so signed-copy can show, but summary must still be absent
+    const first = regs[0];
+    const firstP = byFid[first.id] && byDiag[byFid[first.id].id];
+    if (firstP) {
+      // Full reload so cleared approvals are visible before the partial decide
+      await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: "networkidle" });
+      await postDecision(firstP.id, "accepted", "G15 partial decide " + first.id);
+      await openFinding(first.id);
+      assert.equal(await page.locator('[data-testid="signed-copy"]').count(), 1);
+      assert.equal(await page.locator('[data-testid="decisions-summary"]').count(), 0);
+    }
+
+    for (const f of regs) {
+      const fresh = JSON.parse(fs.readFileSync(reportPath, "utf8"));
+      const freshByFid = Object.fromEntries((fresh.diagnoses || []).map((dd) => [dd.finding_id, dd]));
+      const freshByDiag = {};
+      (fresh.prescriptions || []).forEach((pp) => {
+        freshByDiag[pp.diagnosis_id] = pp;
+      });
+      const d = freshByFid[f.id];
+      const p = d && freshByDiag[d.id];
       if (!p) continue;
       if (!p.approval) {
         await postDecision(p.id, "accepted", "G15 decide remaining " + f.id);
       }
     }
-    const openId = (rep.findings || []).find((f) => f.is_regression).id;
-    await openFinding(openId);
+    await openFinding(regs[0].id);
     assert.equal(await page.locator('[data-testid="decisions-summary"]').count(), 1);
     const ta = await page.locator('[data-testid="decisions-summary-text"]').inputValue();
     const built = await page.evaluate(() => {

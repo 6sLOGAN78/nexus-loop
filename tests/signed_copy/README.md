@@ -44,10 +44,17 @@ Playwright specs under `e2e/` should spawn this themselves (or receive
 ## Harness
 
 `harness/ui-harness.html` loads the signed-copy modules with injectable fakes.
-Run harness specs with Playwright when configured:
+DOM/clipboard/keyboard coverage:
 
 ```bash
-npx playwright test tests/signed_copy/harness/ui.spec.js
+node --test tests/signed_copy/harness/ui.spec.js
+```
+
+Visual secondary-control evidence (idle + copied):
+
+```bash
+node tests/signed_copy/harness/capture-screenshots.js
+# → harness/idle.png, harness/copied.png
 ```
 
 ## Baseline (G9)
