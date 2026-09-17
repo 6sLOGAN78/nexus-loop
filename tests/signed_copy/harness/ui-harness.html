@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Signed copy UI harness</title>
+  <link rel="stylesheet" href="../../../nexus_loop/static/signed-copy/signed-copy.css">
+  <style>
+    :root {
+      --ds-text: #172b4d;
+      --ds-text-subtle: #44546f;
+      --ds-text-subtlest: #626f86;
+      --ds-brand: #0c66e4;
+      --ds-danger: #c9372c;
+      --ds-success: #1f845a;
+      --ds-neutral: #091e420f;
+      --ds-neutral-hovered: #091e4224;
+      --ds-border: #091e4224;
+      --ds-border-focused: #388bff;
+      --ds-sunken: #f7f8f9;
+      --space-2: 0.5rem;
+      --space-3: 0.75rem;
+      --fs-sm: 0.875rem;
+      --fs-2xs: 0.75rem;
+    }
+    body { font-family: "Source Sans 3", sans-serif; padding: 2rem; }
+    .btn { min-height: 2.75rem; padding: 0.75rem 1rem; }
+  </style>
+</head>
+<body>
+  <div data-testid="signed-copy-slot" id="slot"></div>
+  <script src="../../../nexus_loop/static/signed-copy/contract.js"></script>
+  <script src="../../../nexus_loop/static/signed-copy/template.js"></script>
+  <script src="../../../nexus_loop/static/signed-copy/summary.js"></script>
+  <script src="../../../nexus_loop/static/signed-copy/adapter.js"></script>
+  <script src="../../../nexus_loop/static/signed-copy/ui.js"></script>
+</body>
+</html>

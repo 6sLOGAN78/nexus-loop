@@ -257,3 +257,48 @@ To see the screen against a different layout, generate a held-out corpus and run
 the solution on it (`tools/testbed/make_corpora.py`, then `run.py --kit <corpus>
 --no-replay`). The screen needs no change: it reads whatever the report says,
 including missing sections (e.g. an empty `verifications` when replay is off).
+
+---
+
+## 10. Signed copy modules and seam
+
+After a recorded verdict on a **Needs attention** finding, the gate mounts a
+slot and the Signed copy UI. Modules live under
+`nexus_loop/static/signed-copy/` and load before the desk inline script:
+
+| File | Global | Role |
+|---|---|---|
+| `contract.js` | `SignedCopy.contract` | Frozen `COPY`, helpers, `normalizeVerdict` |
+| `template.js` | `SignedCopy.template` | `buildSignedCopy(input)` |
+| `summary.js` | `SignedCopy.summary` | `toSummaryInput` / `buildDecisionsSummary` |
+| `adapter.js` | `SignedCopy.adapter` | `toSignedCopyInput(desk, finding)` |
+| `ui.js` | `SignedCopy.ui` | `render(slotEl, finding)` |
+| `signed-copy.css` | — | Secondary control styles (existing tokens) |
+
+### `window.NexusDesk`
+
+Frozen read-only seam at the end of the desk script. Every method returns
+display strings the screen already shows (or `null`). See
+`docs/prd-signed-copy.md` Appendix A for the inventory. Decisions come only
+from the loaded report (`decisionFor`); `recordedAtText` is always `null`
+because the desk does not display `approval.at`.
+
+### DOM contract
+
+Inside `[data-testid="signed-copy-slot"]` (open + prescription path only,
+directly under the recorded-verdict alert):
+
+```html
+<section data-testid="signed-copy" aria-label="Signed copy">
+  <button type="button" data-testid="signed-copy-button">Copy signed copy</button>
+  <p data-testid="signed-copy-status" role="status" aria-live="polite"></p>
+  <details data-testid="signed-copy-preview">
+    <summary>See the note</summary>
+    <textarea data-testid="signed-copy-text" readonly rows="14"></textarea>
+  </details>
+</section>
+```
+
+When every open finding is decided, a second section
+`[data-testid="decisions-summary"]` follows with the same pattern and the
+`COPY.ui.summary*` labels. Static assets are served at `/signed-copy/*`.

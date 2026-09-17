@@ -1,0 +1,81 @@
+/* Signed copy — secondary post-verdict control (existing desk tokens only). */
+
+[data-testid="signed-copy"],
+[data-testid="decisions-summary"] {
+  margin-top: var(--space-3, 0.75rem);
+  font-family: inherit;
+  font-size: var(--fs-sm, 0.875rem);
+  color: var(--ds-text-subtle, var(--color-muted, #44546f));
+}
+
+.signed-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  font-size: var(--fs-sm, 0.875rem);
+  font-weight: 600;
+  line-height: 1.25;
+  padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+  min-height: 2rem;
+  color: var(--ds-text, var(--color-fg, #172b4d));
+  background: var(--ds-neutral, #091e420f);
+  border: 1px solid var(--ds-border, var(--color-border, #091e4224));
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.signed-copy-btn:hover {
+  background: var(--ds-neutral-hovered, #091e4224);
+}
+
+.signed-copy-btn:focus-visible {
+  outline: 2px solid var(--ds-border-focused, var(--color-ring, #388bff));
+  outline-offset: 2px;
+}
+
+.signed-copy-status {
+  margin: var(--space-2, 0.5rem) 0 0;
+  min-height: 1.25em;
+  font-size: var(--fs-2xs, 0.75rem);
+  color: var(--ds-text-subtlest, #626f86);
+}
+
+.signed-copy-preview {
+  margin-top: var(--space-2, 0.5rem);
+}
+
+.signed-copy-preview > summary {
+  cursor: pointer;
+  font-size: var(--fs-2xs, 0.75rem);
+  color: var(--ds-text-subtle, #44546f);
+  list-style: none;
+}
+
+.signed-copy-preview > summary::-webkit-details-marker {
+  display: none;
+}
+
+.signed-copy-text {
+  display: block;
+  width: 100%;
+  margin-top: var(--space-2, 0.5rem);
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: var(--fs-2xs, 0.75rem);
+  line-height: 1.45;
+  color: var(--ds-text, #172b4d);
+  background: var(--ds-sunken, var(--color-bg, #f7f8f9));
+  border: 1px solid var(--ds-border, #091e4224);
+  border-radius: 3px;
+  padding: var(--space-2, 0.5rem);
+  white-space: pre-wrap;
+  resize: vertical;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .signed-copy-btn,
+  .signed-copy-preview {
+    transition: none;
+  }
+}

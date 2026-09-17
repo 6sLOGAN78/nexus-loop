@@ -32,12 +32,17 @@ Everything is on `master`:
   three-tenant moved-fault corpus (55).
 - **Decision screen** (`nexus_loop/app.py` + `nexus_loop/static/index.html`):
   renders the report and writes approve/reject/defer back into it.
+- **Signed copy** (`nexus_loop/static/signed-copy/`): after a recorded verdict
+  on a Needs attention finding, **Copy signed copy** pastes a fixed hand-off
+  note built only from on-screen strings; **Copy all decisions** appears once
+  every open finding is decided (PRD: `docs/prd-signed-copy.md`).
 - **Testbed** (`tools/testbed/`): generates held-out corpora and evaluates any
   candidate solution against them.
 - **Docs**: problem statement, brief, verified kit findings,
   deliverables/replay/demo guide, submission note, solution overview, UI
-  handoff, UX psychology, the operator-screen report, and a manager-English
-  glossary (`docs/manager-english.md`).
+  handoff, UX psychology, the operator-screen report, a manager-English
+  glossary (`docs/manager-english.md`), operator psychology handoff
+  (`handoff.md`), and the Signed copy PRD.
 - **Examples** (`examples/`): a sample `loop-report.json` from the final
   solution's practice-kit run, and a standalone lo-fi `demo.html` wireframe
   (no server) that renders it.
@@ -55,8 +60,11 @@ question for the organisers; the solution reports measured coverage regardless.
 | Path | What it is |
 |---|---|
 | `nexus_loop/` | The solution package: ingestion, features, detectors, asks, report, replay client, decision screen |
+| `nexus_loop/static/signed-copy/` | Signed copy modules (contract, template, adapter, summary, UI) served at `/signed-copy/*` |
 | `run.py` | The one-command entrypoint that produces `loop-report.json` |
-| `docs/` | Problem statement, brief, verified findings, deliverables/replay/demo guide, submission note, edge-cases, solution overview, UI handoff, UX psychology, operator-screen report, manager-English glossary |
+| `docs/` | Problem statement, brief, verified findings, deliverables/replay/demo guide, submission note, edge-cases, solution overview, UI handoff, UX psychology, operator-screen report, manager-English glossary, Signed copy PRD |
+| `handoff.md` | Operator-desk psychology brief (who the manager is; Signed copy after the signature) |
+| `tests/signed_copy/` | Unit, harness, and e2e coverage for Signed copy |
 | `examples/` | A sample `loop-report.json` (final solution, practice kit) and a standalone lo-fi `demo.html` wireframe |
 | `kit/` | The practice dataset (sessions, steps, turns, config timeline, labels, catalog, asks, ground truth, ~33 MB) |
 | `tools/nexus-loop-kit/` | Organiser tooling: generator, starter, scorer, replay service, schema, reference reports |
@@ -104,26 +112,45 @@ python3 run.py --kit kit --team demo --out out/loop-report.json --serve --port 8
 
 The screen renders only from the report; the approve/reject action writes back
 into `prescriptions[].approval` atomically. See **`docs/ui-handoff.md`** for the
-field contract, **`docs/ux-psychology.md`** for why the console is shaped that
-way, and **`docs/manager-english.md`** for the jargon → manager-English
-glossary used on the page.
+field contract, **`docs/ux-psychology.md`** / **`handoff.md`** for why the
+console is shaped that way, and **`docs/manager-english.md`** for the jargon →
+manager-English glossary used on the page.
 
 The desk is a sunken `#F7F8F9` canvas with raised rounded cards. Type is
 Newsreader (claims and span headings) plus Source Sans 3 (chrome and
 numbers), with Iowan/Palatino and Segoe fallbacks. The gate is a traffic
 light: green Accept `#1F845A`, red Reject `#C9372C`, grey Defer, equal
-targets, required reason. The finding list is segmented **To decide** /
-**Not a problem** / **We will not invent** on a 3-column sticky tab grid; **To decide**
-is danger red, the same token as the regression dots. Titles wrap two lines;
-the list body scrolls under the tabs; ArrowUp/ArrowDown (plus
-Home/End) move the selection. On **Not a problem** or **We will not invent**, the gate
-shows an idle line only — “Nothing to approve. This is not a problem.” or
-“Nothing to approve. We will not invent a failover rate.” Detector codes sit in
-a **Technical names** footer pinned at the bottom of the story pane. Impact
-KPIs sit on a 5-column strip (label / figure / caption): conversations
-info, would-have-resolved warn, handoffs/abandoned bad, cost warn. Tab
-labels, idle gates, ledes, and row copy are catalogued in
-**`docs/manager-english.md`**.
+targets, required reason. Finding groups sit on a top mode bar above the three
+panes: **Needs attention** / **Dismissed signals** / **No measurement**;
+**Needs attention** is danger red, the same token as the regression dots. The
+left list is rows only; ArrowUp/ArrowDown (plus Home/End) move the selection.
+On **Dismissed signals** or **No measurement**, the gate shows an idle line
+only — “Nothing to approve. This is not a problem.” or “Nothing to approve. We
+will not invent a failover rate.” Detector codes sit in a **Technical names**
+footer pinned at the bottom of the story pane. Impact KPIs sit on a 5-column
+strip (label / figure / caption): conversations info, would-have-resolved warn,
+handoffs/abandoned bad, cost warn. Mode labels, idle gates, ledes, and row
+copy are catalogued in **`docs/manager-english.md`**.
+
+### Signed copy (after the verdict)
+
+Once a Needs attention finding has a recorded decision in the loaded report,
+the gate shows a secondary control: **Copy signed copy**. One click puts a
+fixed plain-text hand-off note on the clipboard — the eight operator questions
+in page order, with values identical to the screen, the reason verbatim, the
+simulated-baseline replay qualifier, coverage text, technical names, and a
+deep link. Accept, Reject, and Defer get the same control (equal treatment).
+Nothing appears before the save; Dismissed signals and No measurement never
+get a note.
+
+When **every** Needs attention finding has a recorded decision, **Copy all
+decisions** appears under it and copies one summary of those verdicts, the
+dismissed-signals count, and the refusal claims (A11 first).
+
+Modules live under `nexus_loop/static/signed-copy/` and read display strings
+only through `window.NexusDesk` (no client-side recomputation). Product
+contract: **`docs/prd-signed-copy.md`**. Psychology: **`handoff.md`** §7.4.
+Tests: **`tests/signed_copy/README.md`**.
 
 ### Run the testbed
 
@@ -170,12 +197,15 @@ New to the repo, read in this order:
 6. `docs/deliverables-replay-and-demo.md` — deliverables, replay mechanics, demo script.
 7. `docs/submission-note.md` — real / stubbed / simulated / breaks at 100×.
 8. `docs/edge-cases.md` — the non-obvious traps and how we handle them (judge Q&A).
-9. `docs/ui-handoff.md` — what the UI/product team needs.
+9. `docs/ui-handoff.md` — what the UI/product team needs (includes Signed copy seam).
 10. `docs/ux-psychology.md` — why the screen is a tracing console (operator cognition).
-11. `docs/operator-screen-report.md` — UI/product justification for the TECHQUEST endterm report (section-aligned paste).
-12. `docs/manager-english.md` — jargon → manager English (the attached glossary for the report).
-13. `examples/demo.html` — the lo-fi wireframe + sample report (open the file directly, no server).
-14. `tools/testbed/README.md` — how to evaluate a candidate.
+11. `handoff.md` — manager psychology brief; Signed copy belongs after the signature.
+12. `docs/prd-signed-copy.md` — Signed copy / All-decisions product contract.
+13. `docs/operator-screen-report.md` — UI/product justification for the TECHQUEST endterm report (section-aligned paste).
+14. `docs/manager-english.md` — jargon → manager English (includes quoted `COPY` strings).
+15. `examples/demo.html` — the lo-fi wireframe + sample report (open the file directly, no server).
+16. `tools/testbed/README.md` — how to evaluate a candidate.
+17. `tests/signed_copy/README.md` — how to run Signed copy unit / harness / e2e tests.
 
 ---
 

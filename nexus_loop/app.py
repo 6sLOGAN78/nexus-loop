@@ -37,12 +37,39 @@ SECURITY_HEADERS = (
     ("Referrer-Policy", "no-referrer"),
     ("Cache-Control", "no-store"),
     ("Content-Security-Policy",
-     "default-src 'none'; script-src 'unsafe-inline'; "
-     "style-src 'unsafe-inline' https://fonts.googleapis.com; "
+     "default-src 'none'; script-src 'self' 'unsafe-inline'; "
+     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
      "font-src https://fonts.gstatic.com; "
      "img-src 'none'; connect-src 'self'; form-action 'self'; "
      "base-uri 'none'; frame-ancestors 'none'"),
 )
+
+SIGNED_COPY_DIR = os.path.join(STATIC_DIR, "signed-copy")
+SIGNED_COPY_MIME = {
+    ".js": "application/javascript; charset=utf-8",
+    ".css": "text/css; charset=utf-8",
+    ".map": "application/json; charset=utf-8",
+}
+
+
+def _safe_signed_copy_path(url_path: str) -> Optional[str]:
+    """Resolve /signed-copy/<file> under SIGNED_COPY_DIR only; reject traversal."""
+    if not url_path.startswith("/signed-copy/"):
+        return None
+    rel = url_path[len("/signed-copy/"):]
+    if not rel or rel.endswith("/") or "\\" in rel:
+        return None
+    # Disallow any path segment that escapes (., .., absolute, empty).
+    parts = rel.split("/")
+    if any(p in ("", ".", "..") for p in parts):
+        return None
+    candidate = os.path.normpath(os.path.join(SIGNED_COPY_DIR, *parts))
+    root = os.path.normpath(SIGNED_COPY_DIR)
+    if candidate != root and not candidate.startswith(root + os.sep):
+        return None
+    if not os.path.isfile(candidate):
+        return None
+    return candidate
 
 
 class ReportStore:
@@ -152,12 +179,25 @@ def make_handler(store: ReportStore):
             if path == "/health":
                 present = os.path.isfile(store.report_path)
                 return self._json(200, {"ok": present, "report": present})
+            signed = _safe_signed_copy_path(path)
+            if signed is not None:
+                ext = os.path.splitext(signed)[1].lower()
+                ctype = SIGNED_COPY_MIME.get(ext, "application/octet-stream")
+                try:
+                    with open(signed, "rb") as fh:
+                        body = fh.read()
+                except OSError as e:
+                    return self._json(500, {"error": "signed_copy_unavailable", "detail": str(e)})
+                return self._send(200, body, ctype)
             return self._json(404, {"error": "not_found"})
 
         def do_POST(self):
             path = urlparse(self.path).path
             if path != "/decision":
-                allow = "GET" if path in ("/", "/index.html", "/report.json", "/health") else "GET, POST"
+                allow = "GET" if (
+                    path in ("/", "/index.html", "/report.json", "/health")
+                    or path.startswith("/signed-copy/")
+                ) else "GET, POST"
                 return self._allow(405, allow, {"error": "method_not_allowed"})
             raw = self._read_body()
             if raw is None:

@@ -1,0 +1,21 @@
+{
+  "verdict": "defer",
+  "findingTitle": "Silent tool failure: the tool said success but sent an empty answer",
+  "reason": "Need the agent team to confirm when the tool format changed before I sign.",
+  "findingUrl": "http://localhost:8000/#f01_tool_contract_break",
+  "metricLabel": "Share we finished",
+  "observed": "77.5%",
+  "expected": "85.5%",
+  "affected": "2,686",
+  "cause": "The order lookup tool reported success but returned nothing.",
+  "configChange": null,
+  "changeTarget": null,
+  "changeDescription": "treat an empty answer as a failure and ask the customer to try again",
+  "replay": { "before": "76.0%", "after": "84.5%" },
+  "risk": null,
+  "ifNothingChanges": "customers in this group keep leaving without an answer",
+  "ownerLine": "Agent team needs to act",
+  "technicalNames": [],
+  "recordedAt": null,
+  "coverageText": "Coverage: 100% of sessions"
+}
