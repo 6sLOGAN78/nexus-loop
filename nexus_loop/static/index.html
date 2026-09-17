@@ -132,7 +132,7 @@
       height: 100%;
       min-height: 0;
       display: grid;
-      grid-template-rows: auto minmax(0, 1fr) auto;
+      grid-template-rows: auto auto minmax(0, 1fr) auto;
       overflow: hidden;
     }
     header.top {
@@ -225,48 +225,53 @@
       border-radius: var(--radius-xl);
       box-shadow: var(--ds-shadow-raised);
     }
-    .list-head {
+    .mode-bar {
       flex: none;
-      position: sticky; top: 0; z-index: 1;
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
-      gap: var(--space-1);
-      padding: var(--space-1);
-      margin: var(--space-2);
-      background: var(--ds-neutral);
-      border-radius: var(--radius-lg);
-      border-bottom: 0;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-4);
+      background: var(--ds-surface);
+      border-bottom: 1px solid var(--color-border);
+      min-width: 0;
+    }
+    @media (max-width: 720px) {
+      .mode-bar {
+        gap: var(--space-1);
+        padding: var(--space-2);
+      }
     }
     .list-body {
       flex: 1 1 auto;
       min-height: 0;
       overflow-x: hidden;
       overflow-y: auto;
-      padding-bottom: var(--space-2);
+      padding: var(--space-2) 0;
     }
     .seg {
       appearance: none; border: 0; cursor: pointer;
       background: transparent;
       color: var(--ds-text-subtle);
-      font-size: var(--fs-2xs);
+      font-size: var(--fs-sm);
       font-weight: 600;
-      padding: 0.4rem 0.2rem;
+      padding: 0.55rem 0.75rem;
       border-radius: var(--radius-md);
-      white-space: normal;
+      white-space: nowrap;
       overflow: hidden;
+      text-overflow: ellipsis;
       text-align: center;
       line-height: 1.2;
-      min-height: 2rem;
+      min-height: 2.25rem;
       flex: unset;
       --seg-accent: var(--ds-danger);
       --seg-fill: var(--ds-danger-bg);
     }
     .seg[data-filter="ignored"] {
-      --seg-accent: var(--ds-success);
-      --seg-fill: var(--ds-success-bg);
+      --seg-accent: var(--ds-text-subtle);
+      --seg-fill: var(--ds-neutral);
     }
     .seg[data-filter="refused"] {
-      --seg-accent: var(--ds-text-subtle);
+      --seg-accent: var(--ds-text-subtlest);
       --seg-fill: var(--ds-neutral);
     }
     .seg:hover { background: var(--ds-surface); color: var(--ds-text); }
@@ -412,8 +417,9 @@
       text-transform: uppercase;
       margin: 0 0 var(--space-2);
     }
-    .kicker.ok { color: var(--ds-success); }
-    .kicker.miss { color: var(--ds-text-subtle); }
+    .kicker.ok { color: var(--ds-text-subtle); }
+    .kicker.miss { color: var(--ds-text-subtlest); }
+    .kicker.bad { color: var(--ds-danger); }
     .path {
       font-family: var(--font-mono);
       font-size: var(--fs-2xs);
@@ -766,6 +772,7 @@
       <div class="spacer"></div>
       <div class="honesty" id="honesty"></div>
     </header>
+    <nav class="mode-bar" id="modebar" role="tablist" aria-label="Finding groups"></nav>
     <div class="shell">
       <nav class="list-col" id="list" aria-label="Findings" tabindex="0"></nav>
       <article class="detail" id="detail">
@@ -1122,17 +1129,58 @@
       return "open";
     }
 
+    function modeSegs(rep) {
+      const regs = (rep.findings || []).filter((f) => f.is_regression);
+      const dismissed = (rep.findings || []).filter((f) => !f.is_regression);
+      const gaps = rep.gaps || [];
+      return [
+        ["open", `Needs attention (${regs.length})`],
+        ["ignored", `Dismissed signals (${dismissed.length})`],
+        ["refused", `No measurement (${gaps.length})`],
+      ];
+    }
+
+    function selectFirstInFilter(rep, filter) {
+      if (filter === "open") {
+        const f = (rep.findings || []).find((x) => x.is_regression);
+        if (f) select(f.id);
+      } else if (filter === "ignored") {
+        const f = (rep.findings || []).find((x) => !x.is_regression);
+        if (f) select(f.id);
+      } else {
+        const gaps = rep.gaps || [];
+        const g = gaps.find((x) => x.ask_id === "A11") || gaps[0];
+        if (g) select("gap:" + g.ask_id);
+      }
+    }
+
+    let modeBarBound = false;
+    function renderModeBar(rep) {
+      const segs = modeSegs(rep);
+      $("modebar").innerHTML = segs.map(([id, label]) =>
+        `<button type="button" class="seg${listFilter === id ? " is-on" : ""}" data-filter="${id}" role="tab" aria-selected="${listFilter === id}">${esc(label)}</button>`
+      ).join("");
+      if (!modeBarBound) {
+        modeBarBound = true;
+        $("modebar").addEventListener("click", (ev) => {
+          const btn = ev.target.closest("[data-filter]");
+          if (!btn || !$("modebar").contains(btn)) return;
+          const next = btn.getAttribute("data-filter");
+          listFilter = next;
+          if (filterForPack(currentPack(window.__rep || rep)) !== listFilter) {
+            selectFirstInFilter(window.__rep || rep, listFilter);
+          }
+          render(window.__rep || rep);
+        });
+      }
+    }
+
     function renderList(rep) {
       const regs = (rep.findings || []).filter((f) => f.is_regression);
       const dismissed = (rep.findings || []).filter((f) => !f.is_regression);
       const gaps = rep.gaps || [];
       const a11 = gaps.filter((g) => g.ask_id === "A11");
       const rest = gaps.filter((g) => g.ask_id !== "A11");
-      const segs = [
-        ["open", `To decide (${regs.length})`],
-        ["ignored", `Not a problem (${dismissed.length})`],
-        ["refused", `We will not invent (${gaps.length})`],
-      ];
       const items = [];
       const pushFinding = (f, kind) => {
         const imp = f.impact || {};
@@ -1143,7 +1191,7 @@
         const title = f.headline || f.metric || f.id;
         const n = imp.conversations_affected;
         const stat = kind === "dismissed"
-          ? `<span class="badge ok">not a problem</span>`
+          ? `<span class="badge ghost">dismissed signals</span>`
           : (n != null ? esc(fmt(n, 0) + " conv.") : "");
         items.push(`<button type="button" class="trace${tone}${selectedKey === f.id ? " is-on" : ""}" data-key="${esc(f.id)}" title="${esc(title)}" aria-current="${selectedKey === f.id ? "true" : "false"}">
           <span class="dot ${dot}" aria-hidden="true"></span>
@@ -1157,35 +1205,14 @@
         items.push(`<button type="button" class="trace miss${selectedKey === key ? " is-on" : ""}" data-key="${esc(key)}" title="${esc(title)}" aria-current="${selectedKey === key ? "true" : "false"}">
           <span class="dot miss" aria-hidden="true"></span>
           <span class="t-main"><span class="t-title">${esc(title)}</span><span class="t-sub">No measurement</span></span>
-          <span class="t-stat"><span class="badge ghost">we will not invent</span></span>
+          <span class="t-stat"><span class="badge ghost">no measurement</span></span>
         </button>`);
       };
       if (listFilter === "open") regs.forEach((f) => pushFinding(f, "regression"));
       else if (listFilter === "ignored") dismissed.forEach((f) => pushFinding(f, "dismissed"));
       else [...a11, ...rest].forEach(pushGap);
 
-      $("list").innerHTML = `<div class="list-head" role="tablist" aria-label="Findings">${
-        segs.map(([id, label]) => `<button type="button" class="seg${listFilter === id ? " is-on" : ""}" data-filter="${id}" role="tab" aria-selected="${listFilter === id}">${esc(label)}</button>`).join("")
-      }</div><div class="list-body">${items.join("") || `<p class="idle" style="padding:1rem">Nothing in this group.</p>`}</div>`;
-      $("list").querySelectorAll("[data-filter]").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          listFilter = btn.getAttribute("data-filter");
-          if (filterForPack(currentPack(rep)) !== listFilter) {
-            if (listFilter === "open") {
-              const f = (rep.findings || []).find((x) => x.is_regression);
-              if (f) select(f.id);
-            } else if (listFilter === "ignored") {
-              const f = (rep.findings || []).find((x) => !x.is_regression);
-              if (f) select(f.id);
-            } else {
-              const gaps = rep.gaps || [];
-              const g = gaps.find((x) => x.ask_id === "A11") || gaps[0];
-              if (g) select("gap:" + g.ask_id);
-            }
-          }
-          render(rep);
-        });
-      });
+      $("list").innerHTML = `<div class="list-body">${items.join("") || `<p class="idle" style="padding:1rem">Nothing in this group.</p>`}</div>`;
       $("list").querySelectorAll("[data-key]").forEach((btn) => {
         btn.addEventListener("click", () => {
           select(btn.getAttribute("data-key"));
@@ -1230,9 +1257,9 @@
         ? `<div class="span"><span class="kind">Lookalike</span><div class="body"><h2 class="name">Why a retry is not failover</h2><div class="hint">${esc(toManagerEnglish(g.why_the_proxy_misleads))}</div></div><span class="val">not the same</span></div>`
         : "";
       $("detail").innerHTML = `
-        <p class="kicker miss">We will not invent</p>
+        <p class="kicker miss">No measurement</p>
         <h1 class="claim">${esc(gapClaim(g))}</h1>
-        <div class="chips"><span class="badge ghost">we will not invent</span></div>
+        <div class="chips"><span class="badge ghost">no measurement</span></div>
         <div class="alert miss">
           <p><strong>${esc(idleGateCopy({ kind: "gap", gap: g }))}</strong></p>
         </div>
@@ -1266,11 +1293,11 @@
         ? pairBars("This window", f.observed, "Usual", f.expected, "warn", "ok")
         : "";
       $("detail").innerHTML = `
-        <p class="kicker ok">Not a problem</p>
+        <p class="kicker ok">Dismissed signals</p>
         <p class="path">${esc(cohortPath(f))}</p>
         <h1 class="claim">${esc(f.headline || metricLbl(f.metric) || f.id)}</h1>
         <div class="chips">
-          <span class="badge ok">not a problem</span>
+          <span class="badge ghost">dismissed signals</span>
           ${who && who !== "—" ? `<span class="badge ok">${esc(who)}</span>` : ""}
           ${f.tenant ? `<span class="badge ghost">${esc(f.tenant)}</span>` : ""}
           ${windowLbl(f.window) ? `<span class="badge ghost">${esc(windowLbl(f.window))}</span>` : ""}
@@ -1352,6 +1379,7 @@
       const defn = (imp.derivation || f.baseline || "").trim();
       const defnShort = defn.length > 220 ? defn.slice(0, 217) + "…" : defn;
       $("detail").innerHTML = `
+        <p class="kicker bad">Needs attention</p>
         <p class="path">${esc(cohortPath(f))}</p>
         <h1 class="claim">${esc(f.headline || metricLbl(f.metric))}</h1>
         <div class="chips">
@@ -1504,6 +1532,7 @@
       if (pack.kind === "gap") select("gap:" + (pack.gap && pack.gap.ask_id));
       else if (pack.f) select(pack.f.id);
       if (opts && opts.alignFilter) listFilter = filterForPack(pack);
+      renderModeBar(rep);
       renderList(rep);
       renderDetail(rep, pack);
       renderGate(pack);
