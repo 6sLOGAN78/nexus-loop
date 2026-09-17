@@ -32,6 +32,7 @@
 \usepackage{booktabs}
 \usepackage{array}
 \usepackage{tabularx}
+\usepackage{float}
 \usepackage{multirow}
 \usepackage{caption}
 
@@ -516,7 +517,7 @@ the baseline and the window, then names the nearest matching change.
 This avoids blaming an innocent deploy that happens to share the onset
 day.
 
-\begin{table}[h]
+\begin{table}[H]
 \centering
 \caption{Attributed configuration changes.}
 \label{tab:attrib}
@@ -687,7 +688,7 @@ is unreachable the report stays valid with no verifications.
 
 \subsection{Before and After}
 
-\begin{table}[h]
+\begin{table}[H]
 \centering
 \caption{Replay verification results, P-01.}
 \label{tab:replay}
@@ -762,7 +763,7 @@ No model is trained or used for judgement. The judged quality values
 come from the corpus's own judge, and we publish the agreement between
 that judge and the human rubric labels.
 
-\begin{table}[h]
+\begin{table}[H]
 \centering
 \caption{Judged quality calibration.}
 \label{tab:calibration}
@@ -786,7 +787,7 @@ calibration instead.
 
 \subsection{End-to-End Loop Completeness}
 
-\begin{table}[h]
+\begin{table}[H]
 \centering
 \caption{Automation coverage of the improvement loop.}
 \label{tab:loop}
@@ -840,7 +841,7 @@ No cross-tenant control & Peers and siblings stay inside a tenant, which avoids 
 
 \subsection{Technology Stack}
 
-\begin{table}[h]
+\begin{table}[H]
 \centering
 \caption{Implementation stack.}
 \label{tab:stack}
@@ -890,7 +891,7 @@ no data out.
 All figures below are the practice corpus (80,252 sessions, 883,764
 steps). The sealed corpus has the same shape.
 
-\begin{table}[h]
+\begin{table}[H]
 \centering
 \caption{Computational performance.}
 \label{tab:compute}
@@ -925,7 +926,7 @@ every cohort.
 
 \section{Final Results}
 
-\begin{table}[h]
+\begin{table}[H]
 \centering
 \caption{Final system performance.}
 \label{tab:results}
