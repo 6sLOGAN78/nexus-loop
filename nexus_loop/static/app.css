@@ -327,3 +327,18 @@ tr.open .caret { transform: rotate(90deg); }
 @media (prefers-reduced-motion: reduce) { .rail-group > summary .icon { transition: none; } }
 @media (max-width: 1280px) { .workspace { grid-template-columns: minmax(0, 1fr); padding: 32px; } }
 @media (max-width: 860px) { .workspace { padding: 16px; } .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* ---------- metrics tab: one row per ask ---------- */
+table.data.metrics { table-layout: fixed; }
+table.data.metrics td, table.data.metrics th { overflow-wrap: anywhere; }
+table.data.metrics th:nth-child(1), table.data.metrics td:nth-child(1) { width: 8%; }
+table.data.metrics th:nth-child(2), table.data.metrics td:nth-child(2) { width: 29%; }
+table.data.metrics th:nth-child(3), table.data.metrics td:nth-child(3) { width: 31%; }
+table.data.metrics th:nth-child(4), table.data.metrics td:nth-child(4) { width: 11%; }
+table.data.metrics th:nth-child(5), table.data.metrics td:nth-child(5) { width: 12%; }
+table.data.metrics th:nth-child(6), table.data.metrics td:nth-child(6) { width: 9%; }
+.answer .line { display: block; }
+.ansgroup + .ansgroup { margin-top: 6px; }
+.ansgroup .line { display: block; }
+.metric-detail + .metric-detail { margin-top: 18px; border-top: 1px solid var(--border); padding-top: 14px; }
+.metric-detail .label { display: block; margin-bottom: 8px; }

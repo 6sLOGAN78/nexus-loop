@@ -294,7 +294,8 @@
 
   /* ---------------- top bar ---------------- */
   function renderTop(rep, ix) {
-    const counts = { findings: ix.regs.length, refusals: ix.gaps.length, metrics: (rep.metrics || []).length,
+    const askCount = new Set((rep.metrics || []).map((m) => m.ask_id).concat((rep.gaps || []).map((g) => g.ask_id))).size;
+    const counts = { findings: ix.regs.length, refusals: ix.gaps.length, metrics: askCount,
       decisions: (rep.prescriptions || []).filter((p) => !p.approval).length };
     for (const t of TABS) {
       const b = document.querySelector(`.tab[data-tab="${t}"]`);
@@ -626,48 +627,66 @@
   }
   function fmtPts(d) { return `${d >= 0 ? "+" : "−"}${Math.abs(d * 100).toFixed(1)} pts`; }
 
+  function metricDetail(m) {
+    const cov = m.coverage || {}, cal = m.calibration, plan = m.plan || {};
+    return `<div class="metric-detail"><p class="label mono">${esc(m.id)}</p><div class="grid2">
+      <div>${kv([
+        ["Name", esc(toManagerEnglish(m.name))],
+        ["Definition", plan.filter ? `<span class="mono">${esc(plan.filter)}</span>` : null],
+        ["Source", plan.source ? `<span class="mono">${esc(plan.source)}</span>` : null],
+        ["Denominator", esc(plan.denominator)],
+        ["Breakdowns", (plan.breakdowns || []).map((b) => `<code>${esc(b)}</code>`).join(" ")],
+        ["Grain", esc(m.grain)],
+        ["Coverage", isNum(cov.value) ? `${pct(cov.value, 0)} — ${rich(cov.basis)}` : null],
+        ["Excluded", (cov.excluded || []).map((x) => `<code>${esc(x)}</code>`).join(" ")],
+        ["Calibration", cal ? esc(`agreement ${pct(cal.agreement)} with human labels, n = ${int(cal.n)}${cal.judge_version ? ", judge " + cal.judge_version : ""}`) : null],
+        ["Alternatives", (plan.alternatives_offered || []).map((x) => esc(typeof x === "string" ? x : JSON.stringify(x))).join("<br>")]
+      ])}</div>
+      <div>${kv(flatten(m.breakdown != null ? m.breakdown : m.value).slice(0, 40).map(([k, x]) => [k, `<span class="mono">${esc(leaf(x))}</span>`]))}</div>
+    </div></div>`;
+  }
+
   function renderMetrics(rep) {
     const metrics = rep.metrics || [], gaps = rep.gaps || [];
-    const asks = new Set(metrics.map((m) => m.ask_id).concat(gaps.map((g) => g.ask_id)));
-    const answered = new Set(metrics.map((m) => m.ask_id));
-    const refused = [...asks].filter((a) => !answered.has(a));
-    const rows = metrics.map((m, i) => {
-      const open = !!state.open["m" + i];
-      const cov = m.coverage || {};
-      const cal = m.calibration;
-      const plan = m.plan || {};
-      const detail = `<tr class="expand"><td colspan="7"><div class="grid2">
-        <div>${kv([["Definition", plan.filter ? `<span class="mono">${esc(plan.filter)}</span>` : null],
-          ["Source", plan.source ? `<span class="mono">${esc(plan.source)}</span>` : null],
-          ["Denominator", esc(plan.denominator)], ["Breakdowns", (plan.breakdowns || []).map((b) => `<code>${esc(b)}</code>`).join(" ")],
-          ["Grain", esc(m.grain)], ["Coverage basis", rich(cov.basis)],
-          ["Excluded", (cov.excluded || []).map((x) => `<code>${esc(x)}</code>`).join(" ")],
-          ["Calibration", cal ? esc(`agreement ${pct(cal.agreement)} with human labels, n = ${int(cal.n)}${cal.judge_version ? ", judge " + cal.judge_version : ""}`) : null],
-          ["Alternatives", (plan.alternatives_offered || []).map((x) => esc(typeof x === "string" ? x : JSON.stringify(x))).join("<br>")]])}</div>
-        <div>${kv(flatten(m.breakdown != null ? m.breakdown : m.value).slice(0, 40).map(([k, x]) => [k, `<span class="mono">${esc(leaf(x))}</span>`]))}</div>
-      </div></td></tr>`;
-      return `<tr class="clickable${open ? " open" : ""}" data-open="m${i}" tabindex="0" aria-expanded="${open}">
-        <td class="num-cell"><span class="caret">${I.chev}</span> <span class="mono">${esc(m.ask_id)}</span>${REQUIRED_ASKS.includes(m.ask_id) ? `<div>${pill("required", "info")}</div>` : ""}</td>
-        <td>${esc(toManagerEnglish(m.name))}<div class="small muted">${esc((ASKS[m.ask_id] || ["", ""])[1])}</div></td>
-        <td class="answer">${answerFor(m).map((a) => `<span class="line">${esc(a)}</span>`).join("")}</td>
-        <td>${fidelityPill(m.fidelity)}</td>
-        <td>${isNum(cov.value) ? `<span class="cov"><span class="mono">${pct(cov.value, 0)}</span>${bar(cov.value, cov.value >= 0.95 ? "good" : "warn", true)}</span>` : '<span class="muted">—</span>'}</td>
-        <td>${cal ? `<span class="mono">${num(cal.agreement, 2)}</span><div class="small muted">n ${int(cal.n)}</div>` : '<span class="muted">—</span>'}</td>
-        <td>${pill("Answered", "success")}</td></tr>${open ? detail : ""}`;
+    const byAsk = {};
+    const bucket = (a) => (byAsk[a] = byAsk[a] || { ms: [], gap: null });
+    for (const m of metrics) bucket(m.ask_id).ms.push(m);
+    for (const g of gaps) bucket(g.ask_id).gap = g;
+    const ids = Object.keys(ASKS).filter((a) => byAsk[a]).sort();
+    let answered = 0, partly = 0, refused = 0;
+    const rows = ids.map((ask, i) => {
+      const { ms, gap } = byAsk[ask];
+      const status = ms.length && gap ? "Partly refused" : ms.length ? "Answered" : "Refused";
+      if (status === "Answered") answered += 1;
+      else if (status === "Partly refused") partly += 1;
+      else refused += 1;
+      const open = !!state.open["ask" + i];
+      const covs = ms.map((m) => (m.coverage || {}).value).filter(isNum);
+      const cov = covs.length ? Math.min(...covs) : null;
+      const fids = [...new Set(ms.map((m) => m.fidelity).filter(Boolean))];
+      const answers = ms.length <= 1
+        ? (ms[0] ? answerFor(ms[0]) : []).map((t) => `<span class="line">${esc(t)}</span>`).join("")
+        : ms.map((m) => `<div class="ansgroup"><span class="small muted">${esc(toManagerEnglish(m.name))}</span>${answerFor(m).map((t) => `<span class="line mono">${esc(t)}</span>`).join("")}</div>`).join("");
+      const refusedLine = gap
+        ? `<div class="ansgroup"><span class="small muted">Refused: ${esc(gapClaim(gap))}</span><span class="line muted">${esc(gapLede(gap))}</span></div>`
+        : "";
+      const detail = `<tr class="expand"><td colspan="6">${ms.map(metricDetail).join("") || `<p class="muted">No metric: ${esc(gapClaim(gap))}. ${esc(gapLede(gap))}</p>`}</td></tr>`;
+      return `<tr class="clickable${open ? " open" : ""}" data-open="ask${i}" tabindex="0" aria-expanded="${open}">
+        <td class="num-cell"><span class="caret">${I.chev}</span> <span class="mono">${esc(ask)}</span>${REQUIRED_ASKS.includes(ask) ? `<div>${pill("required", "info")}</div>` : ""}</td>
+        <td>${esc((ASKS[ask] || ["", ""])[1])}</td>
+        <td class="answer">${answers}${refusedLine}</td>
+        <td>${fids.length ? fids.map(fidelityPill).join(" ") : '<span class="muted">—</span>'}</td>
+        <td>${isNum(cov) ? `<span class="cov"><span class="mono">${pct(cov, 0)}</span>${bar(cov, cov >= 0.95 ? "good" : "warn", true)}</span>` : '<span class="muted">—</span>'}</td>
+        <td>${pill(status, status === "Answered" ? "success" : status === "Partly refused" ? "warning" : "critical")}</td></tr>${open ? detail : ""}`;
     });
-    const gapRows = gaps.map((g) => `<tr class="clickable" data-key="g:${esc(g.ask_id)}" tabindex="0">
-      <td class="num-cell"><span class="caret">${I.lock}</span> <span class="mono">${esc(g.ask_id)}</span>${REQUIRED_ASKS.includes(g.ask_id) ? `<div>${pill("required", "info")}</div>` : ""}</td>
-      <td>${esc(gapClaim(g))}<div class="small muted">${esc(gapLede(g))}</div></td>
-      <td class="muted">—</td><td>—</td><td>—</td><td>—</td>
-      <td>${pill(answered.has(g.ask_id) ? "Partly refused" : "Refused", answered.has(g.ask_id) ? "warning" : "critical")}</td></tr>`);
     const std = rep.standard || [];
     return `<div class="page stack">
       <div class="header"><h1 class="display">What we measured, and how far to trust it</h1>
-        <div class="pills">${pill(asks.size + " questions", "outline")}${pill(answered.size + " answered", "success")}${pill(refused.length + " refused outright", "critical")}${pill(gaps.length + " refusals recorded", "neutral")}</div>
-        <p class="muted">Click a row for its definition, source, denominator and what was excluded. Fidelity: <strong>measured</strong> counted from logs, <strong>derived</strong> computed from measured numbers, <strong>judged</strong> scored by a model judge.</p></div>
-      <section class="card flush"><div class="table-wrap"><table class="data">
-        <thead><tr><th>Ask</th><th>Question</th><th>Answer</th><th>Fidelity</th><th>Coverage</th><th>Calibration</th><th>Status</th></tr></thead>
-        <tbody>${rows.join("")}${gapRows.join("")}</tbody></table></div></section>
+        <div class="pills">${pill(ids.length + " questions", "outline")}${pill(answered + " answered", "success")}${partly ? pill(partly + " partly refused", "warning") : ""}${pill(refused + " refused", "critical")}</div>
+        <p class="muted">One row per question. Click a row for the metric passport: definition, source, denominator, coverage basis and what was excluded. Fidelity: <strong>measured</strong> counted from logs, <strong>derived</strong> computed from measured numbers, <strong>judged</strong> scored by a model judge.</p></div>
+      <section class="card flush"><div class="table-wrap"><table class="data metrics">
+        <thead><tr><th>Ask</th><th>Question</th><th>Answer</th><th>Fidelity</th><th>Coverage</th><th>Status</th></tr></thead>
+        <tbody>${rows.join("")}</tbody></table></div></section>
       ${std.length ? `<section class="card flush"><div data-style="padding:16px 20px 4px"><h2 class="title">Standards: the best this cohort has already done</h2></div><div class="table-wrap"><table class="data">
         <thead><tr><th>Tenant</th><th>Cohort</th><th>Metric</th><th>Best</th><th>Median</th><th>Deficit</th><th>Exemplars</th></tr></thead>
         <tbody>${std.map((s) => `<tr><td>${esc(s.tenant)}</td><td class="mono">${esc(cohortText(s.cohort))}</td><td class="mono">${esc(s.metric)}</td>

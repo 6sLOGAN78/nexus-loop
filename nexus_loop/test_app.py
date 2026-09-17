@@ -102,8 +102,8 @@ class ScreenHttp(unittest.TestCase):
     def test_required_asks_are_marked_in_metrics(self):
         js = self._js()
         self.assertIn('const REQUIRED_ASKS = ["A01", "A04", "A09", "A11"];', js)
-        self.assertIn('REQUIRED_ASKS.includes(m.ask_id)', js)
-        self.assertIn('REQUIRED_ASKS.includes(g.ask_id)', js)
+        self.assertIn('REQUIRED_ASKS.includes(ask)', js)
+        self.assertIn("One row per question", js)
 
     def test_rail_groups_are_dropdowns(self):
         js = self._js()
