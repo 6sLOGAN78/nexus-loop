@@ -50,6 +50,11 @@ def post_replay(url: str, body: dict, timeout: float = 20.0) -> dict:
         raise ReplayUnavailable("replay endpoint returned HTTP %d: %s" % (e.code, detail[:300]))
     except (urllib.error.URLError, OSError) as e:
         raise ReplayUnavailable("replay endpoint unreachable: %s" % e)
+    except ValueError as e:
+        # a 200 with a non-JSON or non-UTF-8 body raises JSONDecodeError or
+        # UnicodeDecodeError, both ValueError. Letting one escape would crash
+        # run.py before the report is written, so treat it as unavailable.
+        raise ReplayUnavailable("replay endpoint returned an unreadable body: %s" % e)
 
 
 def verification_from(presc: dict, resp: dict) -> dict:
