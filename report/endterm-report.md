@@ -1,6 +1,6 @@
 # Nexus Loop. Final technical report (prose draft)
 
-Working draft mapped to `endterm-report.tex`. Team name, team ID and institution are left as placeholders. Figures are in `figures/`.
+Working draft mapped to `endterm-report.tex`. Team: Knittin' Yahoo, Indian Institute of Technology, Patna. Figures are in `figures/`.
 
 **Data note, read first.** Every number and figure in this draft comes from the provided practice corpus (`kit/corpus/`, variant A, 80,252 sessions) and the report generated from it (`examples/sample-report.json`). We do not hold the sealed corpus; that run is executed by the organisers against hidden ground truth, so we cannot produce sealed figures on our side. The evidence for the result is therefore the practice run plus the held-out corpora we generated ourselves (a three-corpus pool, a relocated-fault corpus, and a relocated-fault corpus with a third tenant). If a sealed `loop-report.json` is ever produced on our side, regenerate the figures from it with `python3 report/figures/make_figures.py` and update the results table. Reviewers: flag if you think the figures should be labelled as a practice run rather than left unqualified.
 
