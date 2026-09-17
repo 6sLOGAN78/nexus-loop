@@ -17,7 +17,18 @@ import numpy as np
 from collections import Counter, defaultdict
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-REPO = os.path.abspath(os.path.join(HERE, "..", ".."))  # repo root, so figures rebuild anywhere
+
+
+def _find_repo(start):
+    for cand in (os.path.join(start, "..", ".."), os.path.join(start, "..", "yellow-ai"),
+                 os.path.join(start, "..")):
+        p = os.path.abspath(cand)
+        if os.path.exists(os.path.join(p, "run.py")) and os.path.isdir(os.path.join(p, "nexus_loop")):
+            return p
+    raise SystemExit("repo root not found from %s" % start)
+
+
+REPO = _find_repo(HERE)
 sys.path.insert(0, REPO)
 from nexus_loop.io import Kit  # noqa: E402
 from nexus_loop.features import Corpus, resolved  # noqa: E402
@@ -311,8 +322,8 @@ def fig_screen():
     ax.text(96, 94.5, "corpus A · acme + northwind", color="#c9d3e0", fontsize=5.2, va="center", ha="right")
     # tabs
     ax.add_patch(Rectangle((1, 83), 98, 7, fc="white", ec=LINE, lw=0.6))
-    ax.text(3, 86.5, "Decide: Silent tool · KB gap · Prompt   |   Ignored: load · mix · judge   |   Refused: A11 · A09 · A02",
-            fontsize=4.2, va="center", color=SLATE)
+    ax.text(3, 86.5, "To decide: Silent tool · KB gap · Prompt   |   Not a problem: load · mix · judge   |   We will not invent: A11 · A09 · A02",
+            fontsize=4.0, va="center", color=SLATE)
     # brief
     ax.add_patch(FancyBboxPatch((3, 40), 60, 40, boxstyle="round,pad=0.4,rounding_size=1", fc="white", ec=LINE, lw=0.7))
     ax.text(5, 76, "Silent tool failure — empty HTTP 200", fontsize=5.6, color=NAVY_D, weight="bold")
@@ -333,7 +344,7 @@ def fig_screen():
     ax.text(68, 66, "existing fallback path.", fontsize=4.0, color=NAVY_D)
     ax.text(68, 61.5, "Reason (required)", fontsize=4.0, color=SLATE)
     ax.add_patch(Rectangle((67.5, 53), 28, 6.5, fc="#fbfbf9", ec=LINE, lw=0.5, ls="--"))
-    for i, (lab, fc, ec, tc) in enumerate([("Accept", NAVY, NAVY, "white"), ("Reject", "#fdecec", RED, RED), ("Defer", "white", SLATE, NAVY_D)]):
+    for i, (lab, fc, ec, tc) in enumerate([("Accept", GREEN, GREEN, "white"), ("Reject", "#fdecec", RED, RED), ("Defer", "white", SLATE, NAVY_D)]):
         ax.add_patch(FancyBboxPatch((68, 48.5 - i * 4.2), 27, 3.5, boxstyle="round,pad=0.15,rounding_size=0.6", fc=fc, ec=ec, lw=0.6))
         ax.text(81.5, 50.2 - i * 4.2, lab, fontsize=4.2, color=tc, ha="center", va="center")
     # honesty strip
@@ -341,11 +352,11 @@ def fig_screen():
     # other findings
     ax.add_patch(FancyBboxPatch((3, 4), 94, 27, boxstyle="round,pad=0.4,rounding_size=1", fc="white", ec=LINE, lw=0.7))
     ax.text(5, 27, "Other observations", fontsize=4.8, color=SLATE)
-    ax.text(5, 22.5, "Ignored · traffic mix — per-intent containment flat; a campaign, not quality.", fontsize=4.1, color=NAVY_D)
-    ax.text(5, 18.5, "Ignored · load — volume ×3.5, p95 latency up, resolution flat.", fontsize=4.1, color=NAVY_D)
-    ax.text(5, 14.5, "Ignored · judge change — quality drops on every tenant at v1→v2.", fontsize=4.1, color=NAVY_D)
-    ax.text(5, 10.5, "Refused · A11 failover — required event named; retry ≠ failover.", fontsize=4.1, color=AMBER)
-    ax.text(5, 6.5, "Refused · A02 customer_ref — 80,252 distinct vs budget 200.", fontsize=4.1, color=AMBER)
+    ax.text(5, 22.5, "Not a problem · traffic mix — per-intent containment flat; a campaign, not quality.", fontsize=4.1, color=NAVY_D)
+    ax.text(5, 18.5, "Not a problem · load — volume ×3.5, p95 latency up, resolution flat.", fontsize=4.1, color=NAVY_D)
+    ax.text(5, 14.5, "Not a problem · judge change — quality drops on every tenant at v1→v2.", fontsize=4.1, color=NAVY_D)
+    ax.text(5, 10.5, "We will not invent · A11 failover — required event named; retry is not failover.", fontsize=4.1, color=AMBER)
+    ax.text(5, 6.5, "We will not invent · A02 customer_ref — 80,252 distinct vs budget 200.", fontsize=4.1, color=AMBER)
     ax.set_title("Operator screen — one brief, one signature (schematic)", fontsize=8.0, color=NAVY_D)
     fig.tight_layout()
     fig.savefig(os.path.join(HERE, "operator_screen.png"), bbox_inches="tight")

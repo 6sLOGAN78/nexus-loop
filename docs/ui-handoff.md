@@ -29,8 +29,9 @@ python3 run.py --kit kit --team demo --out out/loop-report.json
 ```
 
 The screen is `nexus_loop/static/index.html` (plain HTML/CSS/JS, no build step)
-served by `nexus_loop/app.py` (Python stdlib `http.server`). No API keys, no
-external network.
+served by `nexus_loop/app.py` (Python stdlib `http.server`). No API keys. The only
+external request is the optional web fonts (Newsreader, Source Sans 3); offline
+they fall back to Iowan/Palatino and Segoe/Inter, and no data leaves the box.
 
 For a zero-setup look without running anything, open `examples/demo.html` — a
 standalone lo-fi **wireframe** populated with `examples/sample-report.json` (the

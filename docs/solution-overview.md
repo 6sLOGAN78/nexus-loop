@@ -197,10 +197,14 @@ by judged quality within the current judge version.
 
 A single stdlib HTTP server that renders **only** the report:
 
-- `GET /` — the page; `GET /report.json` — the current report; `GET /health`;
+- `GET /` — the page; `GET /report.json` — the current report (returns `500
+  report_invalid` if the file is corrupt rather than dropping the connection);
+  `GET /health` — liveness booleans (it does not leak the report path);
 - `POST /decision` — `{prescription_id, verdict, decided_by, reason}` (reason
-  required); it updates exactly that prescription's `approval`, validates the
-  report, replaces the file atomically, and appends `decisions.log`.
+  required). It serializes on a lock, updates exactly that prescription's
+  `approval`, re-validates the whole report, writes it through one atomic helper
+  (a unique temp file in the target directory, `fsync`, `os.replace`), and
+  appends `decisions.log`.
 
 The screen is intentionally small and complete; the UI/product team can restyle
 or rebuild it as long as it keeps rendering from the report. The contract, the

@@ -49,6 +49,10 @@ measure and flag:
   `kb_lookup` (and guardrail) steps; only `tool_call` is truly absent. Each
   affected metric carries `coverage.observed_vs_declared` rather than trusting the
   prose.
+- **One data repair.** A line in `kit/labels/outcome_labels.jsonl` had a pasted
+  filesystem path inside a session id (`s_no/home/.../README.mdrt_042184`). It was
+  restored to `s_nort_042184`, which the corpus confirms. The pipeline never reads
+  this file, so no number moved; the file is just no longer visibly broken.
 > "We measure coverage from the corpus and print the declared-vs-observed gap,
 > including where the catalog's own numbers are stale."
 
@@ -300,6 +304,10 @@ trap is found or a `[queued]` item ships.
 | FX8 | Step-grain fallback for by-design handoff and milestones when the session field is absent | `features.by_design_handoff`, `features.milestones_of` | `metrics[m_containment]`, `metrics[m_returns_dropoff]` | handled |
 | FX9 | Mix dismissal no longer silently skips small cohorts | `decoys.detect_traffic_mix` | `findings[f05].evidence` | handled |
 | FX10 | Window length cap raised from `D//2` to `D` | `series.best_window` callers | `findings[].window` | handled |
+| FX11 | One atomic JSON writer (unique temp, fsync, replace) for report, golden set, and screen | `io.write_json_atomic` | `loop-report.json`, `out/golden_set.json` | handled |
+| FX12 | Concurrent decisions serialized by a lock; a corrupt report returns 500, not a dropped connection | `app.ReportStore` | `prescriptions[].approval` | handled |
+| FX13 | A non-JSON replay response is `unavailable`, not a crash | `replay.post_replay` | `verifications[]` | handled |
+| FX14 | Repaired a pasted path inside a label session id (file is unread; no score change) | `kit/labels/outcome_labels.jsonl` | (unread) | handled |
 | IN1 | z assumes independent sessions; clustering inflates z (high floors offset) | `series.best_window` | `findings[].evidence` z token | state-only |
 | IN2 | Multiple comparisons: ~1,500 windows × ~50 cohorts under a fixed z floor | `series.py`, `detect.py` | `findings[].evidence` | state-only |
 | IN3 | Winner's curse: window chosen for contrast, effect measured on same days | `series.py` | `findings[].observed/expected` | state-only |
@@ -400,6 +408,12 @@ should you trust this" answers. (Ledger rows IN1–IN14.)
   decision, so re-score after deciding.
 - **Regeneration used to wipe verdicts — now fixed.** Approvals are carried
   forward by (id, diagnosis_id, target) and `run.py` notes PRESERVED.
+- **The decision store is hardened.** Concurrent decisions are serialized by a
+  lock, every write goes through one atomic JSON helper (unique temp file in the
+  target directory, `fsync`, `os.replace`, cleanup on failure), the screen
+  re-validates the whole report before it writes, a corrupt report returns
+  `500 report_invalid` instead of dropping the connection, and a replay response
+  that is not JSON is treated as unavailable rather than crashing the run.
 
 ## 12. Verify-later (data checks for a sealed or other corpus)
 
