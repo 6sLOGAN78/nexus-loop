@@ -273,6 +273,25 @@
     return `Healthy conversations here sit around ${metricVal(st.metric, st.median)} ${metricLbl(metric || st.metric).toLowerCase()} (best ${metricVal(st.metric, st.best)}).`;
   }
 
+  /* Coverage and fidelity of the metric behind a finding, taken from the
+     report's own metric passport (never recomputed). */
+  function askForCause(c) {
+    if (!c) return null;
+    if (c.indexOf("tool.") === 0) return "A04";
+    if (c.indexOf("kb.") === 0) return "A06";
+    if (c === "prompt.regression" || c === "model.change") return "A02";
+    return null;
+  }
+  function coverageFor(rep, f, d) {
+    const ask = askForCause(d && d.cause_class);
+    if (!ask) return null;
+    const slug = String(f.tenant || "").replace(/[^A-Za-z0-9]/g, "_");
+    const ms = (rep.metrics || []).filter((m) => m.ask_id === ask);
+    const m = ms.find((x) => x.id.indexOf(slug) >= 0) || ms[0];
+    if (!m || !m.coverage || !isNum(m.coverage.value)) return null;
+    return { value: m.coverage.value, fidelity: m.fidelity, ask: ask };
+  }
+
   /* ---------------- top bar ---------------- */
   function renderTop(rep, ix) {
     const counts = { findings: ix.regs.length, refusals: ix.gaps.length, metrics: (rep.metrics || []).length,
@@ -358,9 +377,10 @@
     const others = tiles.filter((t) => t !== cost);
     const shown = others.slice(0, 3).concat(cost ? [cost] : []), rest = others.slice(3);
     const ac = d && d.attributed_change;
+    const cov = coverageFor(rep, f, d);
     const main = `
       <div class="header">
-        <div class="pills">${pill(({ critical: "Critical", high: "High", medium: "Medium", low: "Low" })[f.severity] || f.severity, esc(f.severity))}</div>
+        <div class="pills">${pill(({ critical: "Critical", high: "High", medium: "Medium", low: "Low" })[f.severity] || f.severity, esc(f.severity))}${cov ? pill("coverage " + pct(cov.value, 0), cov.value >= 0.95 ? "outline" : "warning") : ""}${cov && cov.fidelity ? fidelityPill(cov.fidelity) : ""}</div>
         <h1 class="display">${esc(f.headline || metricLbl(f.metric))}</h1>
         <p class="muted">${esc([f.tenant, cohortText(f.cohort), windowText(f.window), isNum(im.days_running) ? `running ${im.days_running} days` : ""].filter(Boolean).join(" · "))}</p>
       </div>

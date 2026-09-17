@@ -270,45 +270,22 @@ including missing sections (e.g. an empty `verifications` when replay is off).
 
 ---
 
-## 10. Signed copy modules and seam
+## 10. Copy decision note
 
-After a recorded verdict on a **Needs attention** finding, the gate mounts a
-slot and the Signed copy UI. Modules live under
-`nexus_loop/static/signed-copy/` and load before the desk inline script:
+After a recorded verdict on a **Needs attention** finding, the decision panel
+shows **Copy decision note**. The note is built in `nexus_loop/static/app.js`
+(`decisionNote(f, p, a)`) from the report only, and copied through the global
+`[data-copy]` handler:
 
-| File | Global | Role |
-|---|---|---|
-| `contract.js` | `SignedCopy.contract` | Frozen `COPY`, helpers, `normalizeVerdict` |
-| `template.js` | `SignedCopy.template` | `buildSignedCopy(input)` |
-| `summary.js` | `SignedCopy.summary` | `toSummaryInput` / `buildDecisionsSummary` |
-| `adapter.js` | `SignedCopy.adapter` | `toSignedCopyInput(desk, finding)` |
-| `ui.js` | `SignedCopy.ui` | `render(slotEl, finding)` |
-| `signed-copy.css` | — | Secondary control styles (existing tokens) |
+- the verdict and target, the finding and slice, the reason verbatim, who
+  decided and when, what moved, the downstream impact, the fix, the risk if
+  wrong, and a deep link to the finding.
 
-### `window.NexusDesk`
+The Decisions tab adds **Copy all decisions** (`allDecisionsNote(rep, ix)`)
+once any decision exists: every verdict, the dismissed-signals count, and the
+refusal count. Both are plain text on the clipboard; there is no preview pane
+and no second module to load. The top bar's **Generate report** action appears
+when `/health` reports generate enabled and POSTs `/generate`.
 
-Frozen read-only seam at the end of the desk script. Every method returns
-display strings the screen already shows (or `null`). See
-`docs/prd-signed-copy.md` Appendix A for the inventory. Decisions come only
-from the loaded report (`decisionFor`); `recordedAtText` is always `null`
-because the desk does not display `approval.at`.
-
-### DOM contract
-
-Inside `[data-testid="signed-copy-slot"]` (open + prescription path only,
-directly under the recorded-verdict alert):
-
-```html
-<section data-testid="signed-copy" aria-label="Signed copy">
-  <button type="button" data-testid="signed-copy-button">Copy signed copy</button>
-  <p data-testid="signed-copy-status" role="status" aria-live="polite"></p>
-  <details data-testid="signed-copy-preview">
-    <summary>See the note</summary>
-    <textarea data-testid="signed-copy-text" readonly rows="14"></textarea>
-  </details>
-</section>
-```
-
-When every open finding is decided, a second section
-`[data-testid="decisions-summary"]` follows with the same pattern and the
-`COPY.ui.summary*` labels. Static assets are served at `/signed-copy/*`.
+The earlier `SignedCopy.*` modules and their `/signed-copy` route were removed;
+`COPY` wording now lives inline in `app.js`.

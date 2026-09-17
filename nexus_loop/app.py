@@ -50,12 +50,6 @@ SECURITY_HEADERS = (
      "base-uri 'none'; frame-ancestors 'none'"),
 )
 
-SIGNED_COPY_DIR = os.path.join(STATIC_DIR, "signed-copy")
-SIGNED_COPY_MIME = {
-    ".js": "application/javascript; charset=utf-8",
-    ".css": "text/css; charset=utf-8",
-    ".map": "application/json; charset=utf-8",
-}
 # the operator console's own assets (app.js, app.css, bundled fonts)
 STATIC_TYPES = {
     ".css": "text/css; charset=utf-8",
@@ -65,26 +59,6 @@ STATIC_TYPES = {
     ".txt": "text/plain; charset=utf-8",
 }
 SAFE_STATIC = re.compile(r"^(?:fonts/)?[A-Za-z0-9][\w.-]{0,80}$")
-
-
-def _safe_signed_copy_path(url_path: str) -> Optional[str]:
-    """Resolve /signed-copy/<file> under SIGNED_COPY_DIR only; reject traversal."""
-    if not url_path.startswith("/signed-copy/"):
-        return None
-    rel = url_path[len("/signed-copy/"):]
-    if not rel or rel.endswith("/") or "\\" in rel:
-        return None
-    # Disallow any path segment that escapes (., .., absolute, empty).
-    parts = rel.split("/")
-    if any(p in ("", ".", "..") for p in parts):
-        return None
-    candidate = os.path.normpath(os.path.join(SIGNED_COPY_DIR, *parts))
-    root = os.path.normpath(SIGNED_COPY_DIR)
-    if candidate != root and not candidate.startswith(root + os.sep):
-        return None
-    if not os.path.isfile(candidate):
-        return None
-    return candidate
 
 
 class GenerateDisabled(RuntimeError):
@@ -309,16 +283,6 @@ def make_handler(store: ReportStore):
                 })
             if path.startswith("/static/"):
                 return self._static(path[len("/static/"):])
-            signed = _safe_signed_copy_path(path)
-            if signed is not None:
-                ext = os.path.splitext(signed)[1].lower()
-                ctype = SIGNED_COPY_MIME.get(ext, "application/octet-stream")
-                try:
-                    with open(signed, "rb") as fh:
-                        body = fh.read()
-                except OSError as e:
-                    return self._json(500, {"error": "signed_copy_unavailable", "detail": str(e)})
-                return self._send(200, body, ctype)
             return self._json(404, {"error": "not_found"})
 
         def do_POST(self):
@@ -329,7 +293,6 @@ def make_handler(store: ReportStore):
                 return self._post_generate()
             allow = "GET" if (
                 path in ("/", "/index.html", "/report.json", "/health")
-                or path.startswith("/signed-copy/")
                 or path.startswith("/static/")
             ) else "GET, POST"
             return self._allow(405, allow, {"error": "method_not_allowed"})
