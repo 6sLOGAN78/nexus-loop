@@ -73,16 +73,8 @@ A sample is written by any `run.py`; the practice corpus produces a rich one.
 |---|---|
 | `GET /` | The screen (`static/index.html`) |
 | `GET /report.json` | The current report, verbatim |
-| `GET /health` | `{ok, report, generate}` booleans. Does not leak a filesystem path. |
+| `GET /health` | `{ok, report}` booleans. Does not leak a filesystem path. |
 | `POST /decision` | Record a human decision. Wrong method → 405. Body > 64KiB → 413. |
-| `POST /generate` | Re-run `run.py` into the same report path (gated). Then reload `/report.json`. |
-
-`POST /generate` is **off by default**. Enable with `--allow-generate` or
-`NEXUS_LOOP_ALLOW_GENERATE=1` (and a discoverable `kit/`). `run.py --serve`
-turns it on automatically for that kit. Default regeneration uses `--no-replay`;
-pass `--with-replay` / `NEXUS_LOOP_REPLAY_URL` only when the kit replay service
-is up. Disabled → 403; already running → 409. The header **Generate report**
-button calls this endpoint and reloads the screen from the new report.
 
 `POST /decision` body:
 
@@ -123,7 +115,7 @@ scrolling through evidence.
 
 | Region | Role |
 |--------|------|
-| Header | Quiet title, corpus, **Generate report**, coverage/fidelity chips. REAL / STUBBED / SIMULATED sit under a disclosure — Framing 12 without a wall of notes. |
+| Header | Quiet title, corpus, coverage/fidelity chips. REAL / STUBBED / SIMULATED sit under a disclosure — Framing 12 without a wall of notes. |
 | List | To decide / Not a problem / We will not invent (A11 first, titled “We will not invent a failover rate”). 3-column sticky tab grid; **To decide** is danger red, same token as `.dot.bad`. Not a problem is mint; We will not invent is grey/info. Compact rows: title, tenant · days subtitle, stat (conversation count, **not a problem**, or **we will not invent**). The list body scrolls under the tabs. ArrowUp/ArrowDown and Home/End move the selection. Default selection is the verification’s prescription, else `tool.contract_break`. Hash deep-links the selected id. |
 | Story | Four steps copied from the report: what changed, why we think so, what we would change, did the test help. Each step label is uppercase tracked; `.span .name` is a Newsreader heading; observed values are tabular sans. A matching `standard[]` sentence sits under what changed. Bars plot report values in red vs green (not brown). Colour-coded KPI strip (5 columns, label / figure / caption): conversations info, would-have-resolved warn, handoffs/abandoned bad, cost warn. Evidence under a disclosure. Codes under **Technical names** in a `.tech-foot` footer pinned at the bottom of the story column. Gap ledes are short (A11: “Failover does not exist here. There is no rate to show.”); full `why` under **Full reason**. |
 | Your decision | The ask, a one-line risk, then full risk/no-ship under a disclosure, then Accept / Reject / Defer and a required reason. On **Not a problem** or **We will not invent**, the gate is an idle line only: “Nothing to approve. This is not a problem.” or “Nothing to approve. We will not invent a failover rate.” (A11 / `NOT_MEASURABLE`; other gaps name their claim or “this number”) After save, the page POSTs `/decision` and re-fetches `/report.json`. |
@@ -284,8 +276,7 @@ shows **Copy decision note**. The note is built in `nexus_loop/static/app.js`
 The Decisions tab adds **Copy all decisions** (`allDecisionsNote(rep, ix)`)
 once any decision exists: every verdict, the dismissed-signals count, and the
 refusal count. Both are plain text on the clipboard; there is no preview pane
-and no second module to load. The top bar's **Generate report** action appears
-when `/health` reports generate enabled and POSTs `/generate`.
+and no second module to load.
 
 The earlier `SignedCopy.*` modules and their `/signed-copy` route were removed;
 `COPY` wording now lives inline in `app.js`.

@@ -35,8 +35,7 @@ Everything is on `master`:
 - **Copy decision note**: after a recorded verdict on a Needs attention
   finding, the decision panel offers **Copy decision note**, a paste-ready
   hand-off built from the finding and the verdict; the Decisions tab offers
-  **Copy all decisions**. The console also has a gated **Generate report**
-  action that re-runs the pipeline into the same report.
+  **Copy all decisions**.
 - **Testbed** (`tools/testbed/`): generates held-out corpora and evaluates any
   candidate solution against them.
 - **Docs**: problem statement, brief, verified kit findings,
@@ -115,14 +114,6 @@ field contract, **`docs/ux-psychology.md`** / **`handoff.md`** for why the
 console is shaped that way, and **`docs/manager-english.md`** for the jargon →
 manager-English glossary used on the page.
 
-**Generate report (operator header):** when the screen is started with
-`--allow-generate` / `NEXUS_LOOP_ALLOW_GENERATE=1`, or via `run.py --serve`,
-`POST /generate` re-runs `run.py` into the same report path (default
-`--no-replay`; optional `--with-replay` / `NEXUS_LOOP_REPLAY_URL`). The header
-button triggers that path and reloads `/report.json`. Without the flag,
-generation stays off (403) so a plain `python3 -m nexus_loop.app` never shells
-out unexpectedly.
-
 **Replay service (what this repo uses):** the pipeline does **not** embed a
 replay backend. `run.py` optionally calls the kit’s provided service
 (`tools/nexus-loop-kit/replay/serve.py`) through the client in
@@ -164,9 +155,7 @@ The Decisions tab offers **Copy all decisions** once any decision exists: one
 summary of every verdict, the dismissed-signals count, and the refusal claims.
 The note is built in `nexus_loop/static/app.js` from the report only.
 
-The top bar also offers **Generate report** when the server was started with
-generate enabled; it POSTs `/generate` to re-run the pipeline into the same
-report and reloads. Psychology: **`handoff.md`**.
+Psychology: **`handoff.md`**.
 
 ### Run the testbed
 

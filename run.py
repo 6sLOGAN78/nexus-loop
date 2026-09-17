@@ -248,13 +248,7 @@ def main(argv=None) -> int:
     if a.serve:
         from nexus_loop.app import serve
         print("decision screen http://127.0.0.1:%d  (Ctrl-C to stop)" % a.port)
-        # --serve already knows the kit; enable Generate report on the screen
-        serve(
-            a.out, a.schema, a.port,
-            allow_generate=True, kit=a.kit, team=a.team,
-            replay_url=None if a.no_replay else a.replay_url,
-            no_replay=a.no_replay,
-        )
+        serve(a.out, a.schema, a.port)
     return rc
 
 

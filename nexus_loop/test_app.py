@@ -265,51 +265,6 @@ class ScreenHttp(unittest.TestCase):
         log = Path(os.path.join(self.tmp.name, "decisions.log")).read_text().splitlines()
         self.assertEqual(len([line for line in log if line.strip()]), 2)
 
-    def test_generate_disabled_by_default(self):
-        st, _, data = self._json("GET", "/health")
-        self.assertEqual(st, 200)
-        self.assertFalse(json.loads(data)["generate"])
-        st2, _, data2 = self._json("POST", "/generate", {})
-        self.assertEqual(st2, 403)
-        self.assertEqual(json.loads(data2)["error"], "generate_disabled")
-
-    def test_generate_enabled_runs_the_runner(self):
-        tmp = tempfile.TemporaryDirectory()
-        report = os.path.join(tmp.name, "loop-report.json")
-        Path(report).write_text(json.dumps(MIN_REPORT), encoding="utf-8")
-        calls = {"n": 0}
-
-        def runner():
-            calls["n"] += 1
-            return {"ok": True, "generated_at": MIN_REPORT["generated_at"]}
-
-        store = ReportStore(report, schema_path=None, generate_runner=runner)
-        httpd = ThreadingHTTPServer(("127.0.0.1", 0), make_handler(store))
-        port = httpd.server_address[1]
-        th = threading.Thread(target=httpd.serve_forever, daemon=True)
-        th.start()
-        try:
-            c = HTTPConnection("127.0.0.1", port, timeout=5)
-            c.request("GET", "/health")
-            r = c.getresponse()
-            self.assertTrue(json.loads(r.read())["generate"])
-            c.close()
-            raw = b"{}"
-            c = HTTPConnection("127.0.0.1", port, timeout=5)
-            c.request("POST", "/generate", body=raw,
-                      headers={"Content-Type": "application/json", "Content-Length": str(len(raw))})
-            r = c.getresponse()
-            out = json.loads(r.read())
-            c.close()
-            self.assertEqual(r.status, 200)
-            self.assertTrue(out.get("ok"))
-            self.assertEqual(calls["n"], 1)
-        finally:
-            httpd.shutdown()
-            httpd.server_close()
-            tmp.cleanup()
-
-
     def test_console_has_copy_decision_note(self):
         st, _, js = self._json("GET", "/static/app.js")
         self.assertEqual(st, 200)
