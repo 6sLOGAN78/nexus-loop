@@ -17,6 +17,8 @@
       Newsreader for claims / span titles, Source Sans 3 for chrome
       and numbers. Offline fallback: Iowan / Palatino + Segoe / Inter.
       Every figure is copied from loop-report.json.
+      Infographics: pair bars, KPI tone strips, share-of-traffic weight,
+      and state figures for all-clear / refusal — report fields only.
     */
 
     :root {
@@ -450,38 +452,42 @@
       display: grid;
       grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: var(--space-3);
-      margin: 0 0 var(--space-5);
+      margin: 0 0 var(--space-4);
       align-items: stretch;
     }
     @media (max-width: 1200px) { .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
     @media (max-width: 720px) { .kpis { grid-template-columns: 1fr 1fr; } }
     .kpi {
       display: grid;
-      grid-template-rows: 2.4em minmax(1.75em, auto) 1.35em;
-      border: 1px solid var(--ds-border);
+      grid-template-rows: auto minmax(2rem, auto) auto;
+      gap: 0.15rem;
+      border: 0;
       background: var(--ds-sunken);
       border-radius: var(--radius-lg);
-      padding: var(--space-3) var(--space-4);
+      padding: var(--space-3) var(--space-4) var(--space-3) calc(var(--space-4) + 2px);
       min-width: 0;
+      box-shadow: inset 5px 0 0 var(--ds-border);
     }
     .kpi.info {
       background: var(--ds-info-bg);
-      border-color: transparent;
-      box-shadow: inset 3px 0 0 var(--ds-information);
+      box-shadow: inset 5px 0 0 var(--ds-information);
     }
     .kpi.info .v { color: var(--ds-information); }
     .kpi.warn {
       background: var(--ds-warning-bg);
-      border-color: transparent;
-      box-shadow: inset 3px 0 0 var(--ds-warning);
+      box-shadow: inset 5px 0 0 var(--ds-warning);
     }
     .kpi.warn .v { color: var(--ds-warning); }
     .kpi.bad {
       background: var(--ds-danger-bg);
-      border-color: transparent;
-      box-shadow: inset 3px 0 0 var(--ds-danger);
+      box-shadow: inset 5px 0 0 var(--ds-danger);
     }
     .kpi.bad .v { color: var(--ds-danger); }
+    .kpi.ok {
+      background: var(--ds-success-bg);
+      box-shadow: inset 5px 0 0 var(--ds-success);
+    }
+    .kpi.ok .v { color: var(--ds-success); }
     .kpi .k {
       font-size: var(--fs-2xs);
       font-weight: 600;
@@ -492,19 +498,81 @@
     }
     .kpi .v {
       font-family: var(--font-sans);
-      font-size: var(--fs-lg);
-      font-weight: 600;
+      font-size: clamp(1.35rem, 1.1rem + 0.6vw, 1.85rem);
+      font-weight: 700;
       font-variant-numeric: tabular-nums;
       letter-spacing: var(--tracking-display);
       overflow-wrap: anywhere;
       color: var(--ds-text);
       align-self: center;
+      line-height: 1.1;
     }
     .kpi .s {
       font-size: var(--fs-2xs);
       color: var(--ds-text-subtlest);
       align-self: end;
-      line-height: 1.2;
+      line-height: 1.25;
+    }
+
+    .impact-viz {
+      display: grid;
+      gap: var(--space-3);
+      margin: 0 0 var(--space-5);
+    }
+    .share-weight {
+      background: var(--ds-sunken);
+      border-radius: var(--radius-lg);
+      padding: var(--space-3) var(--space-4);
+    }
+    .share-meta {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: var(--space-2);
+      margin: 0 0 var(--space-2);
+      align-items: baseline;
+    }
+    .share-lbl {
+      font-size: var(--fs-2xs);
+      font-weight: 600;
+      letter-spacing: var(--tracking-label);
+      text-transform: uppercase;
+      color: var(--ds-text-subtlest);
+    }
+    .share-val {
+      font-family: var(--font-sans);
+      font-size: var(--fs-sm);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--ds-text);
+    }
+    .share-track {
+      height: 14px;
+      background: var(--ds-neutral);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      position: relative;
+    }
+    .share-track > i {
+      display: block;
+      height: 100%;
+      background: var(--ds-information);
+      border-radius: var(--radius-sm);
+      transform-origin: left center;
+      animation: bar-grow 480ms ease-out both;
+    }
+    .share-track::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        90deg,
+        transparent 0,
+        transparent calc(10% - 1px),
+        #091e4214 calc(10% - 1px),
+        #091e4214 10%
+      );
+      pointer-events: none;
     }
 
     .lede { margin: 0 0 var(--space-3); max-width: 52ch; font-size: var(--fs-sm); line-height: 1.4; }
@@ -608,15 +676,147 @@
       text-align: right;
       white-space: nowrap;
     }
-    .bars { display: flex; flex-direction: column; gap: 4px; margin-top: var(--space-2); max-width: 22rem; }
-    .barrow { display: grid; grid-template-columns: 7.2rem 1fr 4.4rem; gap: var(--space-2); align-items: center; }
-    .barrow .bl { font-size: var(--fs-2xs); color: var(--ds-text-subtlest); text-align: right; }
-    .barrow .bv { font-size: var(--fs-2xs); font-variant-numeric: tabular-nums; color: var(--ds-text-subtle); }
-    .track { height: 8px; background: var(--ds-neutral); border-radius: var(--radius-full); overflow: hidden; }
-    .track > i { display: block; height: 100%; border-radius: var(--radius-full); background: var(--ds-brand); }
+    .pair-fig {
+      margin-top: var(--space-3);
+      max-width: 28rem;
+      padding: var(--space-3);
+      background: var(--ds-sunken);
+      border-radius: var(--radius-lg);
+    }
+    .pair-fig .pair-head {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: var(--space-2);
+      align-items: baseline;
+      margin: 0 0 var(--space-2);
+    }
+    .pair-fig .pair-title {
+      font-size: var(--fs-2xs);
+      font-weight: 600;
+      letter-spacing: var(--tracking-label);
+      text-transform: uppercase;
+      color: var(--ds-text-subtlest);
+    }
+    .pair-fig .pair-delta {
+      font-family: var(--font-sans);
+      font-size: var(--fs-sm);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: var(--tracking-display);
+    }
+    .pair-fig .pair-delta.bad { color: var(--ds-danger); }
+    .pair-fig .pair-delta.ok { color: var(--ds-success); }
+    .pair-fig .pair-delta.warn { color: var(--ds-warning); }
+    .bars { display: flex; flex-direction: column; gap: var(--space-2); max-width: none; }
+    .barrow { display: grid; grid-template-columns: 7.5rem 1fr 4.6rem; gap: var(--space-2); align-items: center; }
+    .barrow .bl { font-size: var(--fs-xs); color: var(--ds-text-subtle); text-align: right; line-height: 1.2; }
+    .barrow .bv {
+      font-size: var(--fs-xs);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--ds-text);
+      text-align: right;
+    }
+    .track {
+      height: 14px;
+      background: var(--ds-neutral);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+    .track > i {
+      display: block;
+      height: 100%;
+      border-radius: var(--radius-sm);
+      background: var(--ds-brand);
+      transform-origin: left center;
+      animation: bar-grow 480ms ease-out both;
+    }
     .track > i.bad { background: var(--ds-danger); }
     .track > i.ok { background: var(--ds-success); }
     .track > i.warn { background: var(--ds-warning); }
+
+    .state-fig {
+      margin: 0 0 var(--space-5);
+      padding: var(--space-4);
+      border-radius: var(--radius-xl);
+      background: var(--ds-sunken);
+    }
+    .state-fig.ok {
+      background: var(--ds-success-bg);
+      box-shadow: inset 5px 0 0 var(--ds-success);
+    }
+    .state-fig.miss {
+      background: var(--ds-info-bg);
+      box-shadow: inset 5px 0 0 var(--ds-information);
+    }
+    .state-fig .state-cap {
+      margin: var(--space-3) 0 0;
+      font-size: var(--fs-sm);
+      color: var(--ds-text);
+      max-width: 52ch;
+    }
+    .state-meter {
+      height: 16px;
+      border-radius: var(--radius-sm);
+      background: repeating-linear-gradient(
+        -45deg,
+        #091e4214 0 6px,
+        transparent 6px 12px
+      );
+      border: 1px dashed var(--ds-border);
+      position: relative;
+      overflow: hidden;
+    }
+    .state-meter .state-block {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-size: var(--fs-2xs);
+      font-weight: 700;
+      letter-spacing: var(--tracking-label);
+      text-transform: uppercase;
+      color: var(--ds-text-subtle);
+      background: linear-gradient(90deg, #e9f2ff 0%, #f7f8f9 55%, #e9f2ff 100%);
+    }
+    .clear-strip {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: var(--space-2);
+      align-items: end;
+      margin: 0 0 var(--space-3);
+      max-width: 28rem;
+    }
+    .clear-strip .clear-col { min-width: 0; text-align: center; }
+    .clear-strip .clear-lbl {
+      display: block;
+      font-size: var(--fs-2xs);
+      color: var(--ds-text-subtlest);
+      margin-bottom: var(--space-1);
+    }
+    .clear-strip .clear-val {
+      display: block;
+      font-family: var(--font-sans);
+      font-size: var(--fs-lg);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--ds-success);
+      line-height: 1.1;
+    }
+    .clear-strip .clear-mid {
+      font-size: var(--fs-2xs);
+      font-weight: 600;
+      color: var(--ds-text-subtlest);
+      padding-bottom: 0.35rem;
+      text-transform: uppercase;
+      letter-spacing: var(--tracking-label);
+    }
+
+    @keyframes bar-grow {
+      from { transform: scaleX(0.04); opacity: 0.55; }
+      to { transform: scaleX(1); opacity: 1; }
+    }
 
     .alert {
       border: 0;
@@ -750,7 +950,7 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
-      * { transition: none !important; }
+      * { transition: none !important; animation: none !important; }
     }
   </style>
 </head>
@@ -956,6 +1156,70 @@
       const w = (n == null || Number.isNaN(Number(n))) ? 0 : Math.max(2, Math.min(100, Number(n) * 100));
       return `<span class="track"><i class="${cls || ""}" style="width:${w}%"></i></span>`;
     };
+    function deltaTone(a, b, higherIsWorse) {
+      const d = Number(a) - Number(b);
+      if (!Number.isFinite(d) || d === 0) return "ok";
+      const worse = higherIsWorse ? d > 0 : d < 0;
+      return worse ? "bad" : "ok";
+    }
+    function formatDelta(a, b, asRate) {
+      const d = Number(a) - Number(b);
+      if (!Number.isFinite(d)) return "";
+      const abs = Math.abs(d);
+      const body = asRate ? pct(abs) : fmt(abs, abs >= 10 ? 1 : 4);
+      if (d === 0) return "No change";
+      return (d > 0 ? "+" : "−") + body;
+    }
+    function pairBars(aLbl, aVal, bLbl, bVal, aCls, bCls, title, forceTone) {
+      if (aVal == null || bVal == null) return "";
+      const a = Number(aVal), b = Number(bVal);
+      const asRate = a >= 0 && b >= 0 && a <= 1 && b <= 1;
+      const max = Math.max(a, b, asRate ? 1 : 0.0001);
+      const show = (n) => asRate ? pct(n) : fmt(n, 4);
+      const higherIsWorse = aCls === "bad" ? (a > b) : (!asRate && Math.max(a, b) > 1);
+      const tone = forceTone || ((aCls === "ok" && bCls === "ok") ? "ok" : deltaTone(a, b, higherIsWorse));
+      const delta = formatDelta(a, b, asRate);
+      const aria = `${aLbl} ${show(a)}, ${bLbl} ${show(b)}${delta ? ", delta " + delta : ""}`;
+      return `<div class="pair-fig" role="img" aria-label="${esc(aria)}">
+        <div class="pair-head">
+          <span class="pair-title">${esc(title || "Compared from the report")}</span>
+          ${delta ? `<span class="pair-delta ${tone}">${esc(delta)}</span>` : ""}
+        </div>
+        <div class="bars">
+          <div class="barrow"><span class="bl">${esc(aLbl)}</span>${rateBar(asRate ? a : a / max, aCls)}<span class="bv">${show(a)}</span></div>
+          <div class="barrow"><span class="bl">${esc(bLbl)}</span>${rateBar(asRate ? b : b / max, bCls)}<span class="bv">${show(b)}</span></div>
+        </div>
+      </div>`;
+    }
+    function shareWeight(share, tenant) {
+      if (share == null || Number.isNaN(Number(share))) return "";
+      const w = Math.max(2, Math.min(100, Number(share) * 100));
+      const label = tenant || "tenant";
+      return `<div class="share-weight" role="img" aria-label="${esc(pct(share) + " of " + label)}">
+        <div class="share-meta">
+          <span class="share-lbl">Weight of conversations</span>
+          <span class="share-val">${esc(pct(share))} of ${esc(label)}</span>
+        </div>
+        <div class="share-track"><i style="width:${w}%"></i></div>
+      </div>`;
+    }
+    function clearCompare(observed, expected) {
+      if (observed == null || expected == null) return "";
+      return `<div class="clear-strip" role="img" aria-label="${esc("This window " + showVal(observed) + ", usual " + showVal(expected))}">
+        <div class="clear-col"><span class="clear-lbl">This window</span><span class="clear-val">${esc(showVal(observed))}</span></div>
+        <span class="clear-mid">vs</span>
+        <div class="clear-col"><span class="clear-lbl">Usual</span><span class="clear-val">${esc(showVal(expected))}</span></div>
+      </div>`;
+    }
+    function valuesNear(a, b) {
+      const x = Number(a), y = Number(b);
+      if (!Number.isFinite(x) || !Number.isFinite(y)) return false;
+      const scale = Math.max(Math.abs(x), Math.abs(y), 1e-9);
+      return Math.abs(x - y) / scale <= 0.12;
+    }
+    function inventBlock() {
+      return `<div class="state-meter" aria-hidden="true"><span class="state-block">No rate to plot</span></div>`;
+    }
 
     const SAFE_KEY = /^(gap:[A-Z0-9]+|[A-Za-z0-9._-]+)$/;
     async function api(path, opts) {
@@ -1105,17 +1369,6 @@
       if (!inner) return "";
       return `<details class="more"><summary>${esc(summary)}</summary><div class="inner">${inner}</div></details>`;
     }
-    function pairBars(aLbl, aVal, bLbl, bVal, aCls, bCls) {
-      if (aVal == null || bVal == null) return "";
-      const a = Number(aVal), b = Number(bVal);
-      const asRate = a >= 0 && b >= 0 && a <= 1 && b <= 1;
-      const max = Math.max(a, b, asRate ? 1 : 0.0001);
-      const show = (n) => asRate ? pct(n) : fmt(n, 4);
-      return `<div class="bars">
-        <div class="barrow"><span class="bl">${esc(aLbl)}</span>${rateBar(asRate ? a : a / max, aCls)}<span class="bv">${show(a)}</span></div>
-        <div class="barrow"><span class="bl">${esc(bLbl)}</span>${rateBar(asRate ? b : b / max, bCls)}<span class="bv">${show(b)}</span></div>
-      </div>`;
-    }
     function filterForPack(pack) {
       if (pack.kind === "gap") return "refused";
       if (pack.kind === "dismissed") return "ignored";
@@ -1233,10 +1486,13 @@
         <p class="kicker miss">We will not invent</p>
         <h1 class="claim">${esc(gapClaim(g))}</h1>
         <div class="chips"><span class="badge ghost">we will not invent</span></div>
+        <div class="state-fig miss">
+          ${inventBlock()}
+          <p class="state-cap"><strong>Refusal, not a blank chart.</strong> ${esc(gapLede(g))}</p>
+        </div>
         <div class="alert miss">
           <p><strong>${esc(idleGateCopy({ kind: "gap", gap: g }))}</strong></p>
         </div>
-        <p class="lede">${esc(gapLede(g))}</p>
         <div class="spans">
           <div class="span">
             <span class="kind">What changed</span>
@@ -1263,8 +1519,12 @@
       const claim = toManagerEnglish(f.not_a_regression_because || "—");
       const ev = (f.evidence || []).map((e) => toManagerEnglish(e));
       const observeBars = (f.observed != null && f.expected != null)
-        ? pairBars("This window", f.observed, "Usual", f.expected, "warn", "ok")
+        ? pairBars("This window", f.observed, "Usual", f.expected, "ok", "ok", "Checked against usual", "ok")
         : "";
+      const near = valuesNear(f.observed, f.expected);
+      const clearLine = near
+        ? " Observed stays near usual — nothing to approve."
+        : " The move is explained without a quality regression — nothing to approve.";
       $("detail").innerHTML = `
         <p class="kicker ok">Not a problem</p>
         <p class="path">${esc(cohortPath(f))}</p>
@@ -1275,8 +1535,9 @@
           ${f.tenant ? `<span class="badge ghost">${esc(f.tenant)}</span>` : ""}
           ${windowLbl(f.window) ? `<span class="badge ghost">${esc(windowLbl(f.window))}</span>` : ""}
         </div>
-        <div class="alert ok">
-          <p><strong>This is not a problem.</strong>${who && who !== "—" ? ` A closed all-clear for the ${esc(who)}.` : ""}</p>
+        <div class="state-fig ok">
+          ${clearCompare(f.observed, f.expected)}
+          <p class="state-cap"><strong>This is not a problem.</strong>${who && who !== "—" ? ` A closed all-clear for the ${esc(who)}.` : ""}${clearLine}</p>
         </div>
         <p class="lede">${esc(claim)}</p>
         <div class="spans">
@@ -1338,9 +1599,10 @@
         imp.days_running != null ? `${fmt(imp.days_running, 0)} days running` : windowLbl(f.window),
         "warn",
       ]);
-      const observeBars = pairBars("Now", f.observed, "Before this broke", f.expected, "bad", "ok");
-      const predBars = pairBars("Today", pd.from, "If we change it", pd.to, "bad", "ok");
-      const replayBars = v ? pairBars("Test before", v.before, "Test after", v.after, "bad", "ok") : "";
+      const observeBars = pairBars("Now", f.observed, "Before this broke", f.expected, "bad", "ok", "Now vs before");
+      const predBars = pairBars("Today", pd.from, "If we change it", pd.to, "bad", "ok", "Today vs if we change it");
+      const replayBars = v ? pairBars("Test before", v.before, "Test after", v.after, "bad", "ok", "Test before / after") : "";
+      const weight = shareWeight(imp.share_of_traffic, f.tenant);
       const evList = [].concat(f.evidence || [], (d && d.evidence) || []);
       const ev0 = evList[0] ? toManagerEnglish(evList[0]) : "";
       const evRest = evList.slice(1);
@@ -1361,7 +1623,10 @@
         </div>
         <p class="lede">${esc(metricLbl(f.metric))} is ${showVal(f.observed)} against ${showVal(f.expected)} before this broke.</p>
         ${defnShort ? `<p class="defn">${esc(defnShort)}</p>` : ""}
-        <div class="kpis">${kpis.map(([val, k, s, tone]) => `<div class="kpi${tone ? " " + tone : ""}"><div class="k">${esc(k)}</div><div class="v">${esc(val)}</div><div class="s">${esc(s)}</div></div>`).join("")}</div>
+        <div class="impact-viz">
+          <div class="kpis">${kpis.map(([val, k, s, tone]) => `<div class="kpi${tone ? " " + tone : ""}"><div class="k">${esc(k)}</div><div class="v">${esc(val)}</div><div class="s">${esc(s)}</div></div>`).join("")}</div>
+          ${weight}
+        </div>
         <div class="who">
           <p class="owner">${esc(who)} needs to act.</p>
           <p class="inaction">${esc(f.if_nothing_changes || "")}</p>
