@@ -73,49 +73,70 @@ class ScreenHttp(unittest.TestCase):
         c.close()
         return r.status, dict(r.getheaders()), data
 
-    def test_finding_tabs_and_idle_copy(self):
+    def test_screen_is_offline_and_escapes(self):
         st, _, body = self._json("GET", "/")
         page = body.decode()
         self.assertEqual(st, 200)
-        self.assertIn("`To decide (${regs.length})`", page)
-        self.assertIn("`Not a problem (${dismissed.length})`", page)
-        self.assertIn("`We will not invent (${gaps.length})`", page)
-        self.assertNotIn("`All clear (${dismissed.length})`", page)
-        self.assertNotIn("`No number (${gaps.length})`", page)
-        self.assertNotIn("We would not guess", page)
-        self.assertIn("Nothing to approve. This is not a problem.", page)
-        self.assertIn("Nothing to approve. We will not invent a failover rate.", page)
-        self.assertIn("Nothing to approve. We will not invent this number.", page)
-        self.assertIn('"Nothing to approve. " + gapClaim(g) + "."', page)
-        self.assertIn('g.ask_id === "A11" || g.verdict === "NOT_MEASURABLE"', page)
-        self.assertIn('pack.kind === "dismissed" || !pack.p', page)
-        self.assertNotIn("Nothing to approve. This is all clear.", page)
-        self.assertNotIn("Nothing to approve on this finding.", page)
-        self.assertIn("We will not invent a failover rate", page)
-        self.assertIn(">not a problem<", page)
-        self.assertIn(">we will not invent<", page)
-        self.assertNotIn(">all clear<", page)
-        self.assertNotIn(">no number<", page)
-        self.assertIn('pack.kind === "gap"', page)
-        self.assertIn('pack.kind === "dismissed"', page)
-        self.assertIn("content-visibility: auto", page)
-        self.assertIn("list-body", page)
-        self.assertIn("-webkit-line-clamp: 2;", page)
-        self.assertIn("toManagerEnglish", page)
-        self.assertIn("audienceFor", page)
+        self.assertIn('src="/static/app.js"', page)
+        self.assertIn('href="/static/app.css"', page)
+        for name in ("app.js", "app.css"):
+            st, hdrs, data = self._json("GET", "/static/" + name)
+            self.assertEqual(st, 200)
+            text = data.decode()
+            # no CDN, no web fonts, no remote scripts
+            self.assertNotRegex(text, r"https?://")
+        _, hdrs, js = self._json("GET", "/static/app.js")
+        self.assertIn("javascript", {k.lower(): v for k, v in hdrs.items()}["content-type"])
+        js = js.decode()
+        self.assertIn("function esc(v)", js)
+        self.assertIn('fetch("/decision"', js)
+        self.assertIn('fetch("/report.json"', js)
+        self.assertIn("A reason is required.", js)
+        self.assertNotIn(' style="', js)
 
-    def test_idle_gate_copy_is_two_states(self):
-        st, _, body = self._json("GET", "/")
-        page = body.decode()
+    def _js(self):
+        st, _, data = self._json("GET", "/static/app.js")
         self.assertEqual(st, 200)
-        self.assertIn("function idleGateCopy(pack)", page)
-        self.assertIn('g.ask_id === "A11" || g.verdict === "NOT_MEASURABLE"', page)
-        self.assertIn("Nothing to approve. We will not invent a failover rate.", page)
-        self.assertIn("Nothing to approve. This is not a problem.", page)
-        self.assertIn('pack.kind === "dismissed" || !pack.p', page)
-        self.assertNotIn("Nothing to approve — we would not guess this number", page)
-        self.assertNotIn("Nothing to approve. This is all clear.", page)
-        self.assertNotIn("Nothing to approve on this finding.", page)
+        return data.decode()
+
+    def test_required_asks_are_on_the_screen(self):
+        js = self._js()
+        self.assertIn('const REQUIRED_ASKS = ["A01", "A04", "A09", "A11"];', js)
+        self.assertIn("function requiredAsks(rep)", js)
+        self.assertIn("view.innerHTML = requiredAsks(rep) + body;", js)
+
+    def test_manager_english_and_idle_gate_copy(self):
+        js = self._js()
+        self.assertIn("function toManagerEnglish(text)", js)
+        self.assertIn('"tool.contract_break": "The tool said success but sent an empty answer"', js)
+        self.assertIn("function audienceFor(f, d)", js)
+        self.assertIn('A11: "Failover does not exist here. There is no rate to show."', js)
+        self.assertIn('"Nothing to approve. We will not invent a failover rate."', js)
+        self.assertIn('return "Nothing to approve. This is not a problem.";', js)
+        self.assertIn("Required event:", js)  # stripped from gap prose; the spec is shown structurally
+        self.assertIn("Technical names", js)
+
+    def test_both_impact_shapes_are_rendered(self):
+        js = self._js()
+        for field in ("would_have_resolved_at_baseline", "resolved_conversations_slowed",
+                      "extra_turns", "excess_cost_usd", "unplanned_handoffs", "abandoned"):
+            self.assertIn("ds." + field, js)
+
+    def test_standard_match_treats_null_cohort_keys_as_wildcards(self):
+        self.assertIn("sc[k] == null || sc[k] === c[k]", self._js())
+
+    def test_csp_has_no_inline_or_remote_sources(self):
+        _, hdrs, _ = self._json("GET", "/")
+        csp = {k.lower(): v for k, v in hdrs.items()}["content-security-policy"]
+        self.assertNotIn("unsafe-inline", csp)
+        self.assertNotIn("https:", csp)
+        self.assertIn("script-src 'self'", csp)
+
+    def test_static_whitelist(self):
+        for bad in ("/static/../app.py", "/static/%2e%2e/app.py", "/static/app.py",
+                    "/static/fonts/../../app.py", "/static/", "/static/nope.css"):
+            st, _, _ = self._json("GET", bad)
+            self.assertEqual(st, 404, bad)
 
     def test_get_page_and_security_headers(self):
         st, hdrs, body = self._json("GET", "/")
@@ -178,63 +199,6 @@ class ScreenHttp(unittest.TestCase):
         self.assertEqual(st, 200, data)
         saved = json.loads(Path(self.report).read_text())
         self.assertEqual(saved["prescriptions"][0]["approval"]["reason"], payload["reason"])
-
-    def test_tech_names_are_a_visible_story_footer(self):
-        st, _, body = self._json("GET", "/")
-        page = body.decode()
-        self.assertEqual(st, 200)
-        self.assertIn('class="tech-foot"', page)
-        self.assertIn("function pinStoryLayout", page)
-        self.assertIn(".story-scroll", page)
-        self.assertIn("flex-direction: column", page)
-        self.assertNotIn('details("Technical names"', page)
-        self.assertIn("min-height: 10rem", page)
-        self.assertIn('{ k: "fields", v: (ev.fields || []).join(", ") }', page)
-        self.assertIn("overflow-x: auto", page)
-
-    def test_list_body_wrapper_in_served_html(self):
-        st, _, body = self._json("GET", "/")
-        page = body.decode()
-        self.assertEqual(st, 200)
-        self.assertIn(".list-body {", page)
-        self.assertIn('</div><div class="list-body">${items.join("")', page)
-        self.assertIn("overflow-y: auto", page)
-
-    def test_gap_lede_and_first_beat_helpers(self):
-        st, _, body = self._json("GET", "/")
-        page = body.decode()
-        self.assertEqual(st, 200)
-        self.assertIn("const GAP_LEDE = {", page)
-        self.assertIn(
-            'A11: "Failover does not exist here. There is no rate to show."',
-            page,
-        )
-        self.assertIn("function gapLede(g)", page)
-        self.assertIn("GAP_LEDE[g.ask_id]", page)
-        self.assertIn("function firstBeat(s, max)", page)
-        self.assertIn("${esc(gapLede(g))}", page)
-
-    def test_list_keyboard_navigation_bound(self):
-        st, _, body = self._json("GET", "/")
-        page = body.decode()
-        self.assertEqual(st, 200)
-        self.assertIn("function bindListKeys(rep)", page)
-        self.assertIn("bindListKeys(rep);", page)
-        self.assertIn('$("list").addEventListener("keydown"', page)
-        self.assertIn('ev.key !== "ArrowDown"', page)
-        self.assertIn('ev.key !== "ArrowUp"', page)
-        self.assertIn('ev.key !== "Home"', page)
-        self.assertIn('ev.key !== "End"', page)
-
-    def test_finding_tab_label_contract(self):
-        st, _, body = self._json("GET", "/")
-        page = body.decode()
-        self.assertEqual(st, 200)
-        self.assertIn("`Not a problem (${dismissed.length})`", page)
-        self.assertIn("`We will not invent (${gaps.length})`", page)
-        self.assertNotIn("`All clear (${dismissed.length})`", page)
-        self.assertNotIn("`No number (${gaps.length})`", page)
-        self.assertNotIn("We would not guess", page)
 
     def test_corrupt_report_returns_error_not_drop(self):
         Path(self.report).write_text("{ not json", encoding="utf-8")

@@ -37,12 +37,17 @@ SECURITY_HEADERS = (
     ("Referrer-Policy", "no-referrer"),
     ("Cache-Control", "no-store"),
     ("Content-Security-Policy",
-     "default-src 'none'; script-src 'unsafe-inline'; "
-     "style-src 'unsafe-inline' https://fonts.googleapis.com; "
-     "font-src https://fonts.gstatic.com; "
-     "img-src 'none'; connect-src 'self'; form-action 'self'; "
+     "default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; "
+     "img-src 'self' data:; connect-src 'self'; form-action 'self'; "
      "base-uri 'none'; frame-ancestors 'none'"),
 )
+STATIC_TYPES = {
+    ".css": "text/css; charset=utf-8",
+    ".js": "text/javascript; charset=utf-8",
+    ".woff2": "font/woff2",
+    ".svg": "image/svg+xml",
+}
+SAFE_STATIC = re.compile(r"^(?:fonts/)?[A-Za-z0-9][\w.-]{0,80}$")
 
 
 class ReportStore:
@@ -138,6 +143,8 @@ def make_handler(store: ReportStore):
                 except OSError as e:
                     return self._json(500, {"error": "screen_unavailable", "detail": str(e)})
                 return self._send(200, body, "text/html; charset=utf-8")
+            if path.startswith("/static/"):
+                return self._static(path[len("/static/"):])
             if path == "/report.json":
                 try:
                     body = json.dumps(store.load()).encode("utf-8")
@@ -180,6 +187,18 @@ def make_handler(store: ReportStore):
             except ValueError as e:
                 return self._json(400, {"error": "invalid_decision", "detail": str(e)})
             return self._json(200, {"ok": True, "approval": approval})
+
+        def _static(self, name: str):
+            # whitelist: known extensions, no traversal, only the static dir (and fonts/)
+            ext = os.path.splitext(name)[1].lower()
+            if ext not in STATIC_TYPES or not SAFE_STATIC.match(name) or ".." in name:
+                return self._json(404, {"error": "not_found"})
+            try:
+                with open(os.path.join(STATIC_DIR, *name.split("/")), "rb") as fh:
+                    body = fh.read()
+            except OSError:
+                return self._json(404, {"error": "not_found"})
+            return self._send(200, body, STATIC_TYPES[ext])
 
         def _read_body(self):
             raw_len = self.headers.get("Content-Length") or "0"
