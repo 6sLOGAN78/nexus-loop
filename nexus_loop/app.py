@@ -14,6 +14,7 @@ import datetime as dt
 import json
 import os
 import re
+import tempfile
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Optional
@@ -95,11 +96,22 @@ class ReportStore:
         if problems:
             raise ValueError("report would be invalid after write-back: " + "; ".join(problems[:8]))
         os.makedirs(os.path.dirname(self.report_path) or ".", exist_ok=True)
-        tmp = self.report_path + ".tmp"
-        with open(tmp, "w", encoding="utf-8") as fh:
-            json.dump(report, fh, indent=2, allow_nan=False)
-            fh.write("\n")
-        os.replace(tmp, self.report_path)
+        directory = os.path.dirname(self.report_path) or "."
+        fd, tmp = tempfile.mkstemp(
+            prefix=os.path.basename(self.report_path) + ".", suffix=".tmp", dir=directory)
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as fh:
+                json.dump(report, fh, indent=2, allow_nan=False)
+                fh.write("\n")
+                fh.flush()
+                os.fsync(fh.fileno())
+            os.replace(tmp, self.report_path)
+        except BaseException:
+            try:
+                os.unlink(tmp)
+            except OSError:
+                pass
+            raise
         os.makedirs(os.path.dirname(self.log_path) or ".", exist_ok=True)
         with open(self.log_path, "a", encoding="utf-8") as fh:
             fh.write(json.dumps({
@@ -143,6 +155,11 @@ def make_handler(store: ReportStore):
                     body = json.dumps(store.load()).encode("utf-8")
                 except OSError as e:
                     return self._json(404, {"error": "report_missing", "detail": str(e)})
+                except ValueError as e:
+                    # a corrupt report raises JSONDecodeError (a ValueError); return a
+                    # clear error instead of letting the handler raise and drop the
+                    # connection, which would leave the screen permanently dead
+                    return self._json(500, {"error": "report_invalid", "detail": str(e)})
                 return self._send(200, body, "application/json; charset=utf-8")
             if path == "/health":
                 present = os.path.isfile(store.report_path)
