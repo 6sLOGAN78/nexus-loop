@@ -172,7 +172,13 @@ def make_handler(store: ReportStore):
                 return self._send(200, body, "application/json; charset=utf-8")
             if path == "/health":
                 present = os.path.isfile(store.report_path)
-                return self._json(200, {"ok": present, "report": present})
+                ok = present
+                try:
+                    if present:
+                        store.load()
+                except (OSError, ValueError):
+                    ok = False
+                return self._json(200, {"ok": ok, "report": ok})
             if path.startswith("/static/"):
                 return self._static(path[len("/static/"):])
             return self._json(404, {"error": "not_found"})
@@ -208,6 +214,8 @@ def make_handler(store: ReportStore):
                 return self._json(404, {"error": "unknown_prescription", "detail": str(e)})
             except ValueError as e:
                 return self._json(400, {"error": "invalid_decision", "detail": str(e)})
+            except OSError as e:
+                return self._json(500, {"error": "report_unavailable", "detail": str(e)})
             return self._json(200, {"ok": True, "approval": approval})
 
         def _read_body(self):

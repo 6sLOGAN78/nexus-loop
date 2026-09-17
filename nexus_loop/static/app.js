@@ -107,7 +107,7 @@
     minus: '<svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M5.5 8h5"/></svg>',
   };
 
-  const state = { rep: null, tab: "findings", key: null, open: {}, railOpen: {}, error: null };
+  const state = { rep: null, tab: "findings", key: null, open: {}, railOpen: {}, byTab: {}, error: null };
 
   /* ---------------- formatting ---------------- */
   function esc(v) {
@@ -125,10 +125,16 @@
   function isRateName(s) { return /rate|share|containment|resolution|answered with nothing/i.test(String(s || "")); }
   function metricVal(metric, v) {
     if (!isNum(v)) return "—";
-    return isRateName(metric) && v >= 0 && v <= 1 ? pct(v) : num(v, Math.abs(v) < 10 ? null : 1);
+    if (isRateName(metric) && v >= 0 && v <= 1) return pct(v);
+    if (/latency|duration|_ms/i.test(String(metric || ""))) return num(v, 0) + " ms";
+    if (/quality|score/i.test(String(metric || ""))) return num(v, 2) + " / 5";
+    return num(v, Math.abs(v) < 10 ? null : 1);
   }
   function human(s) { return String(s || "").replace(/_/g, " "); }
-  const audienceLbl = (ids) => (ids || []).map((x) => AUDIENCE[x] || human(x)).join(", ");
+  const audienceLbl = (ids) => {
+    const a = (ids || []).map((x) => AUDIENCE[x] || human(x));
+    return a.length > 1 ? a.slice(0, -1).join(", ") + " and " + a[a.length - 1] : (a[0] || "");
+  };
   function audienceFor(f, d) {
     if (f && f.audience && f.audience.length) return audienceLbl(f.audience);
     return audienceLbl(CAUSE_AUDIENCE[d && d.cause_class] || []);
@@ -270,7 +276,9 @@
   }
   function standardLine(st, metric) {
     if (!st) return "";
-    return `Healthy conversations here sit around ${metricVal(st.metric, st.median)} ${metricLbl(metric || st.metric).toLowerCase()} (best ${metricVal(st.metric, st.best)}).`;
+    const m = metric || st.metric;
+    if (isRateName(m)) return `Healthy conversations here finish at about ${metricVal(st.metric, st.median)}; the best day was ${metricVal(st.metric, st.best)}.`;
+    return `Healthy conversations here finish in about ${metricVal(st.metric, st.median)} ${metricLbl(m).toLowerCase()}; the best is ${metricVal(st.metric, st.best)}.`;
   }
 
   /* Coverage and fidelity of the metric behind a finding, taken from the
@@ -283,20 +291,25 @@
     return null;
   }
   function coverageFor(rep, f, d) {
-    const ask = askForCause(d && d.cause_class);
+    const c = d && d.cause_class;
+    const ask = askForCause(c);
     if (!ask) return null;
     const slug = String(f.tenant || "").replace(/[^A-Za-z0-9]/g, "_");
     const ms = (rep.metrics || []).filter((m) => m.ask_id === ask);
-    const m = ms.find((x) => x.id.indexOf(slug) >= 0) || ms[0];
+    const prefer = c === "tool.contract_break" ? "empty_success" : null;
+    const m = (prefer && ms.find((x) => x.id.indexOf(prefer) >= 0 && x.id.indexOf(slug) >= 0))
+      || ms.find((x) => x.id.indexOf(slug) >= 0) || ms[0];
     if (!m || !m.coverage || !isNum(m.coverage.value)) return null;
-    return { value: m.coverage.value, fidelity: m.fidelity, ask: ask };
+    return { value: m.coverage.value, fidelity: m.fidelity, ask: ask, scope: f.tenant || null };
   }
 
   /* ---------------- top bar ---------------- */
   function renderTop(rep, ix) {
     const askCount = new Set((rep.metrics || []).map((m) => m.ask_id).concat((rep.gaps || []).map((g) => g.ask_id))).size;
-    const counts = { findings: ix.regs.length, refusals: ix.gaps.length, metrics: askCount,
-      decisions: (rep.prescriptions || []).filter((p) => !p.approval).length };
+    const answeredAsks = new Set((rep.metrics || []).map((m) => m.ask_id));
+    const fullyRefused = (rep.gaps || []).filter((g) => !answeredAsks.has(g.ask_id)).length;
+    const counts = { findings: ix.regs.length, refusals: fullyRefused, metrics: askCount,
+      decisions: (rep.prescriptions || []).filter((p) => p.approval).length };
     for (const t of TABS) {
       const b = document.querySelector(`.tab[data-tab="${t}"]`);
       b.setAttribute("aria-selected", String(state.tab === t));
@@ -327,7 +340,7 @@
     });
     const disItems = ix.dismissed.map((f) =>
       railItem("f:" + f.id, '<span class="dot low"></span>', headlineShort(f), `${f.tenant} · ${windowText(f.window)}`));
-    const gapItems = ix.gaps.map((g) =>
+    const gapItems = ix.gaps.slice().sort((a, b) => (a.ask_id === "A11" ? -1 : b.ask_id === "A11" ? 1 : 0)).map((g) =>
       railItem("g:" + g.ask_id, I.lock, gapClaim(g), `${g.ask_id} · ${GAP_VERDICT[g.verdict] || human(g.verdict)}`));
     const [kind, id] = splitKey(state.key);
     const holds = {
@@ -381,7 +394,7 @@
     const cov = coverageFor(rep, f, d);
     const main = `
       <div class="header">
-        <div class="pills">${pill(({ critical: "Critical", high: "High", medium: "Medium", low: "Low" })[f.severity] || f.severity, esc(f.severity))}${cov ? pill("coverage " + pct(cov.value, 0), cov.value >= 0.95 ? "outline" : "warning") : ""}${cov && cov.fidelity ? fidelityPill(cov.fidelity) : ""}</div>
+        <div class="pills">${pill(({ critical: "Critical", high: "High", medium: "Medium", low: "Low" })[f.severity] || f.severity, esc(f.severity))}${cov ? pill("coverage " + pct(cov.value, 0) + (cov.scope ? " · " + cov.scope : ""), cov.value >= 0.95 ? "outline" : "warning") : ""}${cov && cov.fidelity ? fidelityPill(cov.fidelity) : ""}</div>
         <h1 class="display">${esc(f.headline || metricLbl(f.metric))}</h1>
         <p class="muted">${esc([f.tenant, cohortText(f.cohort), windowText(f.window), isNum(im.days_running) ? `running ${im.days_running} days` : ""].filter(Boolean).join(" · "))}</p>
       </div>
@@ -390,11 +403,12 @@
         ${rest.length ? `<p class="small muted tiles-more">${rest.map(([l, n]) => `${esc(l)} <strong>${esc(n)}</strong>`).join(" · ")}</p>` : ""}
         ${im.derivation || f.baseline ? fold("How these were counted, and the baseline", `${im.derivation ? `<p>${rich(im.derivation)}</p>` : ""}${f.baseline ? `<p data-style="margin-top:8px"><strong>Baseline.</strong> ${esc(f.baseline)}</p>` : ""}`) : ""}
       </section>
-      <div class="callout">${I.clock}<div><p><strong>${esc(who || "Someone")} needs to act.</strong></p>${f.if_nothing_changes ? `<p>${esc(f.if_nothing_changes)}</p>` : ""}</div></div>
+      <div class="callout">${I.clock}<div><p><strong>Needs to act:</strong> ${esc(who || "Someone")}</p>${f.if_nothing_changes ? `<p>${esc(f.if_nothing_changes)}</p>` : ""}</div></div>
       <section class="card">
         <h2 class="title">What moved</h2>
         <div class="compare"><span class="metric">${esc(metricVal(f.metric, f.expected))}</span><span class="arrow">→</span><span class="metric to ${worse ? "bad" : "good"}">${esc(metricVal(f.metric, f.observed))}</span></div>
         <p class="muted">${esc(metricLbl(f.metric))}, before this broke → now.${std ? " " + esc(standardLine(std, f.metric)) : ""}</p>
+        ${f.baseline ? `<p class="small muted">Baseline: ${esc(f.baseline)}</p>` : ""}
         ${std ? fold("The standard this cohort is held to", kv([
           ["Best / median", esc(`${metricVal(std.metric, std.best)} / ${metricVal(std.metric, std.median)}`)],
           ["Gap to best", esc(metricVal(std.metric, std.deficit))],
@@ -453,7 +467,7 @@
     const golden = v.golden_set_pass === true ? "known-good conversations still passed"
       : v.golden_set_pass === false ? "a known-good conversation got worse" : "";
     return `<p class="row-line">${pill(ui[0], ui[1])}<span>${esc(replayLbl(v))}: ${esc(metricVal(m, v.before))} → <strong>${esc(metricVal(m, v.after))}</strong></span></p>
-      <p class="small muted">${esc([golden, isNum(v.prediction_error) ? "gap vs prediction " + num(v.prediction_error, 3) : ""].filter(Boolean).join(" · "))}${golden || isNum(v.prediction_error) ? ". " : ""}The test’s “before” is simulated, not our measured number.</p>`;
+      <p class="small muted">${esc([golden, isNum(v.prediction_error) ? "gap vs prediction " + num(v.prediction_error, 3) + " pts" : ""].filter(Boolean).join(" · "))}${golden || isNum(v.prediction_error) ? ". " : ""}The test’s “before” is simulated, not our measured number.</p>`;
   }
 
   /* A paste-ready note for a recorded decision: the human's verdict, reason and
@@ -497,10 +511,13 @@
       lines.push(`  By ${a.decided_by} at ${when(a.at)}`);
     }
     const dismissed = (ix.dismissed || []).length;
-    const gaps = (ix.gaps || []).length;
+    const answered = new Set((rep.metrics || []).map((m) => m.ask_id));
+    const fullyRefused = (ix.gaps || []).filter((g) => !answered.has(g.ask_id)).length;
+    const partly = (ix.gaps || []).length - fullyRefused;
     lines.push("");
     if (dismissed) lines.push(`Dismissed signals: ${dismissed} looked like problems and are not.`);
-    if (gaps) lines.push(`No measurement: ${gaps} questions we will not invent.`);
+    if (fullyRefused) lines.push(`No measurement: ${fullyRefused} question${fullyRefused === 1 ? "" : "s"} we will not invent.`);
+    if (partly) lines.push(`Partly refused: ${partly} question${partly === 1 ? "" : "s"} (a breakdown we will not split).`);
     return lines.join("\n");
   }
 
@@ -515,15 +532,15 @@
       <h2 class="title">${esc(dec.asking_approval_for || p.description)}</h2>
       ${a ? `<div class="decided"><div class="row" data-style="gap:8px">${pill(ui[0], ui[1])}<span class="small muted">by ${esc(a.decided_by)} · ${esc(when(a.at))}</span></div><p data-style="margin-top:6px"><q>${esc(a.reason)}</q></p><div data-style="margin-top:10px"><button class="btn sm secondary" data-copy="${esc(note)}">${I.copy}Copy decision note</button></div></div>` : ""}
       <div>
-        ${fold("Risk if we are wrong", `<p>${rich(dec.risk_if_diagnosis_wrong || "Not stated.")}</p>`)}
-        ${fold("We would not ship if", `<p>${rich(dec.would_not_ship_if || "Not stated.")}</p>`)}
+        ${fold("Risk if we are wrong", `<p>${rich(dec.risk_if_diagnosis_wrong || "Not stated.")}</p>`, true)}
+        ${fold("We would not ship if", `<p>${rich(dec.would_not_ship_if || "Not stated.")}</p>`, true)}
       </div>
       <div class="divider"></div>
       <form id="decide" class="stack" data-style="gap:12px" novalidate data-pid="${esc(p.id)}">
         <div class="field"><label for="who">Your name</label><input id="who" class="input" maxlength="80" autocomplete="name" value="${esc(who)}" placeholder="operator"></div>
         <div class="field" id="reason-field"><label for="reason">Reason (required)</label>
-          <textarea id="reason" class="textarea" rows="4" maxlength="4000" placeholder="Why this call, in one or two sentences"></textarea>
-          <span class="err" id="reason-err">A reason is required.</span></div>
+          <textarea id="reason" class="textarea" rows="4" maxlength="4000" required aria-required="true" aria-describedby="reason-err" placeholder="Why this call, in one or two sentences"></textarea>
+          <span class="err" id="reason-err" role="alert">A reason is required.</span></div>
         <div id="decide-error"></div>
         <div class="btn-stack">
           <button type="submit" class="btn block success" data-verdict="accepted">${I.check}Approve</button>
@@ -615,9 +632,9 @@
           return out;
         }
         case "A08": return Object.entries(v).map(([k, x]) => `${k.replace(/^days_/, "").replace(/_/g, "–")} days: ${usd(x, 0)}`);
-        case "A05": return [`${pct(v.reach_rate[v.reach_rate.length - 1], 0)} reach ${v.milestones[v.milestones.length - 1]}`, `n = ${int(v.n)}`];
+        case "A05": return [`${pct(v.reach_rate[v.reach_rate.length - 1], 0)} reach ${human(v.milestones[v.milestones.length - 1])}`, `n = ${int(v.n)}`];
         case "A06":
-          return Object.entries(v).map(([k, x]) => x.kb_hit_rate != null ? `${k}: hit ${pct(x.kb_hit_rate, 0)}` : `judge ${k}: ${num(x.mean, 2)} (n ${int(x.n)})`);
+          return Object.entries(v).map(([k, x]) => x.kb_hit_rate != null ? `${k}: hit ${pct(x.kb_hit_rate, 0)}` : `scorecard ${k}: ${num(x.mean, 2)} (n ${int(x.n)})`);
         case "A07": return v.map((u) => `${u.tenant}: ${u.from} → ${u.to}, resolution ${pct(u.resolution[0])} → ${pct(u.resolution[1])}`);
         case "A10": return [`${int(v.count)} conversations`];
       }
@@ -632,7 +649,7 @@
     return `<div class="metric-detail"><p class="label mono">${esc(m.id)}</p><div class="grid2">
       <div>${kv([
         ["Name", esc(toManagerEnglish(m.name))],
-        ["Definition", plan.filter ? `<span class="mono">${esc(plan.filter)}</span>` : null],
+        ["Filter", plan.filter ? `<span class="mono">${esc(plan.filter)}</span>` : null],
         ["Source", plan.source ? `<span class="mono">${esc(plan.source)}</span>` : null],
         ["Denominator", esc(plan.denominator)],
         ["Breakdowns", (plan.breakdowns || []).map((b) => `<code>${esc(b)}</code>`).join(" ")],
@@ -652,7 +669,7 @@
     const bucket = (a) => (byAsk[a] = byAsk[a] || { ms: [], gap: null });
     for (const m of metrics) bucket(m.ask_id).ms.push(m);
     for (const g of gaps) bucket(g.ask_id).gap = g;
-    const ids = Object.keys(ASKS).filter((a) => byAsk[a]).sort();
+    const ids = Object.keys(byAsk).sort();
     let answered = 0, partly = 0, refused = 0;
     const rows = ids.map((ask, i) => {
       const { ms, gap } = byAsk[ask];
@@ -673,7 +690,7 @@
       const detail = `<tr class="expand"><td colspan="6">${ms.map(metricDetail).join("") || `<p class="muted">No metric: ${esc(gapClaim(gap))}. ${esc(gapLede(gap))}</p>`}</td></tr>`;
       return `<tr class="clickable${open ? " open" : ""}" data-open="ask${i}" tabindex="0" aria-expanded="${open}">
         <td class="num-cell"><span class="caret">${I.chev}</span> <span class="mono">${esc(ask)}</span>${REQUIRED_ASKS.includes(ask) ? `<div>${pill("required", "info")}</div>` : ""}</td>
-        <td>${esc((ASKS[ask] || ["", ""])[1])}</td>
+        <td>${esc((ASKS[ask] || [ask, ask])[1])}</td>
         <td class="answer">${answers}${refusedLine}</td>
         <td>${fids.length ? fids.map(fidelityPill).join(" ") : '<span class="muted">—</span>'}</td>
         <td>${isNum(cov) ? `<span class="cov"><span class="mono">${pct(cov, 0)}</span>${bar(cov, cov >= 0.95 ? "good" : "warn", true)}</span>` : '<span class="muted">—</span>'}</td>
@@ -689,7 +706,7 @@
         <tbody>${rows.join("")}</tbody></table></div></section>
       ${std.length ? `<section class="card flush"><div data-style="padding:16px 20px 4px"><h2 class="title">Standards: the best this cohort has already done</h2></div><div class="table-wrap"><table class="data">
         <thead><tr><th>Tenant</th><th>Cohort</th><th>Metric</th><th>Best</th><th>Median</th><th>Deficit</th><th>Exemplars</th></tr></thead>
-        <tbody>${std.map((s) => `<tr><td>${esc(s.tenant)}</td><td class="mono">${esc(cohortText(s.cohort))}</td><td class="mono">${esc(s.metric)}</td>
+        <tbody>${std.map((s) => `<tr><td>${esc(s.tenant)}</td><td class="mono">${esc(cohortText(s.cohort))}</td><td class="mono">${esc(metricLbl(s.metric))}</td>
           <td class="mono">${esc(metricVal(s.metric, s.best))}</td><td class="mono">${esc(metricVal(s.metric, s.median))}</td><td class="mono">${esc(metricVal(s.metric, s.deficit))}</td><td class="mono">${int(s.exemplar_n)}</td></tr>`).join("")}</tbody></table></div></section>` : ""}
     </div>`;
   }
@@ -732,7 +749,7 @@
         <div class="stats">
           <div><span class="label">Replay cycles</span><div class="v">${esc(int(sa.cycles))}</div><p class="small muted">${trusted ? "enough cycles to weigh the priors" : "fewer than 3, not trusted yet"}</p></div>
           <div><span class="label">Replays that improved</span><div class="v">${vers.length ? `${hits} of ${vers.length}` : "—"}</div><p class="small muted">verdict from the replay endpoint</p></div>
-          <div><span class="label">Prediction error</span><div class="v">${meanErr == null ? "—" : esc(num(meanErr, 3))}</div><p class="small muted">predicted minus replayed delta${(sa.downweighted || []).length ? " · de-weighted: " + esc(sa.downweighted.join(", ")) : ""}</p></div>
+          <div><span class="label">Prediction error</span><div class="v">${meanErr == null ? "—" : esc(num(meanErr, 3)) + " pts"}</div><p class="small muted">predicted minus replayed delta${(sa.downweighted || []).length ? " · de-weighted: " + esc(sa.downweighted.join(", ")) : ""}</p></div>
         </div>
         ${sa.notes ? `<p class="small muted" data-style="margin-top:14px">${esc(sa.notes)}</p>` : ""}
       </section>
@@ -757,6 +774,8 @@
 
   /* ---------------- main render ---------------- */
   function render() {
+    const prev = document.activeElement;
+    const prevKey = prev && prev.getAttribute ? (prev.getAttribute("data-key") || prev.getAttribute("data-open")) : null;
     const rep = state.rep;
     const view = $("view");
     if (!rep) {
@@ -776,7 +795,9 @@
     $("shell").classList.toggle("shell", withRail);
     $("rail").hidden = !withRail;
     if (withRail) {
-      if (!validKey(ix, state.key, state.tab)) state.key = defaultKey(ix, state.tab);
+      const rememberedKey = state.byTab[state.tab];
+      if (!validKey(ix, state.key, state.tab)) state.key = (rememberedKey && validKey(ix, rememberedKey, state.tab)) ? rememberedKey : defaultKey(ix, state.tab);
+      state.byTab[state.tab] = state.key;
       renderRail(rep, ix);
       const [kind, id] = splitKey(state.key);
       let body;
@@ -786,7 +807,9 @@
       } else if (kind === "g") {
         body = renderGap(rep, ix.gaps.find((g) => g.ask_id === id));
       } else {
-        body = `<div class="empty"><h1 class="title">No regressions found</h1><p class="muted">${ix.dismissed.length} lookalikes checked.</p></div>`;
+        body = state.tab === "refusals"
+          ? `<div class="empty"><h1 class="title">Every ask has a number</h1><p class="muted">No refusals in this report.</p></div>`
+          : `<div class="empty"><h1 class="title">No regressions found</h1><p class="muted">${ix.dismissed.length} lookalikes checked.</p></div>`;
       }
       view.innerHTML = body;
     } else if (state.tab === "metrics") {
@@ -799,6 +822,11 @@
       requestAnimationFrame(() => { el.style.width = (parseFloat(el.dataset.w) * 100).toFixed(1) + "%"; });
     });
     document.title = "Nexus Loop · " + state.tab[0].toUpperCase() + state.tab.slice(1);
+    if (prevKey) {
+      let el = null;
+      try { el = view.querySelector('[data-open="' + CSS.escape(prevKey) + '"]') || $("rail").querySelector('[data-key="' + CSS.escape(prevKey) + '"]'); } catch (e) { el = null; }
+      if (el && el.focus) el.focus();
+    }
   }
   function fixInlineStyles(root) {
     root.querySelectorAll("[data-style]").forEach((el) => {
@@ -812,7 +840,7 @@
     return kind === "f" && ix.regs.concat(ix.dismissed).some((f) => f.id === id);
   }
   function defaultKey(ix, tab) {
-    if (tab === "refusals") return ix.gaps[0] ? "g:" + ix.gaps[0].ask_id : null;
+    if (tab === "refusals") { const g = ix.gaps.find((x) => x.ask_id === "A11") || ix.gaps[0]; return g ? "g:" + g.ask_id : null; }
     // open on the story the demo tells: the fix that was tested on replay, else the silent tool failure
     const tested = ix.regs.find((f) => ix.ver(ix.rx(f)));
     const tool = ix.regs.find((f) => (ix.diag(f) || {}).cause_class === "tool.contract_break");
@@ -822,7 +850,7 @@
 
   /* ---------------- routing ---------------- */
   function readHash() {
-    const h = decodeURIComponent(location.hash.replace(/^#\/?/, ""));
+    let h; try { h = decodeURIComponent(location.hash.replace(/^#\/?/, "")); } catch (e) { h = location.hash.replace(/^#\/?/, ""); }
     const [tab, ...rest] = h.split("/");
     if (h && !TABS.includes(tab)) return;   // e.g. #view from the skip link
     state.tab = TABS.includes(tab) ? tab : "findings";
@@ -865,8 +893,9 @@
     const reasonEl = $("reason"), whoEl = $("who");
     const reason = reasonEl.value.trim();
     const field = $("reason-field");
-    if (!reason) { field.classList.add("invalid"); reasonEl.focus(); return; }
+    if (!reason) { field.classList.add("invalid"); reasonEl.setAttribute("aria-invalid", "true"); reasonEl.focus(); return; }
     field.classList.remove("invalid");
+    reasonEl.setAttribute("aria-invalid", "false");
     const who = whoEl.value.trim() || "operator";
     if (!/^[\w .@+-]{1,80}$/.test(who)) { showDecideError("Name may use letters, digits, spaces and . @ + - only."); whoEl.focus(); return; }
     storeSet("nl.who", who);
@@ -884,6 +913,8 @@
       if (!r.ok) throw new Error(body.detail || body.error || "HTTP " + r.status);
       toast(`${(VERDICT_UI[verdict] || [verdict])[0]} · saved to loop-report.json`);
       await load();
+      const gh = $("gate") && $("gate").querySelector("h2");
+      if (gh) { gh.setAttribute("tabindex", "-1"); gh.focus(); }
     } catch (e) {
       buttons.forEach((b) => (b.disabled = false));
       btn.innerHTML = label;
@@ -912,6 +943,8 @@
       (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(() => toast("Copied"), () => toast("Copy not available here"));
       return;
     }
+    const sum = ev.target.closest("details.rail-group > summary");
+    if (sum) { const d = sum.parentElement; requestAnimationFrame(() => { state.railOpen[d.dataset.group] = d.open; }); return; }
     const keyEl = ev.target.closest("[data-key]");
     if (keyEl) return openKey(keyEl.dataset.key);
     const row = ev.target.closest("tr[data-open]");
@@ -938,10 +971,6 @@
   document.addEventListener("pointerdown", (ev) => { const b = ev.target.closest("button[data-verdict]"); if (b) lastSubmitter = b; });
   document.addEventListener("input", (ev) => { if (ev.target.id === "reason" && ev.target.value.trim()) $("reason-field").classList.remove("invalid"); });
   window.addEventListener("hashchange", () => { readHash(); render(); });
-  document.addEventListener("toggle", (ev) => {
-    const g = ev.target.closest && ev.target.closest("details.rail-group");
-    if (g === ev.target) state.railOpen[g.dataset.group] = g.open;
-  }, true);
 
   readHash();
   load();
