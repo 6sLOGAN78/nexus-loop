@@ -307,11 +307,7 @@ The verdict writes into the report. The server serializes decisions on a lock, u
 
 ### 11.2 Decision record
 
-| Fix | Decision | Reason |
-|---|---|---|
-| P-01 | pending | To be recorded at the demo |
-| P-02 | pending | To be recorded at the demo |
-| P-03 | pending | To be recorded at the demo |
+Decisions live in the report itself. Each verdict, its author, its reason and a UTC timestamp are written into the corresponding prescription's `approval` field, and every decision is appended to an append-only `decisions.log` beside the report. The screen is the only writer, and it revalidates the report before it commits.
 
 ---
 

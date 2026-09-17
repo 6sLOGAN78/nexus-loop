@@ -736,21 +736,11 @@ decision to a log. A reason is required.
 
 \subsection{Decision Record}
 
-\begin{table}[h]
-\centering
-\caption{Human decisions for proposed fixes.}
-\label{tab:decisions}
-\small
-\begin{tabular}{p{0.12\columnwidth}p{0.20\columnwidth}p{0.58\columnwidth}}
-\toprule
-\textbf{Fix} & \textbf{Decision} & \textbf{Reason} \\
-\midrule
-P-01 & pending & To be recorded at the demo \\
-P-02 & pending & To be recorded at the demo \\
-P-03 & pending & To be recorded at the demo \\
-\bottomrule
-\end{tabular}
-\end{table}
+Decisions live in the report itself. Each verdict, its author, its reason
+and a UTC timestamp are written into the corresponding prescription's
+\texttt{approval} field, and every decision is appended to an append-only
+\texttt{decisions.log} beside the report. The screen is the only writer,
+and it revalidates the report before it commits.
 
 % =========================================================
 % 12. SELF-ASSESSMENT
