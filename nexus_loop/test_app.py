@@ -306,6 +306,19 @@ class ScreenHttp(unittest.TestCase):
         log = Path(os.path.join(self.tmp.name, "decisions.log")).read_text().splitlines()
         self.assertEqual(len([line for line in log if line.strip()]), 2)
 
+    def test_signed_copy_contract_js_served(self):
+        st, headers, body = self._json("GET", "/signed-copy/contract.js")
+        self.assertEqual(st, 200)
+        text = body.decode()
+        self.assertIn("normalizeVerdict", text)
+        self.assertIn("Copy signed copy", text)
+        ctype = headers.get("Content-Type") or headers.get("content-type") or ""
+        self.assertIn("javascript", ctype)
+        # Path traversal must 404
+        st404, _, data = self._json("GET", "/signed-copy/../index.html")
+        self.assertEqual(st404, 404)
+        self.assertEqual(json.loads(data)["error"], "not_found")
+
 
 if __name__ == "__main__":
     unittest.main()

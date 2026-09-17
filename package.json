@@ -1,0 +1,12 @@
+{
+  "name": "nexus-loop-signed-copy-tests",
+  "private": true,
+  "scripts": {
+    "test:unit": "node --test tests/signed_copy/unit/*.test.js",
+    "test:purity": "node --test tests/signed_copy/e2e/purity.test.js",
+    "test:e2e": "playwright test tests/signed_copy/e2e tests/signed_copy/harness"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0"
+  }
+}

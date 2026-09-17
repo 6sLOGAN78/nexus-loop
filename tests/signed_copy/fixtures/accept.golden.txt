@@ -1,0 +1,17 @@
+Accepted: go ahead with the change to the order lookup instructions.
+Finding: Silent tool failure: the tool said success but sent an empty answer
+
+My reason: "Harm is large and the replay improved. The agent team can undo it if it misfires."
+
+What broke: Share we finished is 77.5%, expected 85.5%.
+Who was affected: 2,686 conversations.
+Why we think so: The order lookup tool reported success but returned nothing, after the tool's response format was changed.
+What we're changing: the order lookup instructions: treat an empty answer as a failure and ask the customer to try again.
+Replay test: 76.0% → 84.5% (before is the test's simulated baseline, not live traffic).
+If the diagnosis is wrong: customers may get an extra retry message and nothing improves.
+If nothing changes: customers in this group keep leaving without an answer.
+Owner: Agent team needs to act.
+
+Open this finding: http://localhost:8000/#f01_tool_contract_break
+Technical names: tool.contract_break · resolution_rate
+Recorded 14 Sep 2026, 09:42 · Coverage: 100% of sessions
