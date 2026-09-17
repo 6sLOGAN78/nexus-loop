@@ -283,6 +283,20 @@ A refusal is **not** a change request. Never show Accept/Reject/Defer on a
 gap. Never blend “not a problem” and “will not invent” idle lines
 (`idleGateCopy` chooses A11 / `NOT_MEASURABLE` first so failover is named).
 
+### 7.4 After the signature: Signed copy
+
+The Signed copy control belongs to **the minute after the signature**, not
+before it. It appears only once `/report.json` shows a recorded decision on a
+**Needs attention** finding. Nothing new appears while the manager is still
+choosing — otherwise writing the hand-off note would leak into deciding, and
+whichever verdict produced a nicer paste would pull them toward it (Goal 4).
+
+Accept, Reject, and Defer get the **same** quiet control: same label, size,
+and style. Reject is not a lesser paste. Honesty travels with the note —
+verbatim reason, simulated-baseline replay qualifier, coverage, technical
+names, and a deep link — with **no recomputed numbers**. The only action is
+clipboard copy; there is no Send, mailto, or claim of delivery.
+
 ---
 
 ## 8. Spatial story: four steps, one causal arc
@@ -323,6 +337,10 @@ These temptations look helpful and break the psychology:
 | Pre-fill the reason or auto-Accept | Dark pattern; defaults may choose the *story*, not the *verdict* |
 | Mix idle copy across buckets | Manager cannot tell “not a problem” from “cannot measure” |
 | Purple-on-white / glow / pill clusters / emoji chrome | Competes with the traffic-light gate; wrong desk |
+| Show Signed copy before the save | Pulls the manager toward whichever verdict pastes nicer |
+| Editable note inside the desk | Second source of truth; the paste must match the record |
+| LLM-written or free-text note | Paraphrase drift; numbers and honesty fall off |
+| Send / mailto / Slack from the desk | Claims delivery the product does not make; clipboard only |
 
 ---
 
@@ -363,6 +381,8 @@ fold the three buckets back into the brand row or only into the list.
 
 **When changing the gate:** only `open` / Needs attention gets buttons.
 Dismissed and refused get idle lines from the loaded finding, never blended.
+Signed copy mounts only in the open + prescription path, below the recorded
+verdict, via `data-testid="signed-copy-slot"`.
 
 **When changing visuals:** colour encodes go/stop/wait and work-queue vs not;
 size stays equal on verdicts; numbers stay report-backed; type stays claim

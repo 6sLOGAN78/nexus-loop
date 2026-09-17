@@ -31,3 +31,7 @@ tools/testbed/kits/
 
 # Nexus Loop pipeline output
 out/
+
+# Node (signed-copy test runners)
+node_modules/
+package-lock.json
