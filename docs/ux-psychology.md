@@ -109,7 +109,7 @@ That type hierarchy is the same argument as the three panes: the eye should find
 
 ## Type
 
-The face is a **wealth-desk pairing**, not a paper brief and not a log. Claims and span titles set in **Newsreader** (serif, weight 500): “Silent tool failure…” and “Share we finished” should read like “Your wealth, on pace” — a status you can say out loud. Chrome, KPI figures, and buttons stay **Source Sans 3**: that is the $18.42M / FUNDED / TARGET layer — tabular, tracked labels, no serif on the controls. Offline, Newsreader falls back to Iowan / Palatino and Source Sans 3 to Segoe / Inter. We do not set the whole page in Georgia: a serif *UI* is the generated-brief tell; a serif *claim* on a sans desk is the product.
+The face is a **wealth-desk pairing** of exactly two families, not a paper brief and not a log. Claims and span titles set in **Newsreader** (serif, weight 500): “Silent tool failure…” and “Share we finished” should read like “Your wealth, on pace” — a status you can say out loud. Chrome, codes (Technical names), KPI figures, and buttons stay **Source Sans 3** — no separate monospace stack: that is the $18.42M / FUNDED / TARGET layer — tabular, tracked labels, no serif on the controls. Offline, Newsreader falls back to Iowan / Palatino and Source Sans 3 to Segoe UI. We do not set the whole page in Georgia: a serif *UI* is the generated-brief tell; a serif *claim* on a sans desk is the product.
 
 ---
 
