@@ -108,6 +108,24 @@ field contract, **`docs/ux-psychology.md`** for why the console is shaped that
 way, and **`docs/manager-english.md`** for the jargon → manager-English
 glossary used on the page.
 
+**Generate report (operator header):** when the screen is started with
+`--allow-generate` / `NEXUS_LOOP_ALLOW_GENERATE=1`, or via `run.py --serve`,
+`POST /generate` re-runs `run.py` into the same report path (default
+`--no-replay`; optional `--with-replay` / `NEXUS_LOOP_REPLAY_URL`). The header
+button triggers that path and reloads `/report.json`. Without the flag,
+generation stays off (403) so a plain `python3 -m nexus_loop.app` never shells
+out unexpectedly.
+
+**Replay service (what this repo uses):** the pipeline does **not** embed a
+replay backend. `run.py` optionally calls the kit’s provided service
+(`tools/nexus-loop-kit/replay/serve.py`) through the client in
+`nexus_loop/replay.py` (`POST {url}/replay`). Successful replies become
+`verifications[]` via `nexus_loop/report.py` `attach_verifications`. With
+`--no-replay` or an unreachable endpoint, the report stays valid with an empty
+`verifications` list. The operator screen does not call replay itself; it only
+renders report fields — including the **Did the test help** span and before/after
+bars from `verifications[]` (`nexus_loop/static/index.html`).
+
 The desk is a sunken `#F7F8F9` canvas with raised rounded cards. Type is
 Newsreader (claims and span headings) plus Source Sans 3 (chrome and
 numbers), with Iowan/Palatino and Segoe fallbacks. The gate is a traffic
