@@ -31,6 +31,7 @@
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{array}
+\usepackage{tabularx}
 \usepackage{multirow}
 \usepackage{caption}
 
@@ -520,7 +521,7 @@ day.
 \caption{Attributed configuration changes.}
 \label{tab:attrib}
 \small
-\begin{tabular}{llllr}
+\begin{tabularx}{\columnwidth}{@{}l l X X r@{}}
 \toprule
 \textbf{Finding} & \textbf{Kind} & \textbf{Target} & \textbf{From $\rightarrow$ To} & \textbf{Day} \\
 \midrule
@@ -528,7 +529,7 @@ F-01 & kb & premium\_card\_info & kb\_2026\_06\_a $\rightarrow$ kb\_2026\_06\_c 
 F-02 & tool & get\_order\_status & 3.2.0 $\rightarrow$ 3.3.0 & 40 \\
 F-03 & prompt & acme\_main\_v3 & p\_v3 $\rightarrow$ p\_v4 & 46 \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 The attribution window is three days before the onset and two after,
@@ -691,7 +692,7 @@ is unreachable the report stays valid with no verifications.
 \caption{Replay verification results, P-01.}
 \label{tab:replay}
 \small
-\begin{tabular}{p{0.46\columnwidth}rr}
+\begin{tabularx}{\columnwidth}{@{}X r r@{}}
 \toprule
 \textbf{Metric} & \textbf{Before} & \textbf{After} \\
 \midrule
@@ -699,7 +700,7 @@ Resolution rate & 0.7741 & 0.8574 \\
 Golden set, 30 sessions & pass & pass \\
 Prediction error & predicted +0.0713 & replayed +0.0833 \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 The replay returned improved, with a change of +0.0833 and a prediction
@@ -766,7 +767,7 @@ that judge and the human rubric labels.
 \caption{Judged quality calibration.}
 \label{tab:calibration}
 \small
-\begin{tabular}{p{0.60\columnwidth}r}
+\begin{tabularx}{\columnwidth}{@{}X r@{}}
 \toprule
 \textbf{Item} & \textbf{Value} \\
 \midrule
@@ -775,7 +776,7 @@ Human-labelled sessions that join & 96 \\
 Agreement, $|\Delta| \leq 1$ on the 1 to 5 scale & 0.9479 \\
 Mean absolute error & published in the report \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 A calibration of 1.00 is treated as a defect rather than a result,
@@ -790,7 +791,7 @@ calibration instead.
 \caption{Automation coverage of the improvement loop.}
 \label{tab:loop}
 \small
-\begin{tabular}{p{0.16\columnwidth}p{0.16\columnwidth}p{0.60\columnwidth}}
+\begin{tabularx}{\columnwidth}{@{}l l X@{}}
 \toprule
 \textbf{Stage} & \textbf{Automated?} & \textbf{Implementation} \\
 \midrule
@@ -800,7 +801,7 @@ Prescribe & Yes & One decision-shaped fix per regression \\
 Verify & Yes & One high-confidence replay with the frozen golden set \\
 Decision & Human & Approve, reject or defer on the screen, written back into the report \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 \subsection{Threats to Inference}
@@ -813,7 +814,7 @@ weaker than they look.
 \caption{Threats to inference and how we guard against them.}
 \label{tab:threats}
 \small
-\begin{tabular}{p{0.20\textwidth}p{0.46\textwidth}p{0.30\textwidth}}
+\begin{tabular}{p{0.18\textwidth}p{0.44\textwidth}p{0.30\textwidth}}
 \toprule
 \textbf{Threat} & \textbf{Why it matters} & \textbf{How we guard} \\
 \midrule
@@ -844,7 +845,7 @@ No cross-tenant control & Peers and siblings stay inside a tenant, which avoids 
 \caption{Implementation stack.}
 \label{tab:stack}
 \small
-\begin{tabular}{p{0.30\columnwidth}p{0.62\columnwidth}}
+\begin{tabularx}{\columnwidth}{@{}l X@{}}
 \toprule
 \textbf{Component} & \textbf{Implementation} \\
 \midrule
@@ -858,7 +859,7 @@ Screen & Standard-library HTTP server plus one HTML page \\
 Report generation & Deterministic JSON assembly and schema validation \\
 Storage & The report file, a decision log, a replay log, and a frozen golden set \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 \subsection{Report Generation}
@@ -894,7 +895,7 @@ steps). The sealed corpus has the same shape.
 \caption{Computational performance.}
 \label{tab:compute}
 \small
-\begin{tabular}{p{0.52\columnwidth}r}
+\begin{tabularx}{\columnwidth}{@{}X r@{}}
 \toprule
 \textbf{Metric} & \textbf{Value} \\
 \midrule
@@ -905,7 +906,7 @@ Peak memory & about 488 MB \\
 Dataset preprocessing (load and fold) & about 5.3 s \\
 Map / index / cache size & session table dominates; golden set a few kilobytes \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 The replay call adds nothing measurable at this size, one localhost
@@ -929,7 +930,7 @@ every cohort.
 \caption{Final system performance.}
 \label{tab:results}
 \small
-\begin{tabular}{p{0.52\columnwidth}r}
+\begin{tabularx}{\columnwidth}{@{}X r@{}}
 \toprule
 \textbf{Metric} & \textbf{Result} \\
 \midrule
@@ -942,7 +943,7 @@ Held-out pool & 3 / 3 pass, 55.0 each \\
 Moved-fault corpus & 55.0 \\
 Moved-fault with a third tenant & 55.0 \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 \begin{figure*}[t]
@@ -1041,7 +1042,7 @@ result.
 \caption{Defects found and fixed during development.}
 \label{tab:defects}
 \small
-\begin{tabular}{p{0.30\textwidth}p{0.40\textwidth}p{0.26\textwidth}}
+\begin{tabular}{p{0.28\textwidth}p{0.40\textwidth}p{0.26\textwidth}}
 \toprule
 \textbf{Defect} & \textbf{Effect} & \textbf{Fix} \\
 \midrule
