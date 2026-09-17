@@ -1,0 +1,306 @@
+[
+  {
+    "skill_id": "accessibility-audit",
+    "category": "accessibility",
+    "kb_file": "knowledge-base/accessibility/accessibility-audit.md",
+    "title": "Accessibility Audit",
+    "description": "Whole site or product \u2014 a full web accessibility (a11y) audit against WCAG 2.2, following the WCAG-EM methodology. Defines scope, samples representative pages and flows, runs the automated tier (`accessibility-scan`) and the hands-on manual tier (`accessibility-inspect`), and produces one conformance report. Grades each finding by severity and evidence basis, and states per-criterion conformance as pass, fail, or undetermined (needs a human). Use it for 'audit my site for accessibility', 'is thi",
+    "cursor_invoke": "/accessibility-audit"
+  },
+  {
+    "skill_id": "accessibility-diff",
+    "category": "accessibility",
+    "kb_file": "knowledge-base/accessibility/accessibility-diff.md",
+    "title": "Accessibility Diff",
+    "description": "Regression check \u2014 diff a live page's web accessibility (a11y) violations against a baseline. By default it compares your uncommitted changes (stash-based); pass `--branch [<name>]` to compare against a branch. Reports the new WCAG violations introduced, the ones fixed, and the count of pre-existing ones. Use it for 'did my change break accessibility', 'what a11y issues did this PR add', or as a CI gate. For a full scan of one page use `accessibility-scan`; for a whole site use `accessibility-au",
+    "cursor_invoke": "/accessibility-diff"
+  },
+  {
+    "skill_id": "accessibility-fix",
+    "category": "accessibility",
+    "kb_file": "knowledge-base/accessibility/accessibility-fix.md",
+    "title": "Accessibility Fix",
+    "description": "Remediation only \u2014 repair web accessibility (a11y) violations against WCAG 2.2 with a baseline, edit, and verify loop. Takes a target (URL, files, directory) or a findings worklist from `accessibility-scan`/`accessibility-inspect`/`accessibility-audit`, applies mechanical fixes as given, leaves TODOs for visual or contextual judgment, and verifies by re-running the baseline check. It only fixes. To find issues use `accessibility-scan` (one page, automated), `accessibility-inspect` (one page, man",
+    "cursor_invoke": "/accessibility-fix"
+  },
+  {
+    "skill_id": "accessibility-inspect",
+    "category": "accessibility",
+    "kb_file": "knowledge-base/accessibility/accessibility-inspect.md",
+    "title": "Accessibility Inspect",
+    "description": "One page, hands-on manual tier \u2014 drive a live page through the web accessibility (a11y) checks a rule engine can't decide: keyboard operation and focus order, screen-reader names, roles and states from the accessibility tree, reflow and zoom, reduced motion, form errors, and target size. Grades each finding by evidence basis (verified / confirm-with-a-human / human-required) and severity, and closes every criterion in a ledger: verified, flagged, not exercised, or N/A. Locates and assesses; does",
+    "cursor_invoke": "/accessibility-inspect"
+  },
+  {
+    "skill_id": "accessibility-scan",
+    "category": "accessibility",
+    "kb_file": "knowledge-base/accessibility/accessibility-scan.md",
+    "title": "Accessibility Scan",
+    "description": "One page, automated tier \u2014 run the web accessibility (a11y) rule engine against a live page and locate every violation it can detect mechanically. Pass a URL, a config target name (e.g. `accesslint:accessibility-scan dev`), or nothing to use the default target from `accesslint.config.json`. Ensures a debuggable Chrome, runs the @accesslint/core engine over CDP, and returns a worklist of live-DOM WCAG 2.2 violations, each grounded to its DOM selector and source `file:line`. Locates; doesn't edit.",
+    "cursor_invoke": "/accessibility-scan"
+  },
+  {
+    "skill_id": "adaptive-communication",
+    "category": "writing",
+    "kb_file": "knowledge-base/writing/adaptive-communication.md",
+    "title": "Adaptive Communication",
+    "description": "Use when detecting ambiguous user intent, hedging language, open-ended framing, personal context before requests, or when unsure whether user wants exploration vs direct answer. Applies to all conversations.",
+    "cursor_invoke": "/adaptive-communication"
+  },
+  {
+    "skill_id": "banner-design",
+    "category": "design-ui",
+    "kb_file": "knowledge-base/design-ui/banner-design.md",
+    "title": "Banner Design",
+    "description": "Design banners for social media, ads, website heroes, creative assets, and print. Multiple art direction options with AI-generated visuals. Actions: design, create, generate banner. Platforms: Facebook, Twitter/X, LinkedIn, YouTube, Instagram, Google Display, website hero, print. Styles: minimalist, gradient, bold typography, photo-based, illustrated, geometric, retro, glassmorphism, 3D, neon, duotone, editorial, collage. Uses ui-ux-pro-max, frontend-design, ai-artist, ai-multimodal skills.",
+    "cursor_invoke": "/banner-design"
+  },
+  {
+    "skill_id": "bencium-aeo",
+    "category": "marketing",
+    "kb_file": "knowledge-base/marketing/bencium-aeo.md",
+    "title": "Bencium Aeo",
+    "description": "Generate AEO-optimized content (Answer Engine Optimization) for AI search visibility - ChatGPT, Claude, Gemini, AI Overviews. Use when optimizing websites for AI citations, creating FAQ schemas, evidence panels, or analyzing content for LLM extraction readiness.",
+    "cursor_invoke": "/bencium-aeo"
+  },
+  {
+    "skill_id": "brand",
+    "category": "design-ui",
+    "kb_file": "knowledge-base/design-ui/brand.md",
+    "title": "Brand",
+    "description": "Brand voice, visual identity, messaging frameworks, asset management, brand consistency. Activate for branded content, tone of voice, marketing assets, brand compliance, style guides.",
+    "cursor_invoke": "/brand"
+  },
+  {
+    "skill_id": "code-conventions",
+    "category": "engineering",
+    "kb_file": "knowledge-base/engineering/code-conventions.md",
+    "title": "Code Conventions",
+    "description": "Bence's code style, tech stack, and workflow conventions",
+    "cursor_invoke": "/code-conventions"
+  },
+  {
+    "skill_id": "design",
+    "category": "design-ui",
+    "kb_file": "knowledge-base/design-ui/design.md",
+    "title": "Design",
+    "description": "Comprehensive design skill: brand identity, design tokens, UI styling, logo generation (55 styles, Gemini AI), corporate identity program (50 deliverables, CIP mockups), HTML presentations (Chart.js), banner design (22 styles, social/ads/web/print), icon design (15 styles, SVG, Gemini 3.1 Pro), social photos (HTML\u2192screenshot, multi-platform). Actions: design logo, create CIP, generate mockups, build slides, design banner, generate icon, create social photos, social media images, brand identity, ",
+    "cursor_invoke": "/design"
+  },
+  {
+    "skill_id": "design-audit",
+    "category": "design-ui",
+    "kb_file": "knowledge-base/design-ui/design-audit.md",
+    "title": "Design Audit",
+    "description": ">",
+    "cursor_invoke": "/design-audit"
+  },
+  {
+    "skill_id": "design-system",
+    "category": "design-ui",
+    "kb_file": "knowledge-base/design-ui/design-system.md",
+    "title": "Design System",
+    "description": "Token architecture, component specifications, and slide generation. Three-layer tokens (primitive\u2192semantic\u2192component), CSS variables, spacing/typography scales, component specs, strategic slide creation. Use for design tokens, systematic design, brand-compliant presentations.",
+    "cursor_invoke": "/design-system"
+  },
+  {
+    "skill_id": "eu-ai-act-reviewer",
+    "category": "engineering",
+    "kb_file": "knowledge-base/engineering/eu-ai-act-reviewer.md",
+    "title": "Eu Ai Act Reviewer",
+    "description": "Review user journeys, public content, and codebases for potentially relevant EU AI Act provisions, with exact official citations, evidence gaps, application dates, and plain-language next actions. Use for EU AI Act issue-spotting, not final legal or compliance decisions.",
+    "cursor_invoke": "/eu-ai-act-reviewer"
+  },
+  {
+    "skill_id": "frontend-design",
+    "category": "design-ui",
+    "kb_file": "knowledge-base/design-ui/frontend-design.md",
+    "title": "Frontend Design",
+    "description": "Guidance for distinctive, intentional visual design when building new UI or reshaping an existing one. Helps with aesthetic direction, typography, and making choices that don't read as templated defaults.",
+    "cursor_invoke": "/frontend-design"
+  },
+  {
+    "skill_id": "human-architect-mindset",
+    "category": "engineering",
+    "kb_file": "knowledge-base/engineering/human-architect-mindset.md",
+    "title": "Human Architect Mindset",
+    "description": "Systematic architectural thinking for irreplaceable human capabilities - domain modeling, systems thinking, constraint navigation, and AI-aware problem decomposition. Use proactively when detecting architectural decisions, system design discussions, or multi-component planning.",
+    "cursor_invoke": "/human-architect-mindset"
+  },
+  {
+    "skill_id": "hungarian-humanizer",
+    "category": "writing",
+    "kb_file": "knowledge-base/writing/hungarian-humanizer.md",
+    "title": "Hungarian Humanizer",
+    "description": "Detect and remove AI-generated markers from Hungarian text, making it sound like a native Hungarian speaker wrote it. Use when asked to \"humanize\", \"naturalize\", or \"remove AI feel\" from Hungarian text, or when editing .md/.txt files containing Hungarian content. Identifies 26 patterns (12 Hungarian-specific + 14 universal) and 4 style markers.",
+    "cursor_invoke": "/hungarian-humanizer"
+  },
+  {
+    "skill_id": "insurgent-campaign",
+    "category": "marketing",
+    "kb_file": "knowledge-base/marketing/insurgent-campaign.md",
+    "title": "Insurgent Campaign",
+    "description": ">",
+    "cursor_invoke": "/insurgent-campaign"
+  },
+  {
+    "skill_id": "negentropy-lens",
+    "category": "engineering",
+    "kb_file": "knowledge-base/engineering/negentropy-lens.md",
+    "title": "Negentropy Lens",
+    "description": ">",
+    "cursor_invoke": "/negentropy-lens"
+  },
+  {
+    "skill_id": "react-composition",
+    "category": "react-vercel",
+    "kb_file": "knowledge-base/react-vercel/react-composition.md",
+    "title": "React Composition",
+    "description": "",
+    "cursor_invoke": "/react-composition"
+  },
+  {
+    "skill_id": "react-native",
+    "category": "react-vercel",
+    "kb_file": "knowledge-base/react-vercel/react-native.md",
+    "title": "React Native",
+    "description": "",
+    "cursor_invoke": "/react-native"
+  },
+  {
+    "skill_id": "react-perf",
+    "category": "react-vercel",
+    "kb_file": "knowledge-base/react-vercel/react-perf.md",
+    "title": "React Perf",
+    "description": "React and Next.js performance optimization guidelines from Vercel Engineering. This skill should be used when writing, reviewing, or refactoring React/Next.js code to ensure optimal performance patterns. Triggers on tasks involving React components, Next.js pages, data fetching, bundle optimization, or performance improvements.",
+    "cursor_invoke": "/react-perf"
+  },
+  {
+    "skill_id": "react-transitions",
+    "category": "react-vercel",
+    "kb_file": "knowledge-base/react-vercel/react-transitions.md",
+    "title": "React Transitions",
+    "description": "Guide for implementing smooth, native-feeling animations using React's View Transition API (`<ViewTransition>` component, `addTransitionType`, and CSS view transition pseudo-elements). Use this skill whenever the user wants to add page transitions, animate route changes, create shared element animations, animate enter/exit of components, animate list reorder, implement directional (forward/back) navigation animations, or integrate view transitions in Next.js. Also use when the user mentions view",
+    "cursor_invoke": "/react-transitions"
+  },
+  {
+    "skill_id": "relationship-design",
+    "category": "design-ui",
+    "kb_file": "knowledge-base/design-ui/relationship-design.md",
+    "title": "Relationship Design",
+    "description": "Design AI-first interfaces that build ongoing relationships through memory, trust evolution, and collaborative planning, not just isolated screen interactions",
+    "cursor_invoke": "/relationship-design"
+  },
+  {
+    "skill_id": "renaissance-architecture",
+    "category": "engineering",
+    "kb_file": "knowledge-base/engineering/renaissance-architecture.md",
+    "title": "Renaissance Architecture",
+    "description": "Software architecture and UI/UX principles for building genuinely new solutions, not derivative work. Use when designing features, architecting software, brainstorming apps, reviewing designs, or during strategy discussions. Focuses on first-principles thinking, simplicity where it matters, and creating rather than commenting.",
+    "cursor_invoke": "/renaissance-architecture"
+  },
+  {
+    "skill_id": "slides",
+    "category": "design-ui",
+    "kb_file": "knowledge-base/design-ui/slides.md",
+    "title": "Slides",
+    "description": "Create strategic HTML presentations with Chart.js, design tokens, responsive layouts, copywriting formulas, and contextual slide strategies.",
+    "cursor_invoke": "/slides"
+  },
+  {
+    "skill_id": "typography",
+    "category": "design-ui",
+    "kb_file": "knowledge-base/design-ui/typography.md",
+    "title": "Typography",
+    "description": ">",
+    "cursor_invoke": "/typography"
+  },
+  {
+    "skill_id": "ui-styling",
+    "category": "design-ui",
+    "kb_file": "knowledge-base/design-ui/ui-styling.md",
+    "title": "Ui Styling",
+    "description": "Create beautiful, accessible user interfaces with shadcn/ui components (built on Radix UI + Tailwind), Tailwind CSS utility-first styling, and canvas-based visual designs. Use when building user interfaces, implementing design systems, creating responsive layouts, adding accessible components (dialogs, dropdowns, forms, tables), customizing themes and colors, implementing dark mode, generating visual designs and posters, or establishing consistent styling patterns across applications.",
+    "cursor_invoke": "/ui-styling"
+  },
+  {
+    "skill_id": "ui-ux-pro-max",
+    "category": "design-ui",
+    "kb_file": "knowledge-base/design-ui/ui-ux-pro-max.md",
+    "title": "Ui Ux Pro Max",
+    "description": "UI/UX design intelligence for web, mobile, and desktop. This skill should be used when designing, building, reviewing, or fixing interfaces, including pages, components, design systems, accessibility, interaction, responsive layout, typography, color, charts, and stack-specific UI implementation. Searchable local data: 79 searchable styles (50 active), 192 product palettes and reasoning profiles, 74 font pairings, 119 UX guidelines, 105 icons, 17 GSAP presets, 25 chart types, and 22 stacks.",
+    "cursor_invoke": "/ui-ux-pro-max"
+  },
+  {
+    "skill_id": "ux-controlled",
+    "category": "design-ui",
+    "kb_file": "knowledge-base/design-ui/ux-controlled.md",
+    "title": "Ux Controlled",
+    "description": "Expert UI/UX design guidance for unique, accessible interfaces. Use for visual decisions, colors, typography, layouts. Always ask before making design decisions. Use this skill when the user asks to build web components, pages, or applications.",
+    "cursor_invoke": "/ux-controlled"
+  },
+  {
+    "skill_id": "ux-impact",
+    "category": "design-ui",
+    "kb_file": "knowledge-base/design-ui/ux-impact.md",
+    "title": "Ux Impact",
+    "description": "Create distinctive, production-grade frontend interfaces with high design quality. Use this skill when the user asks to build web components, pages, or applications. Generates creative, polished code that avoids generic AI aesthetics. Based on Anthropic's Frontend Designer Skill",
+    "cursor_invoke": "/ux-impact"
+  },
+  {
+    "skill_id": "ux-innovative",
+    "category": "design-ui",
+    "kb_file": "knowledge-base/design-ui/ux-innovative.md",
+    "title": "Ux Innovative",
+    "description": "Develop an independent visual language and turn the human-chosen direction into a production-ready graphic, brand, campaign, publication, web, or product system. Use when originality and differentiation matter enough to escape generic AI and Big Tech aesthetics. Guides a minimum-evidence start, ten isolated typography-led HTML design directions made only from type, color, and space, visual-first human judgement, explicit commitment, and concrete Round 2 production. Do not use for routine UI fixe",
+    "cursor_invoke": "/ux-innovative"
+  },
+  {
+    "skill_id": "vanity-engineering-review",
+    "category": "engineering",
+    "kb_file": "knowledge-base/engineering/vanity-engineering-review.md",
+    "title": "Vanity Engineering Review",
+    "description": ">",
+    "cursor_invoke": "/vanity-engineering-review"
+  },
+  {
+    "skill_id": "vercel-cli",
+    "category": "react-vercel",
+    "kb_file": "knowledge-base/react-vercel/vercel-cli.md",
+    "title": "Vercel Cli",
+    "description": "Deploy and manage projects on Vercel using token-based authentication. Use when working with Vercel CLI using access tokens rather than interactive login \u2014 e.g. \"deploy to vercel\", \"set up vercel\", \"add environment variables to vercel\".",
+    "cursor_invoke": "/vercel-cli"
+  },
+  {
+    "skill_id": "vercel-deploy",
+    "category": "react-vercel",
+    "kb_file": "knowledge-base/react-vercel/vercel-deploy.md",
+    "title": "Vercel Deploy",
+    "description": "Deploy applications and websites to Vercel. Use when the user requests deployment actions like \"deploy my app\", \"deploy and give me the link\", \"push this live\", or \"create a preview deployment\".",
+    "cursor_invoke": "/vercel-deploy"
+  },
+  {
+    "skill_id": "vercel-optimize",
+    "category": "react-vercel",
+    "kb_file": "knowledge-base/react-vercel/vercel-optimize.md",
+    "title": "Vercel Optimize",
+    "description": "Use for Vercel cost and performance optimization on deployed projects, especially Next.js, SvelteKit, Nuxt, and limited Astro apps. Collect Vercel metrics, usage, project config, and code scan results first; investigate only metric-backed candidates; produce ranked recommendations grounded in verified files and version-aware Vercel/framework docs. Trigger for Vercel bill reduction, slow or expensive routes, caching opportunities, Function Invocations, Build Minutes, Fast Data Transfer, Core Web ",
+    "cursor_invoke": "/vercel-optimize"
+  },
+  {
+    "skill_id": "web-design-guidelines",
+    "category": "design-ui",
+    "kb_file": "knowledge-base/design-ui/web-design-guidelines.md",
+    "title": "Web Design Guidelines",
+    "description": "Review UI code for Web Interface Guidelines compliance. Use when asked to \"review my UI\", \"check accessibility\", \"audit design\", \"review UX\", or \"check my site against best practices\".",
+    "cursor_invoke": "/web-design-guidelines"
+  },
+  {
+    "skill_id": "writing-guidelines",
+    "category": "writing",
+    "kb_file": "knowledge-base/writing/writing-guidelines.md",
+    "title": "Writing Guidelines",
+    "description": "Review docs/prose for Writing Guidelines compliance. Use when asked to \"review my docs\", \"check writing style\", \"audit prose\", \"review docs voice and tone\", or \"check this page against the writing handbook\".",
+    "cursor_invoke": "/writing-guidelines"
+  }
+]

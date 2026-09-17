@@ -1,0 +1,686 @@
+[
+  {
+    "name": "skill_accessibility_audit",
+    "display_name": "accessibility-audit",
+    "type": "workflow-or-function-required",
+    "description": "Whole site or product \u2014 a full web accessibility (a11y) audit against WCAG 2.2, following the WCAG-EM methodology. Defines scope, samples representative pages and flows, runs the automated tier (`accessibility-scan`) and the hands-on manual tier (`accessibility-inspect`), and produces one conformance report. Grades each finding by severity and evidence basis, and states per-criterion conformance as pass, fail, or undetermined (needs a human). Use it for 'audit my site for accessibility', 'is thi",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to accessibility-audit"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the accessibility-audit skill, search the knowledge base folder 'accessibility' and apply guidance from accessibility-audit.md before answering.",
+    "kb_metadata": {
+      "skill_id": "accessibility-audit",
+      "category": "accessibility",
+      "document": "accessibility-audit.md"
+    }
+  },
+  {
+    "name": "skill_accessibility_diff",
+    "display_name": "accessibility-diff",
+    "type": "workflow-or-function-required",
+    "description": "Regression check \u2014 diff a live page's web accessibility (a11y) violations against a baseline. By default it compares your uncommitted changes (stash-based); pass `--branch [<name>]` to compare against a branch. Reports the new WCAG violations introduced, the ones fixed, and the count of pre-existing ones. Use it for 'did my change break accessibility', 'what a11y issues did this PR add', or as a CI gate. For a full scan of one page use `accessibility-scan`; for a whole site use `accessibility-au",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to accessibility-diff"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the accessibility-diff skill, search the knowledge base folder 'accessibility' and apply guidance from accessibility-diff.md before answering.",
+    "kb_metadata": {
+      "skill_id": "accessibility-diff",
+      "category": "accessibility",
+      "document": "accessibility-diff.md"
+    }
+  },
+  {
+    "name": "skill_accessibility_fix",
+    "display_name": "accessibility-fix",
+    "type": "workflow-or-function-required",
+    "description": "Remediation only \u2014 repair web accessibility (a11y) violations against WCAG 2.2 with a baseline, edit, and verify loop. Takes a target (URL, files, directory) or a findings worklist from `accessibility-scan`/`accessibility-inspect`/`accessibility-audit`, applies mechanical fixes as given, leaves TODOs for visual or contextual judgment, and verifies by re-running the baseline check. It only fixes. To find issues use `accessibility-scan` (one page, automated), `accessibility-inspect` (one page, man",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to accessibility-fix"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the accessibility-fix skill, search the knowledge base folder 'accessibility' and apply guidance from accessibility-fix.md before answering.",
+    "kb_metadata": {
+      "skill_id": "accessibility-fix",
+      "category": "accessibility",
+      "document": "accessibility-fix.md"
+    }
+  },
+  {
+    "name": "skill_accessibility_inspect",
+    "display_name": "accessibility-inspect",
+    "type": "workflow-or-function-required",
+    "description": "One page, hands-on manual tier \u2014 drive a live page through the web accessibility (a11y) checks a rule engine can't decide: keyboard operation and focus order, screen-reader names, roles and states from the accessibility tree, reflow and zoom, reduced motion, form errors, and target size. Grades each finding by evidence basis (verified / confirm-with-a-human / human-required) and severity, and closes every criterion in a ledger: verified, flagged, not exercised, or N/A. Locates and assesses; does",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to accessibility-inspect"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the accessibility-inspect skill, search the knowledge base folder 'accessibility' and apply guidance from accessibility-inspect.md before answering.",
+    "kb_metadata": {
+      "skill_id": "accessibility-inspect",
+      "category": "accessibility",
+      "document": "accessibility-inspect.md"
+    }
+  },
+  {
+    "name": "skill_accessibility_scan",
+    "display_name": "accessibility-scan",
+    "type": "workflow-or-function-required",
+    "description": "One page, automated tier \u2014 run the web accessibility (a11y) rule engine against a live page and locate every violation it can detect mechanically. Pass a URL, a config target name (e.g. `accesslint:accessibility-scan dev`), or nothing to use the default target from `accesslint.config.json`. Ensures a debuggable Chrome, runs the @accesslint/core engine over CDP, and returns a worklist of live-DOM WCAG 2.2 violations, each grounded to its DOM selector and source `file:line`. Locates; doesn't edit.",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to accessibility-scan"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the accessibility-scan skill, search the knowledge base folder 'accessibility' and apply guidance from accessibility-scan.md before answering.",
+    "kb_metadata": {
+      "skill_id": "accessibility-scan",
+      "category": "accessibility",
+      "document": "accessibility-scan.md"
+    }
+  },
+  {
+    "name": "skill_adaptive_communication",
+    "display_name": "adaptive-communication",
+    "type": "knowledge-base",
+    "description": "Use when detecting ambiguous user intent, hedging language, open-ended framing, personal context before requests, or when unsure whether user wants exploration vs direct answer. Applies to all conversations.",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to adaptive-communication"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the adaptive-communication skill, search the knowledge base folder 'writing' and apply guidance from adaptive-communication.md before answering.",
+    "kb_metadata": {
+      "skill_id": "adaptive-communication",
+      "category": "writing",
+      "document": "adaptive-communication.md"
+    }
+  },
+  {
+    "name": "skill_banner_design",
+    "display_name": "banner-design",
+    "type": "knowledge-base",
+    "description": "Design banners for social media, ads, website heroes, creative assets, and print. Multiple art direction options with AI-generated visuals. Actions: design, create, generate banner. Platforms: Facebook, Twitter/X, LinkedIn, YouTube, Instagram, Google Display, website hero, print. Styles: minimalist, gradient, bold typography, photo-based, illustrated, geometric, retro, glassmorphism, 3D, neon, duotone, editorial, collage. Uses ui-ux-pro-max, frontend-design, ai-artist, ai-multimodal skills.",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to banner-design"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the banner-design skill, search the knowledge base folder 'design-ui' and apply guidance from banner-design.md before answering.",
+    "kb_metadata": {
+      "skill_id": "banner-design",
+      "category": "design-ui",
+      "document": "banner-design.md"
+    }
+  },
+  {
+    "name": "skill_bencium_aeo",
+    "display_name": "bencium-aeo",
+    "type": "knowledge-base",
+    "description": "Generate AEO-optimized content (Answer Engine Optimization) for AI search visibility - ChatGPT, Claude, Gemini, AI Overviews. Use when optimizing websites for AI citations, creating FAQ schemas, evidence panels, or analyzing content for LLM extraction readiness.",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to bencium-aeo"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the bencium-aeo skill, search the knowledge base folder 'marketing' and apply guidance from bencium-aeo.md before answering.",
+    "kb_metadata": {
+      "skill_id": "bencium-aeo",
+      "category": "marketing",
+      "document": "bencium-aeo.md"
+    }
+  },
+  {
+    "name": "skill_brand",
+    "display_name": "brand",
+    "type": "knowledge-base",
+    "description": "Brand voice, visual identity, messaging frameworks, asset management, brand consistency. Activate for branded content, tone of voice, marketing assets, brand compliance, style guides.",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to brand"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the brand skill, search the knowledge base folder 'design-ui' and apply guidance from brand.md before answering.",
+    "kb_metadata": {
+      "skill_id": "brand",
+      "category": "design-ui",
+      "document": "brand.md"
+    }
+  },
+  {
+    "name": "skill_code_conventions",
+    "display_name": "code-conventions",
+    "type": "knowledge-base",
+    "description": "Bence's code style, tech stack, and workflow conventions",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to code-conventions"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the code-conventions skill, search the knowledge base folder 'engineering' and apply guidance from code-conventions.md before answering.",
+    "kb_metadata": {
+      "skill_id": "code-conventions",
+      "category": "engineering",
+      "document": "code-conventions.md"
+    }
+  },
+  {
+    "name": "skill_design",
+    "display_name": "design",
+    "type": "knowledge-base",
+    "description": "Comprehensive design skill: brand identity, design tokens, UI styling, logo generation (55 styles, Gemini AI), corporate identity program (50 deliverables, CIP mockups), HTML presentations (Chart.js), banner design (22 styles, social/ads/web/print), icon design (15 styles, SVG, Gemini 3.1 Pro), social photos (HTML\u2192screenshot, multi-platform). Actions: design logo, create CIP, generate mockups, build slides, design banner, generate icon, create social photos, social media images, brand identity, ",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to design"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the design skill, search the knowledge base folder 'design-ui' and apply guidance from design.md before answering.",
+    "kb_metadata": {
+      "skill_id": "design",
+      "category": "design-ui",
+      "document": "design.md"
+    }
+  },
+  {
+    "name": "skill_design_audit",
+    "display_name": "design-audit",
+    "type": "knowledge-base",
+    "description": ">",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to design-audit"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the design-audit skill, search the knowledge base folder 'design-ui' and apply guidance from design-audit.md before answering.",
+    "kb_metadata": {
+      "skill_id": "design-audit",
+      "category": "design-ui",
+      "document": "design-audit.md"
+    }
+  },
+  {
+    "name": "skill_design_system",
+    "display_name": "design-system",
+    "type": "knowledge-base",
+    "description": "Token architecture, component specifications, and slide generation. Three-layer tokens (primitive\u2192semantic\u2192component), CSS variables, spacing/typography scales, component specs, strategic slide creation. Use for design tokens, systematic design, brand-compliant presentations.",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to design-system"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the design-system skill, search the knowledge base folder 'design-ui' and apply guidance from design-system.md before answering.",
+    "kb_metadata": {
+      "skill_id": "design-system",
+      "category": "design-ui",
+      "document": "design-system.md"
+    }
+  },
+  {
+    "name": "skill_eu_ai_act_reviewer",
+    "display_name": "eu-ai-act-reviewer",
+    "type": "knowledge-base",
+    "description": "Review user journeys, public content, and codebases for potentially relevant EU AI Act provisions, with exact official citations, evidence gaps, application dates, and plain-language next actions. Use for EU AI Act issue-spotting, not final legal or compliance decisions.",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to eu-ai-act-reviewer"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the eu-ai-act-reviewer skill, search the knowledge base folder 'engineering' and apply guidance from eu-ai-act-reviewer.md before answering.",
+    "kb_metadata": {
+      "skill_id": "eu-ai-act-reviewer",
+      "category": "engineering",
+      "document": "eu-ai-act-reviewer.md"
+    }
+  },
+  {
+    "name": "skill_frontend_design",
+    "display_name": "frontend-design",
+    "type": "knowledge-base",
+    "description": "Guidance for distinctive, intentional visual design when building new UI or reshaping an existing one. Helps with aesthetic direction, typography, and making choices that don't read as templated defaults.",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to frontend-design"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the frontend-design skill, search the knowledge base folder 'design-ui' and apply guidance from frontend-design.md before answering.",
+    "kb_metadata": {
+      "skill_id": "frontend-design",
+      "category": "design-ui",
+      "document": "frontend-design.md"
+    }
+  },
+  {
+    "name": "skill_human_architect_mindset",
+    "display_name": "human-architect-mindset",
+    "type": "knowledge-base",
+    "description": "Systematic architectural thinking for irreplaceable human capabilities - domain modeling, systems thinking, constraint navigation, and AI-aware problem decomposition. Use proactively when detecting architectural decisions, system design discussions, or multi-component planning.",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to human-architect-mindset"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the human-architect-mindset skill, search the knowledge base folder 'engineering' and apply guidance from human-architect-mindset.md before answering.",
+    "kb_metadata": {
+      "skill_id": "human-architect-mindset",
+      "category": "engineering",
+      "document": "human-architect-mindset.md"
+    }
+  },
+  {
+    "name": "skill_hungarian_humanizer",
+    "display_name": "hungarian-humanizer",
+    "type": "knowledge-base",
+    "description": "Detect and remove AI-generated markers from Hungarian text, making it sound like a native Hungarian speaker wrote it. Use when asked to \"humanize\", \"naturalize\", or \"remove AI feel\" from Hungarian text, or when editing .md/.txt files containing Hungarian content. Identifies 26 patterns (12 Hungarian-specific + 14 universal) and 4 style markers.",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to hungarian-humanizer"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the hungarian-humanizer skill, search the knowledge base folder 'writing' and apply guidance from hungarian-humanizer.md before answering.",
+    "kb_metadata": {
+      "skill_id": "hungarian-humanizer",
+      "category": "writing",
+      "document": "hungarian-humanizer.md"
+    }
+  },
+  {
+    "name": "skill_insurgent_campaign",
+    "display_name": "insurgent-campaign",
+    "type": "knowledge-base",
+    "description": ">",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to insurgent-campaign"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the insurgent-campaign skill, search the knowledge base folder 'marketing' and apply guidance from insurgent-campaign.md before answering.",
+    "kb_metadata": {
+      "skill_id": "insurgent-campaign",
+      "category": "marketing",
+      "document": "insurgent-campaign.md"
+    }
+  },
+  {
+    "name": "skill_negentropy_lens",
+    "display_name": "negentropy-lens",
+    "type": "knowledge-base",
+    "description": ">",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to negentropy-lens"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the negentropy-lens skill, search the knowledge base folder 'engineering' and apply guidance from negentropy-lens.md before answering.",
+    "kb_metadata": {
+      "skill_id": "negentropy-lens",
+      "category": "engineering",
+      "document": "negentropy-lens.md"
+    }
+  },
+  {
+    "name": "skill_react_composition",
+    "display_name": "react-composition",
+    "type": "knowledge-base",
+    "description": "",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to react-composition"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the react-composition skill, search the knowledge base folder 'react-vercel' and apply guidance from react-composition.md before answering.",
+    "kb_metadata": {
+      "skill_id": "react-composition",
+      "category": "react-vercel",
+      "document": "react-composition.md"
+    }
+  },
+  {
+    "name": "skill_react_native",
+    "display_name": "react-native",
+    "type": "knowledge-base",
+    "description": "",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to react-native"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the react-native skill, search the knowledge base folder 'react-vercel' and apply guidance from react-native.md before answering.",
+    "kb_metadata": {
+      "skill_id": "react-native",
+      "category": "react-vercel",
+      "document": "react-native.md"
+    }
+  },
+  {
+    "name": "skill_react_perf",
+    "display_name": "react-perf",
+    "type": "knowledge-base",
+    "description": "React and Next.js performance optimization guidelines from Vercel Engineering. This skill should be used when writing, reviewing, or refactoring React/Next.js code to ensure optimal performance patterns. Triggers on tasks involving React components, Next.js pages, data fetching, bundle optimization, or performance improvements.",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to react-perf"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the react-perf skill, search the knowledge base folder 'react-vercel' and apply guidance from react-perf.md before answering.",
+    "kb_metadata": {
+      "skill_id": "react-perf",
+      "category": "react-vercel",
+      "document": "react-perf.md"
+    }
+  },
+  {
+    "name": "skill_react_transitions",
+    "display_name": "react-transitions",
+    "type": "knowledge-base",
+    "description": "Guide for implementing smooth, native-feeling animations using React's View Transition API (`<ViewTransition>` component, `addTransitionType`, and CSS view transition pseudo-elements). Use this skill whenever the user wants to add page transitions, animate route changes, create shared element animations, animate enter/exit of components, animate list reorder, implement directional (forward/back) navigation animations, or integrate view transitions in Next.js. Also use when the user mentions view",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to react-transitions"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the react-transitions skill, search the knowledge base folder 'react-vercel' and apply guidance from react-transitions.md before answering.",
+    "kb_metadata": {
+      "skill_id": "react-transitions",
+      "category": "react-vercel",
+      "document": "react-transitions.md"
+    }
+  },
+  {
+    "name": "skill_relationship_design",
+    "display_name": "relationship-design",
+    "type": "knowledge-base",
+    "description": "Design AI-first interfaces that build ongoing relationships through memory, trust evolution, and collaborative planning, not just isolated screen interactions",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to relationship-design"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the relationship-design skill, search the knowledge base folder 'design-ui' and apply guidance from relationship-design.md before answering.",
+    "kb_metadata": {
+      "skill_id": "relationship-design",
+      "category": "design-ui",
+      "document": "relationship-design.md"
+    }
+  },
+  {
+    "name": "skill_renaissance_architecture",
+    "display_name": "renaissance-architecture",
+    "type": "knowledge-base",
+    "description": "Software architecture and UI/UX principles for building genuinely new solutions, not derivative work. Use when designing features, architecting software, brainstorming apps, reviewing designs, or during strategy discussions. Focuses on first-principles thinking, simplicity where it matters, and creating rather than commenting.",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to renaissance-architecture"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the renaissance-architecture skill, search the knowledge base folder 'engineering' and apply guidance from renaissance-architecture.md before answering.",
+    "kb_metadata": {
+      "skill_id": "renaissance-architecture",
+      "category": "engineering",
+      "document": "renaissance-architecture.md"
+    }
+  },
+  {
+    "name": "skill_slides",
+    "display_name": "slides",
+    "type": "knowledge-base",
+    "description": "Create strategic HTML presentations with Chart.js, design tokens, responsive layouts, copywriting formulas, and contextual slide strategies.",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to slides"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the slides skill, search the knowledge base folder 'design-ui' and apply guidance from slides.md before answering.",
+    "kb_metadata": {
+      "skill_id": "slides",
+      "category": "design-ui",
+      "document": "slides.md"
+    }
+  },
+  {
+    "name": "skill_typography",
+    "display_name": "typography",
+    "type": "knowledge-base",
+    "description": ">",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to typography"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the typography skill, search the knowledge base folder 'design-ui' and apply guidance from typography.md before answering.",
+    "kb_metadata": {
+      "skill_id": "typography",
+      "category": "design-ui",
+      "document": "typography.md"
+    }
+  },
+  {
+    "name": "skill_ui_styling",
+    "display_name": "ui-styling",
+    "type": "knowledge-base",
+    "description": "Create beautiful, accessible user interfaces with shadcn/ui components (built on Radix UI + Tailwind), Tailwind CSS utility-first styling, and canvas-based visual designs. Use when building user interfaces, implementing design systems, creating responsive layouts, adding accessible components (dialogs, dropdowns, forms, tables), customizing themes and colors, implementing dark mode, generating visual designs and posters, or establishing consistent styling patterns across applications.",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to ui-styling"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the ui-styling skill, search the knowledge base folder 'design-ui' and apply guidance from ui-styling.md before answering.",
+    "kb_metadata": {
+      "skill_id": "ui-styling",
+      "category": "design-ui",
+      "document": "ui-styling.md"
+    }
+  },
+  {
+    "name": "skill_ui_ux_pro_max",
+    "display_name": "ui-ux-pro-max",
+    "type": "knowledge-base",
+    "description": "UI/UX design intelligence for web, mobile, and desktop. This skill should be used when designing, building, reviewing, or fixing interfaces, including pages, components, design systems, accessibility, interaction, responsive layout, typography, color, charts, and stack-specific UI implementation. Searchable local data: 79 searchable styles (50 active), 192 product palettes and reasoning profiles, 74 font pairings, 119 UX guidelines, 105 icons, 17 GSAP presets, 25 chart types, and 22 stacks.",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to ui-ux-pro-max"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the ui-ux-pro-max skill, search the knowledge base folder 'design-ui' and apply guidance from ui-ux-pro-max.md before answering.",
+    "kb_metadata": {
+      "skill_id": "ui-ux-pro-max",
+      "category": "design-ui",
+      "document": "ui-ux-pro-max.md"
+    }
+  },
+  {
+    "name": "skill_ux_controlled",
+    "display_name": "ux-controlled",
+    "type": "knowledge-base",
+    "description": "Expert UI/UX design guidance for unique, accessible interfaces. Use for visual decisions, colors, typography, layouts. Always ask before making design decisions. Use this skill when the user asks to build web components, pages, or applications.",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to ux-controlled"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the ux-controlled skill, search the knowledge base folder 'design-ui' and apply guidance from ux-controlled.md before answering.",
+    "kb_metadata": {
+      "skill_id": "ux-controlled",
+      "category": "design-ui",
+      "document": "ux-controlled.md"
+    }
+  },
+  {
+    "name": "skill_ux_impact",
+    "display_name": "ux-impact",
+    "type": "knowledge-base",
+    "description": "Create distinctive, production-grade frontend interfaces with high design quality. Use this skill when the user asks to build web components, pages, or applications. Generates creative, polished code that avoids generic AI aesthetics. Based on Anthropic's Frontend Designer Skill",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to ux-impact"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the ux-impact skill, search the knowledge base folder 'design-ui' and apply guidance from ux-impact.md before answering.",
+    "kb_metadata": {
+      "skill_id": "ux-impact",
+      "category": "design-ui",
+      "document": "ux-impact.md"
+    }
+  },
+  {
+    "name": "skill_ux_innovative",
+    "display_name": "ux-innovative",
+    "type": "knowledge-base",
+    "description": "Develop an independent visual language and turn the human-chosen direction into a production-ready graphic, brand, campaign, publication, web, or product system. Use when originality and differentiation matter enough to escape generic AI and Big Tech aesthetics. Guides a minimum-evidence start, ten isolated typography-led HTML design directions made only from type, color, and space, visual-first human judgement, explicit commitment, and concrete Round 2 production. Do not use for routine UI fixe",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to ux-innovative"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the ux-innovative skill, search the knowledge base folder 'design-ui' and apply guidance from ux-innovative.md before answering.",
+    "kb_metadata": {
+      "skill_id": "ux-innovative",
+      "category": "design-ui",
+      "document": "ux-innovative.md"
+    }
+  },
+  {
+    "name": "skill_vanity_engineering_review",
+    "display_name": "vanity-engineering-review",
+    "type": "knowledge-base",
+    "description": ">",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to vanity-engineering-review"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the vanity-engineering-review skill, search the knowledge base folder 'engineering' and apply guidance from vanity-engineering-review.md before answering.",
+    "kb_metadata": {
+      "skill_id": "vanity-engineering-review",
+      "category": "engineering",
+      "document": "vanity-engineering-review.md"
+    }
+  },
+  {
+    "name": "skill_vercel_cli",
+    "display_name": "vercel-cli",
+    "type": "workflow-or-function-required",
+    "description": "Deploy and manage projects on Vercel using token-based authentication. Use when working with Vercel CLI using access tokens rather than interactive login \u2014 e.g. \"deploy to vercel\", \"set up vercel\", \"add environment variables to vercel\".",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to vercel-cli"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the vercel-cli skill, search the knowledge base folder 'react-vercel' and apply guidance from vercel-cli.md before answering.",
+    "kb_metadata": {
+      "skill_id": "vercel-cli",
+      "category": "react-vercel",
+      "document": "vercel-cli.md"
+    }
+  },
+  {
+    "name": "skill_vercel_deploy",
+    "display_name": "vercel-deploy",
+    "type": "workflow-or-function-required",
+    "description": "Deploy applications and websites to Vercel. Use when the user requests deployment actions like \"deploy my app\", \"deploy and give me the link\", \"push this live\", or \"create a preview deployment\".",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to vercel-deploy"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the vercel-deploy skill, search the knowledge base folder 'react-vercel' and apply guidance from vercel-deploy.md before answering.",
+    "kb_metadata": {
+      "skill_id": "vercel-deploy",
+      "category": "react-vercel",
+      "document": "vercel-deploy.md"
+    }
+  },
+  {
+    "name": "skill_vercel_optimize",
+    "display_name": "vercel-optimize",
+    "type": "workflow-or-function-required",
+    "description": "Use for Vercel cost and performance optimization on deployed projects, especially Next.js, SvelteKit, Nuxt, and limited Astro apps. Collect Vercel metrics, usage, project config, and code scan results first; investigate only metric-backed candidates; produce ranked recommendations grounded in verified files and version-aware Vercel/framework docs. Trigger for Vercel bill reduction, slow or expensive routes, caching opportunities, Function Invocations, Build Minutes, Fast Data Transfer, Core Web ",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to vercel-optimize"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the vercel-optimize skill, search the knowledge base folder 'react-vercel' and apply guidance from vercel-optimize.md before answering.",
+    "kb_metadata": {
+      "skill_id": "vercel-optimize",
+      "category": "react-vercel",
+      "document": "vercel-optimize.md"
+    }
+  },
+  {
+    "name": "skill_web_design_guidelines",
+    "display_name": "web-design-guidelines",
+    "type": "knowledge-base",
+    "description": "Review UI code for Web Interface Guidelines compliance. Use when asked to \"review my UI\", \"check accessibility\", \"audit design\", \"review UX\", or \"check my site against best practices\".",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to web-design-guidelines"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the web-design-guidelines skill, search the knowledge base folder 'design-ui' and apply guidance from web-design-guidelines.md before answering.",
+    "kb_metadata": {
+      "skill_id": "web-design-guidelines",
+      "category": "design-ui",
+      "document": "web-design-guidelines.md"
+    }
+  },
+  {
+    "name": "skill_writing_guidelines",
+    "display_name": "writing-guidelines",
+    "type": "knowledge-base",
+    "description": "Review docs/prose for Writing Guidelines compliance. Use when asked to \"review my docs\", \"check writing style\", \"audit prose\", \"review docs voice and tone\", or \"check this page against the writing handbook\".",
+    "input_schema": {
+      "query": {
+        "type": "string",
+        "description": "User question or task related to writing-guidelines"
+      }
+    },
+    "routing_hint": "When the user asks about topics covered by the writing-guidelines skill, search the knowledge base folder 'writing' and apply guidance from writing-guidelines.md before answering.",
+    "kb_metadata": {
+      "skill_id": "writing-guidelines",
+      "category": "writing",
+      "document": "writing-guidelines.md"
+    }
+  }
+]
