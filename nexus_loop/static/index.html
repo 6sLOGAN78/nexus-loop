@@ -183,6 +183,32 @@
       border-radius: var(--radius-lg);
       padding: var(--space-3) var(--space-4);
     }
+    .gen-wrap {
+      display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2);
+      flex: 0 1 auto;
+    }
+    .btn-gen {
+      width: auto;
+      min-height: 2rem;
+      padding: 0.25rem var(--space-3);
+      background: var(--ds-surface);
+      color: var(--ds-text);
+      border: 1px solid var(--ds-border);
+      border-radius: var(--radius-md);
+      font-size: var(--fs-xs);
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-gen:hover { background: var(--ds-neutral-hovered); }
+    .btn-gen:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 var(--ring-off) var(--ds-surface),
+                  0 0 0 calc(var(--ring-off) + var(--ring)) var(--ds-border-focused);
+    }
+    .btn-gen:disabled { opacity: 0.5; pointer-events: none; }
+    .gen-flash { font-size: var(--fs-2xs); color: var(--ds-text-subtle); min-width: 0; }
+    .gen-flash.err { color: var(--ds-danger); }
+    .gen-flash.ok { color: var(--ds-success); }
 
     .shell {
       display: grid;
@@ -975,6 +1001,10 @@
         <h2 class="brand">Nexus Loop</h2>
       </div>
       <div class="meta" id="hdr">Loading report…</div>
+      <div class="gen-wrap">
+        <button type="button" class="btn-gen" id="gen-btn" title="Re-run the pipeline into this report">Generate report</button>
+        <span class="gen-flash" id="gen-flash" role="status" aria-live="polite"></span>
+      </div>
       <div class="spacer"></div>
       <div class="honesty" id="honesty"></div>
     </header>
@@ -1237,8 +1267,9 @@
     const SAFE_KEY = /^(gap:[A-Z0-9]+|[A-Za-z0-9._-]+)$/;
     async function api(path, opts) {
       const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 15000);
       const extra = opts || {};
+      const waitMs = extra.timeoutMs != null ? extra.timeoutMs : 15000;
+      const t = setTimeout(() => ctrl.abort(), waitMs);
       const hdrs = Object.assign(
         { Accept: "application/json" },
         extra.body ? { "Content-Type": "application/json" } : {},
@@ -1819,6 +1850,37 @@
       selectedKey = keyFromHash();
       if (window.__rep) render(window.__rep, { alignFilter: true });
     });
+
+    async function generateReport() {
+      const btn = $("gen-btn");
+      const flash = $("gen-flash");
+      if (!btn || !flash) return;
+      btn.disabled = true;
+      flash.className = "gen-flash";
+      flash.textContent = "Generating…";
+      try {
+        const summary = await api("/generate", { method: "POST", body: "{}", timeoutMs: 200000 });
+        const next = await api("/report.json");
+        window.__rep = next;
+        render(next, { alignFilter: true });
+        const nVer = summary && summary.verifications != null ? summary.verifications : "—";
+        flash.className = "gen-flash ok";
+        flash.textContent = `Updated · ${summary.findings || 0} findings · ${nVer} tests`;
+      } catch (e) {
+        flash.className = "gen-flash err";
+        flash.textContent = String(e.message || e);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    $("gen-btn").addEventListener("click", generateReport);
+
+    api("/health").then((h) => {
+      if (h && h.generate === false) {
+        $("gen-flash").textContent = "Enable with --allow-generate";
+      }
+    }).catch(() => {});
 
     api("/report.json").then((rep) => {
       window.__rep = rep;
