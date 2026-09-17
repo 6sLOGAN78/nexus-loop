@@ -14,12 +14,12 @@ import datetime as dt
 import json
 import os
 import re
-import tempfile
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Optional
 from urllib.parse import urlparse
 
+from .io import write_json_atomic
 from .validate import extra_checks, load_schema, validate
 
 STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
@@ -95,23 +95,7 @@ class ReportStore:
             problems = validate(report, self.schema) + problems
         if problems:
             raise ValueError("report would be invalid after write-back: " + "; ".join(problems[:8]))
-        os.makedirs(os.path.dirname(self.report_path) or ".", exist_ok=True)
-        directory = os.path.dirname(self.report_path) or "."
-        fd, tmp = tempfile.mkstemp(
-            prefix=os.path.basename(self.report_path) + ".", suffix=".tmp", dir=directory)
-        try:
-            with os.fdopen(fd, "w", encoding="utf-8") as fh:
-                json.dump(report, fh, indent=2, allow_nan=False)
-                fh.write("\n")
-                fh.flush()
-                os.fsync(fh.fileno())
-            os.replace(tmp, self.report_path)
-        except BaseException:
-            try:
-                os.unlink(tmp)
-            except OSError:
-                pass
-            raise
+        write_json_atomic(self.report_path, report, allow_nan=False)
         os.makedirs(os.path.dirname(self.log_path) or ".", exist_ok=True)
         with open(self.log_path, "a", encoding="utf-8") as fh:
             fh.write(json.dumps({
@@ -148,8 +132,12 @@ def make_handler(store: ReportStore):
                 return self._allow(405, "POST", {"error": "method_not_allowed"})
             if path in ("/", "/index.html"):
                 page = os.path.join(STATIC_DIR, "index.html")
-                with open(page, "rb") as fh:
-                    return self._send(200, fh.read(), "text/html; charset=utf-8")
+                try:
+                    with open(page, "rb") as fh:
+                        body = fh.read()
+                except OSError as e:
+                    return self._json(500, {"error": "screen_unavailable", "detail": str(e)})
+                return self._send(200, body, "text/html; charset=utf-8")
             if path == "/report.json":
                 try:
                     body = json.dumps(store.load()).encode("utf-8")

@@ -11,6 +11,7 @@ import csv
 import gzip
 import json
 import os
+import tempfile
 from typing import Dict, Iterator, List, Optional
 
 
@@ -50,6 +51,32 @@ def read_json(path: str, default=None):
         return default
     with open(path, encoding="utf-8") as fh:
         return json.load(fh)
+
+
+def write_json_atomic(path: str, obj, *, indent: int = 2, sort_keys: bool = False,
+                      allow_nan: bool = False) -> None:
+    """Write JSON so a reader never sees a partial file.
+
+    A unique temp file in the same directory (so os.replace stays on one
+    filesystem), an fsync before the replace, and a cleanup on any failure.
+    A fixed temp name would let two writers collide on the same path.
+    """
+    directory = os.path.dirname(os.path.abspath(path)) or "."
+    os.makedirs(directory, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(prefix=os.path.basename(path) + ".", suffix=".tmp", dir=directory)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            json.dump(obj, fh, indent=indent, sort_keys=sort_keys, allow_nan=allow_nan)
+            fh.write("\n")
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp, path)
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
 
 
 def check_required(row: dict, keys, what: str) -> None:

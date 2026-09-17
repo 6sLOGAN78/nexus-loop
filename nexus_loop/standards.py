@@ -23,6 +23,7 @@ from typing import Dict, List, Optional
 
 from .coverage import Coverage
 from .features import Corpus, median, percentile, rate, resolved, unplanned_handoff
+from .io import write_json_atomic
 
 GOLDEN_VERSION = "gs_v1"
 GOLDEN_N = 30
@@ -124,11 +125,7 @@ def freeze_golden_sets(observations: List[dict], cov: Coverage, path: str, corpu
         changed = True
     doc = {"corpus": corpus_variant, "fingerprint": fingerprint, "version": GOLDEN_VERSION, "sets": sets}
     if changed or not existing:
-        os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
-        tmp = path + ".tmp"
-        with open(tmp, "w", encoding="utf-8") as fh:
-            json.dump(doc, fh, indent=2, sort_keys=True)
-        os.replace(tmp, path)
+        write_json_atomic(path, doc, sort_keys=True)
     return doc
 
 

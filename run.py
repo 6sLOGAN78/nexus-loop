@@ -27,7 +27,7 @@ from nexus_loop.coverage import Coverage
 from nexus_loop.decoys import detect_all as detect_decoys
 from nexus_loop.detect import detect_all as detect_faults
 from nexus_loop.features import Corpus
-from nexus_loop.io import Kit, KitError
+from nexus_loop.io import Kit, KitError, write_json_atomic
 from nexus_loop.report import assemble, attach_verifications, replay_queue, strip_internal
 from nexus_loop.replay import health as replay_health
 from nexus_loop.replay import run_all as run_replays
@@ -86,13 +86,7 @@ def system_notes(corpus: Corpus, cov: Coverage, replay_notes: list, n_reg: int, 
 
 
 def write_report(path: str, report: dict) -> None:
-    os.makedirs(os.path.dirname(os.path.abspath(path)) or ".", exist_ok=True)
-    payload = strip_internal(report)
-    tmp = path + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as fh:
-        json.dump(payload, fh, indent=2, allow_nan=False)
-        fh.write("\n")
-    os.replace(tmp, path)
+    write_json_atomic(path, strip_internal(report), allow_nan=False)
 
 
 def load_prior_approvals(path: str) -> dict:
