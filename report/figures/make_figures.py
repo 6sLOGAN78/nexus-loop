@@ -311,59 +311,10 @@ def fig_diagnosis():
     plt.close(fig)
 
 
-# ---------------------------------------------------------------- fig: operator screen
-def fig_screen():
-    fig, ax = plt.subplots(figsize=(3.5, 3.1))
-    ax.set_xlim(0, 100); ax.set_ylim(0, 100); ax.axis("off")
-    ax.add_patch(Rectangle((1, 1), 98, 98, fc="#f1f0ec", ec="#c7c7c4", lw=0.8))
-    # header
-    ax.add_patch(Rectangle((1, 90), 98, 9, fc=NAVY_D, ec=NAVY_D))
-    ax.text(4, 94.5, "Nexus Loop", color="white", fontsize=7.5, weight="bold", va="center")
-    ax.text(96, 94.5, "corpus A · acme + northwind", color="#c9d3e0", fontsize=5.2, va="center", ha="right")
-    # tabs
-    ax.add_patch(Rectangle((1, 83), 98, 7, fc="white", ec=LINE, lw=0.6))
-    ax.text(3, 86.5, "To decide: Silent tool · KB gap · Prompt   |   Not a problem: load · mix · judge   |   We will not invent: A11 · A09 · A02",
-            fontsize=4.0, va="center", color=SLATE)
-    # brief
-    ax.add_patch(FancyBboxPatch((3, 40), 60, 40, boxstyle="round,pad=0.4,rounding_size=1", fc="white", ec=LINE, lw=0.7))
-    ax.text(5, 76, "Silent tool failure — empty HTTP 200", fontsize=5.6, color=NAVY_D, weight="bold")
-    ax.text(5, 72.3, "HIGH · tool.contract_break · northwind-retail · days 40–51", fontsize=4.0, color=RED)
-    for i, (v, l) in enumerate([("2,686", "conversations"), ("213", "would resolve"), ("404", "handoffs")]):
-        ax.text(6 + i * 19, 66, v, fontsize=6.6, color=NAVY_D, weight="bold")
-        ax.text(6 + i * 19, 62.5, l, fontsize=3.9, color=SLATE)
-    ax.text(5, 55, "Observed 0.7755 vs baseline 0.8547; ~18/day fail", fontsize=4.1, color=NAVY_D)
-    ax.text(5, 51, "that would have resolved. Cause tool.contract_break.", fontsize=4.1, color=NAVY_D)
-    ax.text(5, 47, "Attributed get_order_status 3.2.0→3.3.0 (day 40).", fontsize=4.1, color=NAVY_D)
-    ax.text(5, 43, "Fix tool.validate → resolution 0.8468.", fontsize=4.1, color=NAVY_D)
-    ax.text(5, 41, "▸ Evidence and why this baseline is fair", fontsize=4.0, color=NAVY)
-    # gate
-    ax.add_patch(FancyBboxPatch((66, 40), 31, 40, boxstyle="round,pad=0.4,rounding_size=1", fc="white", ec=LINE, lw=0.7))
-    ax.text(68, 76, "Your call", fontsize=4.8, color=SLATE)
-    ax.text(68, 72, "Make get_order_status reject", fontsize=4.0, color=NAVY_D)
-    ax.text(68, 69, "an empty 200 and take the", fontsize=4.0, color=NAVY_D)
-    ax.text(68, 66, "existing fallback path.", fontsize=4.0, color=NAVY_D)
-    ax.text(68, 61.5, "Reason (required)", fontsize=4.0, color=SLATE)
-    ax.add_patch(Rectangle((67.5, 53), 28, 6.5, fc="#fbfbf9", ec=LINE, lw=0.5, ls="--"))
-    for i, (lab, fc, ec, tc) in enumerate([("Accept", GREEN, GREEN, "white"), ("Reject", "#fdecec", RED, RED), ("Defer", "white", SLATE, NAVY_D)]):
-        ax.add_patch(FancyBboxPatch((68, 48.5 - i * 4.2), 27, 3.5, boxstyle="round,pad=0.15,rounding_size=0.6", fc=fc, ec=ec, lw=0.6))
-        ax.text(81.5, 50.2 - i * 4.2, lab, fontsize=4.2, color=tc, ha="center", va="center")
-    # honesty strip
-    ax.text(3, 34, "coverage 0.72/0.93 · fidelity chips · ▸ what is real / stubbed / simulated", fontsize=4.0, color=SLATE)
-    # other findings
-    ax.add_patch(FancyBboxPatch((3, 4), 94, 27, boxstyle="round,pad=0.4,rounding_size=1", fc="white", ec=LINE, lw=0.7))
-    ax.text(5, 27, "Other observations", fontsize=4.8, color=SLATE)
-    ax.text(5, 22.5, "Not a problem · traffic mix — per-intent containment flat; a campaign, not quality.", fontsize=4.1, color=NAVY_D)
-    ax.text(5, 18.5, "Not a problem · load — volume ×3.5, p95 latency up, resolution flat.", fontsize=4.1, color=NAVY_D)
-    ax.text(5, 14.5, "Not a problem · judge change — quality drops on every tenant at v1→v2.", fontsize=4.1, color=NAVY_D)
-    ax.text(5, 10.5, "We will not invent · A11 failover — required event named; retry is not failover.", fontsize=4.1, color=AMBER)
-    ax.text(5, 6.5, "We will not invent · A02 customer_ref — 80,252 distinct vs budget 200.", fontsize=4.1, color=AMBER)
-    ax.set_title("Operator screen — one brief, one signature (schematic)", fontsize=8.0, color=NAVY_D)
-    fig.tight_layout()
-    fig.savefig(os.path.join(HERE, "operator_screen.png"), bbox_inches="tight")
-    plt.close(fig)
 
 
 if __name__ == "__main__":
     fig_window_scan(); fig_coverage(); fig_standard(); fig_results()
-    fig_architecture(); fig_diagnosis(); fig_screen()
+    fig_architecture(); fig_diagnosis()
+    # operator_screen.png is a live capture of the running console, not a generated schematic
     print("figures written to", HERE)
