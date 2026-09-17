@@ -391,14 +391,20 @@ Python 3.9 or later, no third-party packages, and no network access except the o
 
 ## 14. Computational efficiency
 
+All figures below are the practice corpus (80,252 sessions, 883,764 steps). The sealed corpus has the same shape.
+
 | Metric | Value |
 |---|---|
-| Average runtime, practice corpus | about 12 seconds |
-| Best and worst runtime | to be filled from repeated runs |
-| Peak memory | to be measured |
-| Bottleneck | The day-window scan and the one-pass step fold |
+| Average runtime | 9.2 s, over three runs |
+| Best runtime | 9.1 s |
+| Worst runtime | 9.3 s |
+| Peak memory | about 488 MB |
+| Dataset preprocessing (load and fold) | about 5.3 s |
+| Map / index / cache size | the in-memory session table is the working set; the frozen golden set is a few kilobytes |
 
-The scan is the dominant cost because it grows with the square of the number of days, and it runs across every cohort. The step fold is a single pass over 883,764 steps and is linear. The design favours one pass over the steps and repeated cheap reads of the session table.
+The replay call adds nothing measurable at this size, one localhost request per run.
+
+The dominant cost is the single pass over the 883,764 steps and the session map it builds, about 5.3 s of the 9.2. The asks pass is next at about 2.3 s, mostly the calibration join and the review-queue scan. The three detectors together are about 1.3 s, so the window scan is not the bottleneck here even though it grows with the square of the number of days. A larger corpus changes that balance, because the session map is held in memory and the scan runs across every cohort.
 
 ---
 
