@@ -284,8 +284,9 @@ used for Accept. Using the brand colour as a proceed cue would collapse
 navigation and verdict into one pre-attentive channel.
 
 Type is a wealth-desk pairing with exactly two families: **Newsreader** serif
-for claims and span headings, **Source Sans 3** for chrome, codes, KPI figures,
-and buttons (no separate monospace). Offline, Newsreader falls back to
+for claims, span headings, and technical jargon (codes, paths, Technical
+names), **Source Sans 3** for chrome, KPI figures, and buttons (no separate
+monospace). Offline, Newsreader falls back to
 Iowan / Palatino and Source Sans 3 to Segoe UI.
 
 ### 16.5 The gate as a traffic light

@@ -109,8 +109,9 @@ way, and **`docs/manager-english.md`** for the jargon → manager-English
 glossary used on the page.
 
 The desk is a sunken `#F7F8F9` canvas with raised rounded cards. Type is
-exactly two families: Newsreader (claims and span headings) and Source Sans 3
-(chrome, codes, KPI figures, and buttons), with Iowan/Palatino and Segoe
+exactly two families: Newsreader (claims, span headings, and technical jargon
+such as Technical names / codes / paths) and Source Sans 3 (chrome, KPI
+figures, and buttons), with Iowan/Palatino and Segoe
 fallbacks — no separate monospace stack. The gate is a traffic
 light: green Accept `#1F845A`, red Reject `#C9372C`, grey Defer, equal
 targets, required reason. The finding list is segmented **To decide** /

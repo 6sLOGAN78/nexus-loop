@@ -132,7 +132,7 @@ navigation, selected rows, and links — **not** Accept. Finding tabs sit on a
 colour-coded on a 5-column strip (label / figure / caption). Span titles
 (`.span .name`) are Newsreader `h2`s: sentence case, weight 500. KPI labels
 are uppercase tracked; observed values are tabular Source Sans. Technical
-names and codes use the same Source Sans face (no third monospace). Offline
+names and codes use the claim Newsreader face (no third monospace). Offline
 fallback: Iowan / Palatino + Segoe UI.
 
 ---

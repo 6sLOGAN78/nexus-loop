@@ -15,8 +15,9 @@
       sunken canvas #F7F8F9, raised rounded cards, traffic-light gate
       (Accept green #1F845A, Reject red #C9372C, Defer grey).
       Exactly two faces: --font-header (Newsreader) for claims / span
-      titles / owner / ask; --font-tech (Source Sans 3) for all chrome,
-      codes, KPI figures, and buttons. No separate mono stack.
+      titles / owner / ask / technical jargon (code, paths, Technical
+      names); --font-chrome (Source Sans 3) for UI chrome (body, tabs,
+      buttons, badges, KPI figures). No separate mono stack.
       Offline fallback: Iowan / Palatino + Segoe UI.
       Every figure is copied from loop-report.json.
     */
@@ -64,7 +65,7 @@
       --radius-full: 999px;
       --duration: 120ms;
       --font-header: Newsreader, "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
-      --font-tech: "Source Sans 3", "Segoe UI", "Helvetica Neue", ui-sans-serif, system-ui, sans-serif;
+      --font-chrome: "Source Sans 3", "Segoe UI", "Helvetica Neue", ui-sans-serif, system-ui, sans-serif;
       --tracking-display: -0.018em;
       --tracking-body: 0.01em;
       --tracking-label: 0.08em;
@@ -110,7 +111,7 @@
       overflow: hidden;
       background: var(--color-bg);
       color: var(--color-fg);
-      font-family: var(--font-tech);
+      font-family: var(--font-chrome);
       font-size: var(--fs-base);
       line-height: var(--leading);
       letter-spacing: var(--tracking-body);
@@ -118,7 +119,7 @@
     button, input, textarea { font: inherit; touch-action: manipulation; }
     a { color: var(--color-accent); }
     code, .mono {
-      font-family: var(--font-tech);
+      font-family: var(--font-header);
       font-size: var(--fs-xs);
       font-variant-numeric: tabular-nums;
       letter-spacing: 0.02em;
@@ -157,7 +158,7 @@
       border-radius: var(--radius-sm);
     }
     header.top .brand {
-      font-family: var(--font-tech);
+      font-family: var(--font-chrome);
       font-weight: 600;
       letter-spacing: var(--tracking-display);
       margin: 0;
@@ -347,7 +348,7 @@
       display: -webkit-box;
       -webkit-box-orient: vertical;
       -webkit-line-clamp: 2;
-      font-family: var(--font-tech);
+      font-family: var(--font-chrome);
       font-size: var(--fs-xs);
       font-weight: 600;
       letter-spacing: var(--tracking-display);
@@ -404,7 +405,7 @@
     }
     .tech-head {
       margin: 0 0 var(--space-2);
-      font-family: var(--font-tech);
+      font-family: var(--font-chrome);
       font-size: var(--fs-xs);
       font-weight: 600;
       color: var(--ds-brand);
@@ -420,7 +421,7 @@
     .kicker.ok { color: var(--ds-success); }
     .kicker.miss { color: var(--ds-text-subtle); }
     .path {
-      font-family: var(--font-tech);
+      font-family: var(--font-header);
       font-size: var(--fs-2xs);
       font-variant-numeric: tabular-nums;
       letter-spacing: 0.02em;
@@ -498,7 +499,7 @@
       line-height: 1.2;
     }
     .kpi .v {
-      font-family: var(--font-tech);
+      font-family: var(--font-chrome);
       font-size: var(--fs-lg);
       font-weight: 600;
       font-variant-numeric: tabular-nums;
@@ -553,8 +554,16 @@
       overflow: visible;
     }
     .tech:last-child { border-bottom: 0; }
-    .tech .tk { color: var(--ds-text-subtlest); overflow-wrap: anywhere; }
-    .tech code { overflow-wrap: anywhere; overflow: visible; }
+    .tech .tk {
+      font-family: var(--font-header);
+      color: var(--ds-text-subtlest);
+      overflow-wrap: anywhere;
+    }
+    .tech code {
+      font-family: var(--font-header);
+      overflow-wrap: anywhere;
+      overflow: visible;
+    }
 
     .spans {
       border: 1px solid var(--ds-border);
@@ -573,7 +582,7 @@
     }
     .span:first-child { border-top: 0; }
     .span .kind {
-      font-family: var(--font-tech);
+      font-family: var(--font-chrome);
       font-size: var(--fs-2xs);
       font-weight: 700;
       letter-spacing: var(--tracking-label);
@@ -606,7 +615,7 @@
       overflow-wrap: anywhere;
     }
     .span .val {
-      font-family: var(--font-tech);
+      font-family: var(--font-chrome);
       font-variant-numeric: tabular-nums;
       font-size: var(--fs-sm);
       font-weight: 700;
