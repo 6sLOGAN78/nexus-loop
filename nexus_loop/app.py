@@ -2,14 +2,19 @@
 
 GET  /              the operator screen (static/index.html)
 GET  /report.json   the current loop-report.json
+GET  /health        liveness; does not leak filesystem paths
 POST /decision      write approval back: read → update that prescription only →
                     temp file → atomic replace → re-validate → append decisions.log
+
+Unknown paths 404. Wrong methods 405. The screen is the only client.
 """
 from __future__ import annotations
 
 import datetime as dt
 import json
 import os
+import re
+import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Optional
 from urllib.parse import urlparse
@@ -18,6 +23,25 @@ from .validate import extra_checks, load_schema, validate
 
 STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 VERDICTS = {"accepted", "rejected", "deferred"}
+MAX_BODY = 64 * 1024
+MAX_REASON = 4000
+MAX_ID = 128
+MAX_WHO = 80
+SAFE_ID = re.compile(r"^[\w.:-]{1,128}$")
+SAFE_WHO = re.compile(r"^[\w .@+-]{1,80}$")
+
+SECURITY_HEADERS = (
+    ("X-Content-Type-Options", "nosniff"),
+    ("X-Frame-Options", "DENY"),
+    ("Referrer-Policy", "no-referrer"),
+    ("Cache-Control", "no-store"),
+    ("Content-Security-Policy",
+     "default-src 'none'; script-src 'unsafe-inline'; "
+     "style-src 'unsafe-inline' https://fonts.googleapis.com; "
+     "font-src https://fonts.gstatic.com; "
+     "img-src 'none'; connect-src 'self'; form-action 'self'; "
+     "base-uri 'none'; frame-ancestors 'none'"),
+)
 
 
 class ReportStore:
@@ -26,6 +50,7 @@ class ReportStore:
         self.schema_path = schema_path
         self.schema = load_schema(schema_path) if schema_path and os.path.exists(schema_path) else None
         self.log_path = os.path.join(os.path.dirname(self.report_path), "decisions.log")
+        self._lock = threading.Lock()
 
     def load(self) -> dict:
         with open(self.report_path, encoding="utf-8") as fh:
@@ -34,10 +59,21 @@ class ReportStore:
     def decide(self, prescription_id: str, verdict: str, decided_by: str, reason: str) -> dict:
         if verdict not in VERDICTS:
             raise ValueError("verdict must be one of %s" % sorted(VERDICTS))
-        if not (reason or "").strip():
+        reason = (reason or "").strip()
+        if not reason:
             raise ValueError("a reason is required")
-        if not (prescription_id or "").strip():
+        if len(reason) > MAX_REASON:
+            raise ValueError("reason is too long")
+        pid = (prescription_id or "").strip()
+        if not pid or not SAFE_ID.match(pid):
             raise ValueError("prescription_id is required")
+        who = (decided_by or "operator").strip() or "operator"
+        if len(who) > MAX_WHO or not SAFE_WHO.match(who):
+            raise ValueError("decided_by is invalid")
+        with self._lock:
+            return self._decide_locked(pid, verdict, who, reason)
+
+    def _decide_locked(self, prescription_id: str, verdict: str, decided_by: str, reason: str) -> dict:
         report = self.load()
         target = None
         for p in report.get("prescriptions") or []:
@@ -49,8 +85,8 @@ class ReportStore:
         at = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         target["approval"] = {
             "verdict": verdict,
-            "decided_by": (decided_by or "operator").strip(),
-            "reason": reason.strip(),
+            "decided_by": decided_by,
+            "reason": reason,
             "at": at,
         }
         problems = extra_checks(report)
@@ -68,27 +104,36 @@ class ReportStore:
         with open(self.log_path, "a", encoding="utf-8") as fh:
             fh.write(json.dumps({
                 "at": at, "prescription_id": prescription_id, "verdict": verdict,
-                "decided_by": target["approval"]["decided_by"], "reason": reason.strip(),
+                "decided_by": decided_by, "reason": reason,
             }, sort_keys=True) + "\n")
         return target["approval"]
 
 
 def make_handler(store: ReportStore):
     class H(BaseHTTPRequestHandler):
-        def _send(self, code: int, body: bytes, content_type: str) -> None:
+        def _send(self, code: int, body: bytes, content_type: str, extra=None) -> None:
             self.send_response(code)
             self.send_header("Content-Type", content_type)
             self.send_header("Content-Length", str(len(body)))
-            self.send_header("Cache-Control", "no-store")
+            for k, v in SECURITY_HEADERS:
+                self.send_header(k, v)
+            if extra:
+                for k, v in extra:
+                    self.send_header(k, v)
             self.end_headers()
             self.wfile.write(body)
 
-        def _json(self, code: int, obj: dict) -> None:
+        def _json(self, code: int, obj: dict, extra=None) -> None:
             self._send(code, json.dumps(obj, indent=2).encode("utf-8"),
-                       "application/json; charset=utf-8")
+                       "application/json; charset=utf-8", extra)
+
+        def _allow(self, code: int, allow: str, obj: dict) -> None:
+            self._json(code, obj, extra=(("Allow", allow),))
 
         def do_GET(self):
             path = urlparse(self.path).path
+            if path == "/decision":
+                return self._allow(405, "POST", {"error": "method_not_allowed"})
             if path in ("/", "/index.html"):
                 page = os.path.join(STATIC_DIR, "index.html")
                 with open(page, "rb") as fh:
@@ -100,19 +145,24 @@ def make_handler(store: ReportStore):
                     return self._json(404, {"error": "report_missing", "detail": str(e)})
                 return self._send(200, body, "application/json; charset=utf-8")
             if path == "/health":
-                return self._json(200, {"ok": True, "report": store.report_path})
+                present = os.path.isfile(store.report_path)
+                return self._json(200, {"ok": present, "report": present})
             return self._json(404, {"error": "not_found"})
 
         def do_POST(self):
             path = urlparse(self.path).path
             if path != "/decision":
-                return self._json(404, {"error": "not_found"})
-            n = int(self.headers.get("Content-Length") or 0)
-            raw = self.rfile.read(n) if n else b"{}"
+                allow = "GET" if path in ("/", "/index.html", "/report.json", "/health") else "GET, POST"
+                return self._allow(405, allow, {"error": "method_not_allowed"})
+            raw = self._read_body()
+            if raw is None:
+                return
             try:
-                body = json.loads(raw.decode("utf-8") or "{}")
-            except ValueError as e:
+                body = json.loads((raw.decode("utf-8") or "{}"))
+            except (ValueError, UnicodeDecodeError) as e:
                 return self._json(400, {"error": "bad_json", "detail": str(e)})
+            if not isinstance(body, dict):
+                return self._json(400, {"error": "bad_json", "detail": "object required"})
             try:
                 approval = store.decide(
                     str(body.get("prescription_id") or ""),
@@ -125,6 +175,32 @@ def make_handler(store: ReportStore):
             except ValueError as e:
                 return self._json(400, {"error": "invalid_decision", "detail": str(e)})
             return self._json(200, {"ok": True, "approval": approval})
+
+        def _read_body(self):
+            raw_len = self.headers.get("Content-Length") or "0"
+            try:
+                n = int(raw_len)
+            except ValueError:
+                self._json(400, {"error": "bad_length"})
+                return None
+            if n < 0 or n > MAX_BODY:
+                self._json(413, {"error": "payload_too_large"})
+                return None
+            return self.rfile.read(n) if n else b"{}"
+
+        def do_OPTIONS(self):
+            path = urlparse(self.path).path
+            allow = "POST" if path == "/decision" else "GET"
+            self._send(204, b"", "text/plain; charset=utf-8", extra=(("Allow", allow),))
+
+        def do_PUT(self):
+            self.do_PATCH()
+
+        def do_PATCH(self):
+            self.do_DELETE()
+
+        def do_DELETE(self):
+            self._allow(405, "GET, POST", {"error": "method_not_allowed"})
 
         def log_message(self, *a):
             pass

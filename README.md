@@ -35,8 +35,9 @@ Everything is on `master`:
 - **Testbed** (`tools/testbed/`): generates held-out corpora and evaluates any
   candidate solution against them.
 - **Docs**: problem statement, brief, verified kit findings,
-  deliverables/replay/demo guide, submission note, solution overview, and UI
-  handoff.
+  deliverables/replay/demo guide, submission note, solution overview, UI
+  handoff, UX psychology, the operator-screen report, and a manager-English
+  glossary (`docs/manager-english.md`).
 - **Examples** (`examples/`): a sample `loop-report.json` from the final
   solution's practice-kit run, and a standalone lo-fi `demo.html` wireframe
   (no server) that renders it.
@@ -55,7 +56,7 @@ question for the organisers; the solution reports measured coverage regardless.
 |---|---|
 | `nexus_loop/` | The solution package: ingestion, features, detectors, asks, report, replay client, decision screen |
 | `run.py` | The one-command entrypoint that produces `loop-report.json` |
-| `docs/` | Problem statement, brief, verified findings, deliverables/replay/demo guide, submission note, edge-cases, solution overview, UI handoff |
+| `docs/` | Problem statement, brief, verified findings, deliverables/replay/demo guide, submission note, edge-cases, solution overview, UI handoff, UX psychology, operator-screen report, manager-English glossary |
 | `examples/` | A sample `loop-report.json` (final solution, practice kit) and a standalone lo-fi `demo.html` wireframe |
 | `kit/` | The practice dataset (sessions, steps, turns, config timeline, labels, catalog, asks, ground truth, ~33 MB) |
 | `tools/nexus-loop-kit/` | Organiser tooling: generator, starter, scorer, replay service, schema, reference reports |
@@ -103,7 +104,26 @@ python3 run.py --kit kit --team demo --out out/loop-report.json --serve --port 8
 
 The screen renders only from the report; the approve/reject action writes back
 into `prescriptions[].approval` atomically. See **`docs/ui-handoff.md`** for the
-full contract.
+field contract, **`docs/ux-psychology.md`** for why the console is shaped that
+way, and **`docs/manager-english.md`** for the jargon → manager-English
+glossary used on the page.
+
+The desk is a sunken `#F7F8F9` canvas with raised rounded cards. Type is
+Newsreader (claims and span headings) plus Source Sans 3 (chrome and
+numbers), with Iowan/Palatino and Segoe fallbacks. The gate is a traffic
+light: green Accept `#1F845A`, red Reject `#C9372C`, grey Defer, equal
+targets, required reason. The finding list is segmented **To decide** /
+**Not a problem** / **We will not invent** on a 3-column sticky tab grid; **To decide**
+is danger red, the same token as the regression dots. Titles wrap two lines;
+the list body scrolls under the tabs; ArrowUp/ArrowDown (plus
+Home/End) move the selection. On **Not a problem** or **We will not invent**, the gate
+shows an idle line only — “Nothing to approve. This is not a problem.” or
+“Nothing to approve. We will not invent a failover rate.” Detector codes sit in
+a **Technical names** footer pinned at the bottom of the story pane. Impact
+KPIs sit on a 5-column strip (label / figure / caption): conversations
+info, would-have-resolved warn, handoffs/abandoned bad, cost warn. Tab
+labels, idle gates, ledes, and row copy are catalogued in
+**`docs/manager-english.md`**.
 
 ### Run the testbed
 
@@ -151,8 +171,11 @@ New to the repo, read in this order:
 7. `docs/submission-note.md` — real / stubbed / simulated / breaks at 100×.
 8. `docs/edge-cases.md` — the non-obvious traps and how we handle them (judge Q&A).
 9. `docs/ui-handoff.md` — what the UI/product team needs.
-10. `examples/demo.html` — the lo-fi wireframe + sample report (open the file directly, no server).
-11. `tools/testbed/README.md` — how to evaluate a candidate.
+10. `docs/ux-psychology.md` — why the screen is a tracing console (operator cognition).
+11. `docs/operator-screen-report.md` — UI/product justification for the TECHQUEST endterm report (section-aligned paste).
+12. `docs/manager-english.md` — jargon → manager English (the attached glossary for the report).
+13. `examples/demo.html` — the lo-fi wireframe + sample report (open the file directly, no server).
+14. `tools/testbed/README.md` — how to evaluate a candidate.
 
 ---
 

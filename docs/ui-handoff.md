@@ -71,8 +71,8 @@ A sample is written by any `run.py`; the practice corpus produces a rich one.
 |---|---|
 | `GET /` | The screen (`static/index.html`) |
 | `GET /report.json` | The current report, verbatim |
-| `GET /health` | `{ok, report}` |
-| `POST /decision` | Record a human decision |
+| `GET /health` | `{ok, report}` booleans. Does not leak a filesystem path. |
+| `POST /decision` | Record a human decision. Wrong method → 405. Body > 64KiB → 413. |
 
 `POST /decision` body:
 
@@ -94,24 +94,43 @@ report, and the report must stay schema-valid.
 
 The operator screen is **one page, not a dashboard**. It exists so a reviewer can
 answer the eight questions from the report without recomputing anything in the
-browser.
+browser. The psychology behind the tracing-console layout — working memory,
+recognition, trust calibration, why Reject is easy — is in
+[`docs/ux-psychology.md`](ux-psychology.md). Paste-ready TECHQUEST sections
+(Decision Layer, Operator Screen, screen-only transparency) are in
+[`docs/operator-screen-report.md`](operator-screen-report.md). The jargon →
+manager-English glossary (audience, metric, cause, A11 claim, and the other
+on-screen labels) is [`docs/manager-english.md`](manager-english.md).
 
 **Regions (live screen):**
 
-The page is a **brief plus a signature**, not three columns of cards. An operator should
-see the claim, the harm, and the ask without scrolling through evidence.
+The page is an **operator console**, not a dashboard of every session. Layout
+follows the tracing products (list / story / decision). Copy is manager English;
+detector codes live under **Technical names**. The prescription description and
+`asking_approval_for` stay in the open story and decision — they are already
+English. An operator should see the claim, the harm, and the ask without
+scrolling through evidence.
 
 | Region | Role |
 |--------|------|
 | Header | Quiet title, corpus, coverage/fidelity chips. REAL / STUBBED / SIMULATED sit under a disclosure — Framing 12 without a wall of notes. |
-| Switcher | One-line tabs: regressions to decide, lookalikes ignored, refusals (A11 first). Selecting a tab loads the brief. Default selection is the verification’s prescription, else `tool.contract_break`. |
-| Brief | The eight questions, as prose, not a questionnaire. Impact + owner + inaction sit together. Evidence and baseline working live under a disclosure. |
-| Gate (sticky) | The ask, then risk/no-ship under a disclosure, then Accept / Reject / Defer and a required reason. After save, the page re-fetches `/report.json`. |
+| List | To decide / Not a problem / We will not invent (A11 first, titled “We will not invent a failover rate”). 3-column sticky tab grid; **To decide** is danger red, same token as `.dot.bad`. Not a problem is mint; We will not invent is grey/info. Compact rows: title, tenant · days subtitle, stat (conversation count, **not a problem**, or **we will not invent**). The list body scrolls under the tabs. ArrowUp/ArrowDown and Home/End move the selection. Default selection is the verification’s prescription, else `tool.contract_break`. Hash deep-links the selected id. |
+| Story | Four steps copied from the report: what changed, why we think so, what we would change, did the test help. Each step label is uppercase tracked; `.span .name` is a Newsreader heading; observed values are tabular sans. A matching `standard[]` sentence sits under what changed. Bars plot report values in red vs green (not brown). Colour-coded KPI strip (5 columns, label / figure / caption): conversations info, would-have-resolved warn, handoffs/abandoned bad, cost warn. Evidence under a disclosure. Codes under **Technical names** in a `.tech-foot` footer pinned at the bottom of the story column. Gap ledes are short (A11: “Failover does not exist here. There is no rate to show.”); full `why` under **Full reason**. |
+| Your decision | The ask, a one-line risk, then full risk/no-ship under a disclosure, then Accept / Reject / Defer and a required reason. On **Not a problem** or **We will not invent**, the gate is an idle line only: “Nothing to approve. This is not a problem.” or “Nothing to approve. We will not invent a failover rate.” (A11 / `NOT_MEASURABLE`; other gaps name their claim or “this number”) After save, the page POSTs `/decision` and re-fetches `/report.json`. |
 
 **Styles:** CSS follows the ui-ux-pro-max **design-system skill** (primitive →
 semantic → component tokens; Button / Card / Badge / Input / Alert specs and
 states). Hex exists only in the primitive layer. Numbers still come **only**
-from the report — tokens do not invent charts or metrics.
+from the report — tokens do not invent charts or metrics. The page is a light
+operator desk: sunken `#F7F8F9` canvas, raised 12px columns, 8px cards, 6px
+buttons and fields, 4px lozenges. Accept is success green `#1F845A` (go).
+Reject is danger `#C9372C` (stop). Defer is subtle grey (wait). Brand blue is
+navigation, selected rows, and links — **not** Accept. Finding tabs sit on a
+3-column grid; To decide is danger red matching `.dot.bad`. KPI cards are
+colour-coded on a 5-column strip (label / figure / caption). Span titles
+(`.span .name`) are Newsreader `h2`s: sentence case, weight 500. KPI labels
+are uppercase tracked; observed values are tabular Source Sans. Offline
+fallback: Iowan / Palatino + Segoe / Inter.
 
 ---
 
@@ -189,16 +208,23 @@ demo show the refusal, state coverage out loud, and admit what is faked?
 These were presentation, not detector work. The loop still produces the data;
 the screen only maps it.
 
-- One finding at a time as a **brief**; a one-line tab switcher reaches other
-  regressions, dismissed lookalikes, and refusals (A11 first).
-- Evidence, baseline working, and risk/no-ship sit under disclosures so the
-  first screen is the claim, the harm, and the signature.
-- A11 is a first-class tab (not footer text): required event in mono, and why
-  retry is not failover.
-- `coverage` / `fidelity` are chips; REAL / STUBBED / SIMULATED is one disclosure,
-  not a header essay.
-- Paper + navy tokens (not a dark dashboard). Accept is primary; Reject is
-  destructive (a valid outcome); a recorded accept is success.
+- One finding at a time; the list is To decide / Not a problem / We will not invent (A11 first). To decide is danger red matching `.dot.bad`. Tabs are a 3-column sticky grid; the list body scrolls; arrow keys move the selection.
+- The loop is four English steps: what changed, why we think so, what we would change, did the test help. A matching `standard[]` sentence sits under what changed. Span titles are Newsreader headings, not passive body copy.
+- Hybrid disclosure: `cause_class`, `change_type`, metric id, `replay_run_id`, ask ids, gap verdicts sit under Technical names. The prescription description and `asking_approval_for` stay in the open story and decision.
+- A11 is a first-class list row. The claim is “We will not invent a failover rate.” The required event stays on the page.
+- `coverage` / `fidelity` chips in English (coverage named as coverage; judged
+  chips show calibration, never a bare 100%). REAL / STUBBED / SIMULATED / 100×
+  sit under one disclosure.
+- Sunken canvas, raised rounded cards, light elevation. Accept is success green (go);
+  Reject is danger (stop, a valid outcome); Defer is subtle grey (wait). Brand
+  blue is not a verdict colour. A recorded accept is a success lozenge.
+  Comparison bars are green vs red, not brown plus red.
+- Colour KPI cards on a 5-column strip (conversations info, would-have-resolved
+  warn, handoffs/abandoned bad, cost warn). Label / figure / caption rows share
+  a baseline.
+- Span titles are Newsreader headings (sentence case, 500). Step labels
+  are uppercase tracked. Observed values are tabular sans. Fitts: equal
+  Accept / Reject / Defer targets; the required reason is the bias brake.
 
 **Do not**: recompute metrics client-side, invent values, change the report shape
 (ask the backend owner first), or let the screen and report diverge.
