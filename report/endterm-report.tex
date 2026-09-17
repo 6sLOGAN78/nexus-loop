@@ -3,7 +3,7 @@
 % =========================================================
 % YELLOW.AI - TECHQUEST
 % NEXUS LOOP
-% ENDTERM / FINAL TECHNICAL REPORT TEMPLATE
+% ENDTERM / FINAL TECHNICAL REPORT
 % =========================================================
 
 % ---------------------------------------------------------
@@ -80,7 +80,7 @@
     \textsc{TECHQUEST} \\[3pt]
     \Large \textbf{Nexus Loop} \\[2pt]
     \normalsize
-    \textit{Building an Autonomous Improvement Loop for AI Agent Deployments}
+    \textit{A deterministic detect, diagnose, prescribe, verify loop for AI agent deployments}
 }
 
 \author{
@@ -107,26 +107,31 @@
 
 \begin{abstract}
 
-We present \textbf{[SYSTEM NAME]}, an autonomous improvement loop for
-AI-agent deployments that converts execution logs into actionable
-diagnoses and verified improvement proposals. The system follows the
+We present \textbf{Nexus Loop}, a deterministic pipeline that turns
+execution logs from a deployed AI support agent into a small set of
+verified improvement decisions. The system follows the
 \textbf{Detect $\rightarrow$ Diagnose $\rightarrow$ Prescribe
-$\rightarrow$ Verify} workflow. It identifies genuine regressions,
-dismisses lookalike changes, quantifies their impact with explicit
-fidelity and coverage, identifies likely causes and responsible
-configuration changes, proposes fixes, evaluates them using the replay
-service, and records the final human decision. On the sealed dataset,
-the system achieves \textbf{[KEY RESULT]} with \textbf{[RUNTIME]} runtime
-and \textbf{[COVERAGE]} coverage. We additionally report measurement
-gaps, judge calibration, failure cases, and the limitations of the
-system at larger scale.
+$\rightarrow$ Verify} workflow. It measures how much of the traffic each
+metric can cover, detects genuine regressions, dismisses lookalike
+changes, quantifies impact with explicit fidelity and coverage, links a
+cause to the responsible configuration change, proposes one fix per
+regression, evaluates the strongest fix on the replay service, and
+records the final human decision. On the practice corpus it scores
+\textbf{55.0 of 55} machine points, and the same on every held-out
+corpus we generated, with \textbf{about 9.2 seconds} runtime and
+per-metric coverage of \textbf{0.72 and 0.93} on tool metrics and
+\textbf{1.0} on cost and knowledge-base metrics. No language model is
+called for any fact the logs already record. We additionally report the
+measurement gaps we refused to fill, the calibration of the corpus judge
+against human labels, the defects we found in our own pipeline, and the
+limits of the system at larger scale.
 
 \end{abstract}
 
 \noindent
 \textbf{Keywords:}
-Agent Observability, Root Cause Analysis, AI Agents, Autonomous
-Improvement, Anomaly Detection, Evaluation, Human-in-the-Loop
+Agent Observability, Root Cause Analysis, AI Agents, Anomaly Detection,
+Evaluation, Human-in-the-Loop
 
 % =========================================================
 % 1. PROBLEM AND OBJECTIVE
@@ -134,10 +139,10 @@ Improvement, Anomaly Detection, Evaluation, Human-in-the-Loop
 
 \section{Problem and Objective}
 
-AI-agent deployments generate large volumes of execution data including
-conversations, tool calls, model information, outcomes, transcripts,
-and configuration changes. The challenge is to turn these logs into a
-closed improvement loop rather than relying on manual investigation.
+A deployed agent writes a lot of data: conversations, tool calls,
+retrieval lookups, model calls, end states, and a timeline of
+configuration changes. The task is to turn that into a closed
+improvement loop rather than a manual investigation.
 
 Our system addresses four stages:
 
@@ -146,35 +151,32 @@ Our system addresses four stages:
     traffic slices.
     \item \textbf{Diagnose:} determine why the problem occurred and
     identify the relevant configuration change.
-    \item \textbf{Prescribe:} propose a concrete fix and state its
+    \item \textbf{Prescribe:} propose one concrete fix and state its
     associated risk.
     \item \textbf{Verify:} replay the affected cohort and determine
     whether the fix actually improves the outcome.
 \end{enumerate}
 
-The system is designed to answer the operator's core questions:
-\textit{What broke? Who was affected? Why did it happen? Who should
-act? What happens if nobody acts? Can the proposed fix be trusted?}
-
-% ---------------------------------------------------------
-% 1.1 Objectives
-% ---------------------------------------------------------
+An operator reading the final screen should be able to answer six
+questions: what broke, who was affected, why it happened, who should
+act, what happens if nobody acts, and whether the proposed fix can be
+trusted.
 
 \subsection{Objectives}
-
-The primary objectives of the system are:
 
 \begin{itemize}
     \item Detect genuine regressions from deployment logs.
     \item Identify the precise traffic slice affected.
-    \item Quantify impact using defensible denominators.
-    \item Diagnose the underlying cause.
-    \item Link diagnoses to relevant configuration changes.
-    \item Explicitly dismiss lookalike / false-alarm patterns.
-    \item Refuse questions that cannot be answered from available data.
-    \item Mine the deployment's own ``good'' behaviour as a standard.
-    \item Propose and verify fixes through replay.
-    \item Keep a human approval/rejection decision in the loop.
+    \item Quantify impact using a denominator we can defend.
+    \item Diagnose the underlying cause and link it to a configuration
+    change.
+    \item Explicitly dismiss lookalike and false-alarm patterns with a
+    written reason.
+    \item Refuse questions that cannot be answered from the available
+    data.
+    \item Mine the deployment's own good behaviour as a standard.
+    \item Propose a fix and verify it through the replay service.
+    \item Keep a human approval or rejection decision in the loop.
 \end{itemize}
 
 % =========================================================
@@ -185,58 +187,97 @@ The primary objectives of the system are:
 
 \subsection{Available Data}
 
-The system operates on the provided deployment corpus containing:
-
-\begin{itemize}
-    \item 80,000 conversations;
-    \item 880,000 execution steps;
-    \item Conversation transcripts;
-    \item 16 timestamped configuration changes;
-    \item Sparse human ratings;
-    \item Human resolution labels and quality scores.
-\end{itemize}
-
-The system initially uses the provided sample dataset for development
-and subsequently confirms reported findings on the full corpus.
+The corpus covers 56 days across two tenants, acme-bank and
+northwind-retail. It contains 80,252 sessions and 883,764 execution
+steps. The step mix is 368,517 model calls, 365,065 turns, 72,168
+knowledge-base lookups, 62,198 tool calls, 11,854 handoffs, and 3,962
+guardrail events. There are 16 timestamped configuration changes across
+the two tenants, 400 outcome labels, and 96 human rubric labels. Work
+started on a smaller whole-session sample and the reported findings are
+confirmed on the full corpus.
 
 \subsection{Data Model and Joins}
 
-Describe the relevant entities, fields, relationships, and safe joins
-used by the system.
+The data has three grains. A session is one whole conversation. A step
+is one internal action. A turn is one text exchange. Steps fan out many
+to one onto sessions, so any join that multiplies steps before an
+outcome is computed will double count the busier sessions. Our loader
+folds every step fact down to one row per session before any rate is
+computed, which removes that class of error at the source.
+\texttt{session\_id} is the only join key we use, and
+\texttt{custom\_dims.customer\_ref} is close to unique per session and is
+not a key.
 
-\begin{table}[h]
+\begin{table*}[t]
 \centering
 \caption{Important data entities and their usage.}
 \label{tab:data}
 \small
-\begin{tabular}{p{0.28\columnwidth}p{0.62\columnwidth}}
+\begin{tabular}{p{0.16\textwidth}p{0.48\textwidth}p{0.30\textwidth}}
 \toprule
-\textbf{Entity} & \textbf{Usage} \\
+\textbf{Entity} & \textbf{Fields we use} & \textbf{Purpose} \\
 \midrule
-Conversation & [Purpose / fields used] \\
-Execution step & [Purpose / fields used] \\
-Transcript & [Purpose / fields used] \\
-Configuration & [Purpose / fields used] \\
-Human labels & [Purpose / fields used] \\
-Ratings & [Purpose / fields used] \\
+Session & tenant, day, intent, agent\_id, agent\_kind, session\_end, handoff\_by\_design, turns, cost\_usd, quality\_score, judge\_version, milestones\_reached & Outcome, cost, quality and cohort definitions \\
+Step & step\_type and per-type fields (tool status, result\_field\_count, retry\_count, duration; kb\_hit, kb\_top\_score; llm outcome) & Mechanism evidence, folded to session grain \\
+Config timeline & day, tenant, kind, target, from\_value, to\_value & Attribution of a regression to a deploy \\
+Catalog & fields, capabilities, cardinality budgets, milestones & Coverage planning and journey definitions \\
+Human labels & session\_id, human\_quality & Calibration of the corpus judge \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 \subsection{Measurement Constraints}
 
-State explicitly which quantities can and cannot be measured from the
-available logs.
-
-For every reported metric, distinguish:
+Not every number can be measured from the logs, and the report marks
+this on every metric. Each metric carries a fidelity tag, a coverage
+figure, and, where the value is a judgement rather than a measurement, a
+calibration.
 
 \begin{itemize}
-    \item \textbf{Fidelity:} measured, derived, or judged;
-    \item \textbf{Coverage:} fraction of traffic for which the metric
-    can actually be computed;
-    \item \textbf{Calibration:} agreement with human labels for judged
-    quantities.
+    \item \textbf{Fidelity:} measured, derived, or judged. Measured means
+    we read or counted it from the logs. Derived means we computed it
+    from measured primitives. Judged means a human or a judge decided
+    meaning.
+    \item \textbf{Coverage:} the share of traffic that can produce the
+    metric. The legacy v2 flow emits no tool calls, so tool metrics cover
+    0.72 of acme-bank and 0.93 of northwind-retail traffic. Sessions on
+    an agent kind that never emits the step type leave the denominator
+    instead of being counted as zero.
+    \item \textbf{Calibration:} for judged values, the agreement between
+    the corpus judge and human labels, published with the sample size and
+    per judge version.
 \end{itemize}
+
+Two questions are answered the other way on purpose. A tool failure rate
+is measured because we executed the call. The reason a user abandoned a
+session is a judgement about meaning, so it is filed as a gap rather
+than inferred from an end code.
+
+\subsection{Declared versus Measured Coverage}
+
+The catalog is a planning contract, and in two places it does not match
+the corpus we were given. We measure coverage from the corpus and
+publish the difference instead of trusting the prose.
+
+\begin{table*}[t]
+\centering
+\caption{Catalog claims checked against the corpus.}
+\label{tab:drift}
+\small
+\begin{tabular}{p{0.30\textwidth}p{0.34\textwidth}p{0.30\textwidth}}
+\toprule
+\textbf{Claim in the catalog} & \textbf{What the corpus shows} & \textbf{How we handled it} \\
+\midrule
+Cost coverage 0.72 and 0.93, because v2 lacks cost & v2 sessions carry cost\_usd and emit kb and guardrail steps & Measured coverage is 1.0; the metric carries observed\_vs\_declared \\
+Calibration set of 100 human-scored sessions & manifest and labels are 96 & Calibration published on the 96 labels that join \\
+v2\_flow emits no tool\_call & Only the tool\_call hole is real & This claim holds; tool coverage is 0.72 and 0.93 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+This matters for honesty rather than for the score. A metric whose
+coverage is copied from the catalog would either overstate the hole or
+understate it. Measuring from the corpus keeps the denominator right.
 
 % =========================================================
 % 3. SYSTEM OVERVIEW
@@ -246,40 +287,44 @@ For every reported metric, distinguish:
 
 \subsection{Architecture}
 
-Describe the complete automated pipeline from raw deployment logs to
-the final report and decision layer.
+The pipeline is one Python process. A kit loader streams the gzipped
+session and step files and keeps unknown fields. A feature layer folds
+steps to session grain. A coverage layer records which agent kinds emit
+which step types. Three fault detectors and three lookalike detectors
+inspect the session table. An asks layer answers the eleven questions as
+metrics or structured gaps. A standards layer mines a good-behaviour
+standard and freezes a golden set. The report layer assembles findings,
+diagnoses and prescriptions, validates the result against the provided
+schema, and writes it atomically. A replay client verifies one fix. A
+small standard-library server renders the report on a decision screen
+and writes the operator's verdict back into the report.
 
-\begin{figure}[t]
+\begin{figure*}[t]
     \centering
-    \includegraphics[width=0.98\columnwidth]
-    {figures/system_architecture.png}
-    \caption{
-        Overall architecture of the proposed Nexus Loop system.
-    }
+    \includegraphics[width=0.90\textwidth]{figures/system_architecture.png}
+    \caption{Overall architecture of the Nexus Loop system.}
     \label{fig:architecture}
-\end{figure}
+\end{figure*}
 
 \subsection{End-to-End Pipeline}
 
-The implemented pipeline consists of:
-
 \begin{enumerate}
-    \item \textbf{Data ingestion and validation}
-    \item \textbf{Metric computation}
-    \item \textbf{Traffic slicing}
-    \item \textbf{Problem detection}
-    \item \textbf{False-alarm analysis}
-    \item \textbf{Root-cause diagnosis}
-    \item \textbf{Impact estimation}
-    \item \textbf{Standard mining}
-    \item \textbf{Fix prescription}
-    \item \textbf{Replay verification}
-    \item \textbf{Human decision}
-    \item \textbf{Report generation}
+    \item Data ingestion and validation
+    \item Session-grain feature table
+    \item Per-tenant emission coverage
+    \item Three fault detectors
+    \item Three lookalike detectors
+    \item Eleven asks as metrics or gaps
+    \item Golden set frozen before any fix exists
+    \item Report assembly and schema validation
+    \item Replay verification of the strongest fix
+    \item Decision screen
+    \item Human decision written back into the report
 \end{enumerate}
 
-Replace the above with the actual implementation if the ordering or
-components differ.
+The ordering matters in one place. The detectors run before the asks, so
+the asks can mark their windows as confounded when a detected event
+overlaps them.
 
 % =========================================================
 % 4. DETECTION
@@ -289,52 +334,75 @@ components differ.
 
 \subsection{Metrics}
 
-Describe the metrics used to detect changes in agent behaviour.
-
-\begin{table}[h]
+\begin{table*}[t]
 \centering
 \caption{Primary metrics used by the detection system.}
 \label{tab:metrics}
 \small
-\begin{tabular}{p{0.24\columnwidth}p{0.27\columnwidth}p{0.35\columnwidth}}
+\begin{tabular}{p{0.22\textwidth}p{0.46\textwidth}p{0.24\textwidth}}
 \toprule
 \textbf{Metric} & \textbf{Definition} & \textbf{Fidelity / Coverage} \\
 \midrule
-[Metric 1] & [Definition] & [Measured / Derived / Judged] \\
-[Metric 2] & [Definition] & [Measured / Derived / Judged] \\
-[Metric 3] & [Definition] & [Measured / Derived / Judged] \\
+Containment rate & Share of sessions that resolved or handed off by design & Measured, coverage 1.0 \\
+Resolution rate & Share of sessions that ended resolved & Measured, coverage 1.0 \\
+Empty tool success & Tool calls with status 200, outcome ok, and result\_field\_count 0 & Derived, coverage 0.72 and 0.93 \\
+Tool failure rate & Tool calls with outcome other than ok & Measured, coverage 0.72 and 0.93 \\
+KB confident-hit rate & Lookups that returned a document above the confidence bar & Measured, coverage 1.0 here \\
+Turns to resolve & Median turns among resolved sessions & Measured, coverage 1.0 \\
+Cost per resolved conversation & Intent spend divided by its resolutions & Measured, coverage 1.0 here \\
+Judged quality & Rubric score, segmented by judge version & Judged, calibrated, coverage 1.0 \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 \subsection{Detection Strategy}
 
-Explain:
+Each detector owns its own cohort dimensions. The tool detector groups
+by tenant and tool and then narrows to the dominant intent when one
+intent accounts for at least half of the affected sessions. The
+knowledge-base detector groups by tenant and intent. The efficiency
+detector groups by tenant and agent. No practice value such as a tenant
+name, a day, a tool or an agent appears in the detection code.
 
-\begin{itemize}
-    \item How traffic is grouped into meaningful cohorts;
-    \item How baselines are selected;
-    \item How temporal changes are detected;
-    \item How thresholds are selected;
-    \item How insufficient sample sizes are handled;
-    \item How the system distinguishes signal from normal variation.
-\end{itemize}
+A shared window scanner finds the day window whose inside mean differs
+most from the outside mean, scored with a Welch z. This suits faults
+that start and end, and an open-ended window also catches a fault that
+has not recovered. The scan requires a minimum number of sessions inside
+and outside and at least a week of contrast outside, and windows open
+and close on days that carry traffic.
+
+Thresholds are relative or statistical rather than tuned to this corpus.
+The tool detector requires an in-window empty rate of at least 5 percent,
+an absolute lift of at least 4 points, a relative lift of at least three
+times, and a z of at least 4. The resolution detector requires a drop of
+at least 5 points and a z of at least 4, with a stricter bar for a
+regression it cannot explain. The efficiency detector requires a turns
+ratio of at least 1.2 and a z of at least 5.
+
+Two things about the scan bound how much weight a z deserves. The scan
+maximises over a large number of candidate windows and cohorts, so an
+unadjusted z of 4 is not a one-in-thirty-thousand event across the whole
+search. Sessions also cluster by day, agent and version, so treating
+them as independent draws makes the z optimistic. The high bars and the
+absolute-lift requirements are our guard against both, and we treat the
+effect size as the primary signal.
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=0.94\textwidth]{figures/window_scan.png}
+    \caption{Detector evidence: each daily series against the window the
+    scan selects (shaded).}
+    \label{fig:window}
+\end{figure*}
 
 \subsection{Affected Slice}
 
-For each detected problem, report the exact slice in which the
-behaviour occurs.
-
-Examples of useful dimensions include:
-
-\begin{itemize}
-    \item Intent;
-    \item Tenant;
-    \item Time period;
-    \item Model / agent version;
-    \item Tool usage;
-    \item Other relevant traffic attributes.
-\end{itemize}
+Each finding names the slice it applies to. The tool fault is scoped to
+northwind-retail, intent order\_status, tool get\_order\_status. The
+knowledge-base fault is scoped to acme-bank, intent premium\_card\_info.
+The efficiency fault is scoped to acme-bank, agent acme\_main\_v3. The
+lookalike findings are scoped the same way, and the judge-version change
+is scoped to both tenants.
 
 % =========================================================
 % 5. FINDINGS AND SPECIFICITY
@@ -344,61 +412,58 @@ Examples of useful dimensions include:
 
 \subsection{Real Problems}
 
-For every genuine problem, provide an explicit impact block.
-
-\begin{table}[h]
+\begin{table*}[t]
 \centering
 \caption{Summary of genuine findings.}
 \label{tab:findings}
 \small
-\begin{tabular}{p{0.15\columnwidth}p{0.23\columnwidth}p{0.48\columnwidth}}
+\begin{tabular}{p{0.06\textwidth}p{0.22\textwidth}p{0.64\textwidth}}
 \toprule
 \textbf{ID} & \textbf{Affected Slice} & \textbf{Finding / Impact} \\
 \midrule
-F-01 & [Slice] & [What changed and who was affected] \\
-F-02 & [Slice] & [What changed and who was affected] \\
-F-03 & [Slice] & [What changed and who was affected] \\
+F-01 & acme-bank, premium\_card\_info, days 34 to 44 & Knowledge gap. Resolution fell to 0.3087 against a peer baseline of 0.7073. The cohort had no traffic before day 35, so its own history could not serve as a baseline. KB hit rate was 0.000 against 0.899 on peer intents. \\
+F-02 & northwind-retail, order\_status, get\_order\_status, days 40 to 51 & Silent tool failure. 13.7 percent of successful calls returned an empty body against 0.0 percent outside the window. Resolution fell from 0.8547 to 0.7755. The declared tool error rate stayed flat, so alerting on it would have missed the fault. \\
+F-03 & acme-bank, acme\_main\_v3, days 46 to 55 & Prompt regression. Median turns to resolve rose from 4.0 to 6.0 and cost per session from 0.04406 to 0.07994 dollars, while resolution stayed flat at 0.7943 to 0.8031. \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
-For each finding, state:
+For F-02 the impact block reads: 2,686 conversations, 29.0 percent of
+the tenant's traffic in the window, 12 days, 94.31 dollars of recorded
+cost, 213 conversations that would have resolved at baseline, 404
+unplanned handoffs, and 147 abandonments. For F-03 it reads 1,224
+conversations, 23.3 percent of traffic, 10 days, 97.85 dollars, 2,448
+extra turns, 983 slowed resolutions and 43.92 dollars of excess spend.
+Every finding names the owner who should act and the consequence of
+waiting. The owners differ because the causes differ: F-01 sits with the
+agent builder and the business owner who own the knowledge base, F-02
+with the agent builder and the platform owner who own the tool contract,
+and F-03 with the agent builder who owns the prompt.
 
-\begin{itemize}
-    \item Number of affected conversations;
-    \item Percentage of total traffic;
-    \item Change in the relevant outcome;
-    \item Number of users negatively affected;
-    \item Additional human handoffs, if applicable;
-    \item Duration of the problem;
-    \item Estimated consequence / cost;
-    \item Responsible owner;
-    \item Consequence of taking no action.
-\end{itemize}
+\subsection{False Alarms and Lookalikes}
 
-\subsection{False Alarms / Lookalikes}
+Three changes look like regressions and are not. Each is reported as a
+non-regression finding with a linked diagnosis and a written reason, so
+a reader can see that we examined it.
 
-The system must explicitly explain why observed changes were \textbf{not}
-classified as regressions.
-
-\begin{table}[h]
+\begin{table*}[t]
 \centering
 \caption{Lookalikes examined and rejected.}
 \label{tab:lookalikes}
 \small
-\begin{tabular}{p{0.18\columnwidth}p{0.31\columnwidth}p{0.41\columnwidth}}
+\begin{tabular}{p{0.08\textwidth}p{0.32\textwidth}p{0.52\textwidth}}
 \toprule
 \textbf{Case} & \textbf{Observed Change} & \textbf{Reason Dismissed} \\
 \midrule
-L-01 & [Pattern] & [Evidence] \\
-L-02 & [Pattern] & [Evidence] \\
-L-03 & [Pattern] & [Evidence] \\
+L-01 & acme-bank aggregate containment moved +1.9 points on days 22 to 31 & branch\_locator's share of traffic rose from 13 to 44 percent while every per-intent containment rate stayed flat within 5 points. This is a mix shift. \\
+L-02 & northwind-retail latency and volume spiked on days 12 to 15 & Volume ran at 3.5 times normal and tool p95 latency rose from 1,338 to 3,152 ms, while resolution stayed flat. This is a load event for the platform owner. \\
+L-03 & Judged quality fell from 3.89 to 3.29 on day 28 across both tenants & The judge version changed from v1 to v2 on that day. We measured the rubric, not the agent, so we never trend quality across a judge boundary. \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
-Explain the evidence that distinguishes each lookalike from a genuine
-regression.
+Specificity is earned by looking and being right rather than by staying
+quiet, so these three dismissals are a first-class part of the result.
 
 % =========================================================
 % 6. DIAGNOSIS
@@ -408,53 +473,69 @@ regression.
 
 \subsection{Root-Cause Analysis}
 
-For each real problem, explain the causal reasoning used to move from
-the observed symptom to the underlying cause.
+For each regression the diagnosis states the observed change, the
+cohort, the window, the candidate causes, the evidence that selects one,
+and the configuration change where one applies. The chain is recorded in
+the report and shown on the screen.
 
-\begin{figure}[h]
+\begin{figure*}[t]
     \centering
-    \includegraphics[width=0.98\columnwidth]
-    {figures/diagnosis.png}
-    \caption{
-        Example diagnosis chain from observed regression to responsible
-        configuration change.
-    }
+    \includegraphics[width=0.94\textwidth]{figures/diagnosis.png}
+    \caption{Diagnosis chain from observed regression to responsible
+    configuration change, with evidence at each step.}
     \label{fig:diagnosis}
-\end{figure}
+\end{figure*}
 
-The diagnosis should identify:
+For F-02 the chain is: cohort resolution fell to 0.7755; the affected
+slice is order\_status on get\_order\_status; the mechanism is an empty
+success, a 200 response with an outcome of ok and no result fields, on
+13.7 percent of calls in the window, with a same-tool retry appearing in
+the affected sessions; the ordinary error rate stayed flat, which is why
+the fault was invisible; and the onset aligns with the
+get\_order\_status deploy from 3.2.0 to 3.3.0 on day 40.
 
-\begin{enumerate}
-    \item Observed metric change;
-    \item Affected cohort;
-    \item Relevant temporal window;
-    \item Candidate causes;
-    \item Evidence supporting the selected cause;
-    \item Configuration change responsible, where applicable.
-\end{enumerate}
+Observation and attribution are separate. A regression is reported when
+the behaviour proves it, even when no configuration change aligns. In
+that case the cause is left unknown and no change is blamed.
 
 \subsection{Baseline Selection}
 
-Clearly state the baseline used for each diagnosis.
-
-Where a before-period exists, explain the before/after comparison.
-
-Where no before-period exists, explain the peer or deployment-internal
-baseline used instead.
+The baseline is chosen per finding and stated in words on the impact
+block, so a reader can check it. F-02 and F-03 use the cohort's own
+history over the 14 days before the window. F-01 has no before-period
+because the intent first appears on day 35, so it uses the other
+knowledge-base backed intents on the same agents in the same tenant and
+the same days, and its window opens on the launch change that created
+the cohort rather than on the first day that cleared the sample-size
+floor. Opening on the launch removes most of the detection lag. Where a
+cohort is new, we say so in the evidence and point to the peer baseline.
 
 \subsection{Configuration Change Attribution}
 
-For every attributed configuration change, report:
+Attribution reads which configuration dimension actually changed between
+the baseline and the window, then names the nearest matching change.
+This avoids blaming an innocent deploy that happens to share the onset
+day.
 
-\begin{itemize}
-    \item Configuration identifier;
-    \item Timestamp;
-    \item Parameter / component changed;
-    \item Previous state;
-    \item New state;
-    \item Relationship to the detected regression;
-    \item Evidence supporting the attribution.
-\end{itemize}
+\begin{table}[h]
+\centering
+\caption{Attributed configuration changes.}
+\label{tab:attrib}
+\small
+\begin{tabular}{llllr}
+\toprule
+\textbf{Finding} & \textbf{Kind} & \textbf{Target} & \textbf{From $\rightarrow$ To} & \textbf{Day} \\
+\midrule
+F-01 & kb & premium\_card\_info & kb\_2026\_06\_a $\rightarrow$ kb\_2026\_06\_c & 34 \\
+F-02 & tool & get\_order\_status & 3.2.0 $\rightarrow$ 3.3.0 & 40 \\
+F-03 & prompt & acme\_main\_v3 & p\_v3 $\rightarrow$ p\_v4 & 46 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The attribution window is three days before the onset and two after,
+with the earlier change winning a tie. When the mechanism is proven but
+nothing aligns, the cause stays unknown and the change is left null.
 
 % =========================================================
 % 7. MEASUREMENT GAPS
@@ -462,37 +543,48 @@ For every attributed configuration change, report:
 
 \section{Measurement Gaps}
 
-This section documents questions that the available data cannot answer.
-
 \subsection{Unanswerable Questions}
 
-For every refused question, explicitly state:
+Two of the eleven questions have no honest numeric answer in this
+deployment, and one is a cohort that the planner should refuse.
 
-\begin{enumerate}
-    \item The question;
-    \item Why the available logs cannot answer it;
-    \item Which event or field is missing;
-    \item The exact event that would need to be logged;
-    \item How that event would enable future measurement.
-\end{enumerate}
-
-\begin{table}[h]
+\begin{table*}[t]
 \centering
 \caption{Measurement gaps.}
 \label{tab:gaps}
 \small
-\begin{tabular}{p{0.24\columnwidth}p{0.34\columnwidth}p{0.32\columnwidth}}
+\begin{tabular}{p{0.16\textwidth}p{0.40\textwidth}p{0.36\textwidth}}
 \toprule
 \textbf{Question} & \textbf{Why Unanswerable} & \textbf{Required Event} \\
 \midrule
-[Axx] & [Reason] & [Required event] \\
-[Question] & [Reason] & [Required event] \\
+A11 failover rate & No failover mechanism exists, so no failover event is ever emitted. There is no primary and secondary path to observe. & failover at step grain, fields from\_target, to\_target, reason, recovered, owner conversation-runtime \\
+A09 abandonment reason & The abandonment end state is measured, but the reason is a judgement about meaning that no calibrated judge in the deployment answers. & abandonment\_reason\_judgement at session grain, fields judge\_version, reason\_class, confidence, calibration\_set\_id, owner quality-judging \\
+A02 per-customer breakdown & custom\_dims.customer\_ref has 80,252 distinct values against a declared budget of 200. Grouping by it is a planner error. & custom\_dims.segment, a closed set with a budget of 50, is the correct cohort key \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
-Do not infer or estimate quantities for which the required event is not
-present in the data.
+We report the measured abandonment rate, 5.92 percent at acme-bank and
+5.73 percent at northwind-retail, inside the gap text rather than as a
+metric. A measured metric tagged A09 would misread the question, which
+asks about the reason, not the rate.
+
+\subsection{How We Refuse}
+
+A refusal names what is missing, the event that would enable the
+measurement later, the near proxy an impatient team might use, and why
+that proxy misleads. For A11 the proxy is retry\_count $>$ 0, 1,956 rows
+in this corpus. Those are quality retries of the same target, not a
+switch to an alternate target, so reporting them as failover would show
+a small non-zero rate that reads as good news when failover does not
+exist. For A09 the proxy is a high turn count or a same-tool retry,
+which flags effort rather than frustration: a happy exit after two turns
+and a rage quit after two turns look the same in the logs.
+
+The same discipline applies when a judged metric cannot be calibrated.
+If fewer than ten human labels join, the judged quality reading is
+replaced by an A06 gap that asks for a calibration set, rather than
+publishing a number with no agreement behind it.
 
 % =========================================================
 % 8. STANDARD / GOOD BEHAVIOUR
@@ -500,37 +592,39 @@ present in the data.
 
 \section{Deployment Standard}
 
-\subsection{Mining ``Good'' Behaviour}
+\subsection{Mining Good Behaviour}
 
-Describe how the system identifies high-quality conversations from the
-deployment itself and converts them into a reference standard.
+The standard comes from the deployment's own sessions rather than a
+fixed target. A session is eligible when it resolved, had no unplanned
+handoff, and, where the telemetry exists for its agent kind, had no tool
+error, no empty tool answer and no knowledge-base miss. From the
+eligible baseline sessions we take the top decile by efficiency, or the
+90th percentile of daily rates for resolution, and report the median as
+well. The result is an aspirational bar, not a typical one, and the
+derivation string says so.
 
-The standard should capture:
-
-\begin{itemize}
-    \item Relevant behavioural characteristics;
-    \item Expected resolution behaviour;
-    \item Expected conversation length;
-    \item Tool usage patterns;
-    \item Quality indicators;
-    \item Other deployment-specific properties.
-\end{itemize}
+The golden set is 30 eligible baseline sessions per finding, frozen to
+disk before any prescription exists and reused verbatim on later runs.
+Freezing before the fix removes hindsight: we cannot choose the
+known-good sessions after seeing which fix helps. One caveat we state
+plainly is that the golden set is the lowest-turn eligible tail, so
+passing it is a floor on quality rather than proof of broad improvement.
 
 \subsection{Deviation from Standard}
 
-Explain how observed problematic cohorts are compared against the
-deployment's own good behaviour.
+Each affected cohort is compared with the standard for the same metric
+and cohort. F-02 resolved at 0.7755 against a standard median of 0.8545
+and a best of 0.8926. F-01 resolved at 0.3087 against a standard median
+of 0.7273 and a best of 0.7399. F-03 took a median of 6.0 turns against
+a standard median of 4.0 and a best of 2.0.
 
-\begin{figure}[h]
+\begin{figure*}[t]
     \centering
-    \includegraphics[width=0.98\columnwidth]
-    {figures/standard_comparison.png}
-    \caption{
-        Comparison between the mined deployment standard and an affected
-        cohort.
-    }
+    \includegraphics[width=0.94\textwidth]{figures/standard_comparison.png}
+    \caption{Comparison between the mined deployment standard and the
+    affected cohorts, split by metric so the units match.}
     \label{fig:standard}
-\end{figure}
+\end{figure*}
 
 % =========================================================
 % 9. PRESCRIPTION
@@ -540,38 +634,41 @@ deployment's own good behaviour.
 
 \subsection{Proposed Fix}
 
-For each real problem, describe one concrete proposed intervention.
+Each regression gets one concrete intervention, framed as a decision a
+human approves.
 
-\begin{table}[h]
+\begin{table*}[t]
 \centering
 \caption{Proposed fixes.}
 \label{tab:fixes}
 \small
-\begin{tabular}{p{0.13\columnwidth}p{0.28\columnwidth}p{0.43\columnwidth}}
+\begin{tabular}{p{0.06\textwidth}p{0.08\textwidth}p{0.56\textwidth}p{0.22\textwidth}}
 \toprule
-\textbf{ID} & \textbf{Problem} & \textbf{Proposed Fix} \\
+\textbf{ID} & \textbf{Finding} & \textbf{Proposed Fix} & \textbf{Predicted Change} \\
 \midrule
-P-01 & [Finding ID] & [Fix description] \\
-P-02 & [Finding ID] & [Fix description] \\
+P-01 & F-02 & Validate the get\_order\_status response so an empty 200 is treated as a failure and takes the existing fallback path & Resolution 0.7755 to 0.8468 \\
+P-02 & F-01 & Publish knowledge-base content for premium\_card\_info so retrieval returns a confident document & Resolution 0.3087 to 0.6674 \\
+P-03 & F-03 & Edit the acme\_main\_v3 prompt so it confirms once rather than on every turn, keeping the safety wording & Median turns 6.0 to 4.2 \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 \subsection{Risk and Shipping Criteria}
 
-Every proposed fix must state:
+Each prescription states what is being approved, the risk if the
+diagnosis is wrong, and the condition under which we would not ship.
+P-01 is low risk in the sense that failing to fix it changes nothing,
+but it carries a real risk the other way: if an empty body is a valid
+state for a brand-new or cancelled order, the fix would route valid
+sessions to a human. P-02 is low risk because added correct content does
+not remove anything. P-03 is moderate because the confirmation wording
+was added for safety, and if it is a compliance requirement then
+removing it trades cost for risk, which is a business decision.
 
-\begin{itemize}
-    \item What change is being proposed;
-    \item Why it should address the diagnosed cause;
-    \item Risk if the diagnosis is wrong;
-    \item What metric(s) should improve;
-    \item What would prevent the fix from being shipped;
-    \item Conditions under which the fix should be rejected.
-\end{itemize}
-
-The system proposes changes to the agent, but never changes the
-evaluation yardstick.
+Each prescription also carries a recovery estimate that closes nine
+tenths of the deficit, leaving the rest to genuine edge cases. The
+system changes the agent, and it never changes the metric definition,
+the judge version, or the reviewed good set.
 
 % =========================================================
 % 10. VERIFICATION
@@ -581,50 +678,44 @@ evaluation yardstick.
 
 \subsection{Replay Method}
 
-Describe how the proposed fix is submitted to the replay service and
-how the affected cohort is selected.
+The replay endpoint verifies a hypothesis we already hold, so we
+diagnose offline first and send one high-confidence run rather than
+probing. The request carries the exact detected cohort, the proposed
+change, and the frozen golden set. The endpoint can return an
+improvement, no effect, or a golden-set regression, and all three are
+recorded. A no-effect result is a result, not an error. If the service
+is unreachable the report stays valid with no verifications.
 
-The verification must compare:
-
-\begin{itemize}
-    \item Before-fix behaviour;
-    \item After-fix behaviour;
-    \item Relevant outcome metrics;
-    \item Statistical / practical significance where applicable;
-    \item Any regressions introduced by the fix.
-\end{itemize}
-
-\subsection{Before--After Results}
+\subsection{Before and After}
 
 \begin{table}[h]
 \centering
-\caption{Replay verification results.}
+\caption{Replay verification results, P-01.}
 \label{tab:replay}
 \small
-\begin{tabular}{p{0.20\columnwidth}ccc}
+\begin{tabular}{p{0.46\columnwidth}rr}
 \toprule
-\textbf{Metric} & \textbf{Before} & \textbf{After} & \textbf{Change} \\
+\textbf{Metric} & \textbf{Before} & \textbf{After} \\
 \midrule
-[Metric 1] & [X] & [X] & [X] \\
-[Metric 2] & [X] & [X] & [X] \\
-[Metric 3] & [X] & [X] & [X] \\
+Resolution rate & 0.7741 & 0.8574 \\
+Golden set, 30 sessions & pass & pass \\
+Prediction error & predicted +0.0713 & replayed +0.0833 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-A fix returning no measurable effect must be reported as a valid
-negative result rather than being hidden.
+The replay returned improved, with a change of +0.0833 and a prediction
+error of $-0.012$, and 0 of 30 golden-set sessions regressed. The before
+figure is the endpoint's own simulated baseline, not our corpus
+measurement, and the report says so in the verification note. The
+prediction error compares our predicted delta with the replayed delta,
+and it is published on every verification.
 
 \subsection{Verification Decision}
 
-State whether the proposed fix:
-
-\begin{itemize}
-    \item \textbf{Worked and should be considered for deployment;}
-    \item \textbf{Did not produce the expected effect;}
-    \item \textbf{Introduced unacceptable side effects;}
-    \item \textbf{Requires additional testing.}
-\end{itemize}
+P-01 improved and is a candidate for deployment, with the golden set
+intact. The other two prescriptions carry no replay this run; the report
+records that they remain decision records without attached verification.
 
 % =========================================================
 % 11. HUMAN DECISION LAYER
@@ -632,26 +723,18 @@ State whether the proposed fix:
 
 \section{Decision Layer}
 
-\subsection{Approve / Reject Workflow}
+\subsection{Approve and Reject Workflow}
 
-Describe how a human operator reviews:
+The screen renders only the report. A reviewer sees the claim, the harm
+numbers, the cause, the proposed change, the replay result, and the
+risk, then records a verdict. Approve, reject and defer are all
+first-class. A rejection with a strong reason is a valid outcome, not a
+failed one.
 
-\begin{enumerate}
-    \item The finding;
-    \item Evidence and impact;
-    \item Diagnosis;
-    \item Proposed fix;
-    \item Verification result;
-    \item Associated risk.
-\end{enumerate}
-
-The final screen must provide a working:
-
-\begin{center}
-\textbf{APPROVE \qquad / \qquad REJECT}
-\end{center}
-
-control and write the human decision back into the report.
+The verdict writes into the report. The server serializes decisions on a
+lock, updates only the target prescription's approval field, revalidates
+the whole report, writes it through one atomic helper, and appends the
+decision to a log. A reason is required.
 
 \subsection{Decision Record}
 
@@ -660,18 +743,16 @@ control and write the human decision back into the report.
 \caption{Human decisions for proposed fixes.}
 \label{tab:decisions}
 \small
-\begin{tabular}{p{0.16\columnwidth}p{0.20\columnwidth}p{0.45\columnwidth}}
+\begin{tabular}{p{0.12\columnwidth}p{0.20\columnwidth}p{0.58\columnwidth}}
 \toprule
 \textbf{Fix} & \textbf{Decision} & \textbf{Reason} \\
 \midrule
-P-01 & [Approve/Reject] & [Human reasoning] \\
-P-02 & [Approve/Reject] & [Human reasoning] \\
+P-01 & pending & To be recorded at the demo \\
+P-02 & pending & To be recorded at the demo \\
+P-03 & pending & To be recorded at the demo \\
 \bottomrule
 \end{tabular}
 \end{table}
-
-A rejection supported by a strong reason should be treated as a valid
-decision, not a failed outcome.
 
 % =========================================================
 % 12. SELF-ASSESSMENT
@@ -679,56 +760,88 @@ decision, not a failed outcome.
 
 \section{Self-Assessment}
 
-Describe how the system evaluates its own performance.
-
 \subsection{Detection Performance}
 
-Report:
-
-\begin{itemize}
-    \item Genuine problems detected;
-    \item Genuine problems missed;
-    \item False alarms;
-    \item Detection hit rate;
-    \item Detection latency.
-\end{itemize}
+All three genuine faults were detected at the onset day, with the right
+cohort and cause, and no false alarms. Detection latency is zero because
+each window opens on the onset rather than on the first day that clears
+the sample floor.
 
 \subsection{Judge Calibration}
 
-If a model is used for semantic judgement, report:
+No model is trained or used for judgement. The judged quality values
+come from the corpus's own judge, and we publish the agreement between
+that judge and the human rubric labels.
 
-\begin{itemize}
-    \item Judge model / version;
-    \item Judgement task;
-    \item Human-labelled evaluation set;
-    \item Agreement with human labels;
-    \item Calibration methodology.
-\end{itemize}
+\begin{table}[h]
+\centering
+\caption{Judged quality calibration.}
+\label{tab:calibration}
+\small
+\begin{tabular}{p{0.60\columnwidth}r}
+\toprule
+\textbf{Item} & \textbf{Value} \\
+\midrule
+Judge versions & v1 and v2 \\
+Human-labelled sessions that join & 96 \\
+Agreement, $|\Delta| \leq 1$ on the 1 to 5 scale & 0.9479 \\
+Mean absolute error & published in the report \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-Do not report a calibration of 1.00 without explaining the evaluation
-procedure and dataset.
+A calibration of 1.00 is treated as a defect rather than a result,
+because the human labels disagree with one another. If agreement
+reaches 0.995 we publish the tighter half-point reading or withhold the
+calibration instead.
 
 \subsection{End-to-End Loop Completeness}
-
-Report which stages execute automatically:
 
 \begin{table}[h]
 \centering
 \caption{Automation coverage of the improvement loop.}
 \label{tab:loop}
 \small
-\begin{tabular}{p{0.25\columnwidth}p{0.19\columnwidth}p{0.43\columnwidth}}
+\begin{tabular}{p{0.16\columnwidth}p{0.16\columnwidth}p{0.60\columnwidth}}
 \toprule
 \textbf{Stage} & \textbf{Automated?} & \textbf{Implementation} \\
 \midrule
-Detect & [Yes/No] & [Description] \\
-Diagnose & [Yes/No] & [Description] \\
-Prescribe & [Yes/No] & [Description] \\
-Verify & [Yes/No] & [Description] \\
-Decision & Human & [Interface / storage] \\
+Detect & Yes & Three detectors over the session table \\
+Diagnose & Yes & Mechanism evidence plus the changed configuration dimension \\
+Prescribe & Yes & One decision-shaped fix per regression \\
+Verify & Yes & One high-confidence replay with the frozen golden set \\
+Decision & Human & Approve, reject or defer on the screen, written back into the report \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\subsection{Threats to Inference}
+
+The detectors use statistics, so we state where those statistics are
+weaker than they look.
+
+\begin{table*}[t]
+\centering
+\caption{Threats to inference and how we guard against them.}
+\label{tab:threats}
+\small
+\begin{tabular}{p{0.20\textwidth}p{0.46\textwidth}p{0.30\textwidth}}
+\toprule
+\textbf{Threat} & \textbf{Why it matters} & \textbf{How we guard} \\
+\midrule
+Multiple comparisons & The scan maximises over roughly 1,500 candidate windows per series and dozens of cohorts, so an unadjusted z of 4 is much weaker as a family-wise test than it appears & Absolute-lift floors plus high z bars \\
+Dependence between sessions & Sessions cluster by day, agent and version, so treating them as independent makes the z optimistic & We lean on effect size rather than the p-value \\
+Winner's curse & The window is chosen because it contrasts most, so the effect measured on it is inflated & The frozen golden set removes hindsight for fixes; detection stays exposed \\
+Degenerate baselines & An outside rate of exactly zero makes the z a function of a zero-variance baseline rather than of precision & A very large z there is read as directional, not as a probability \\
+Two variance estimators & Detection uses an unpooled standard error and the mix guard a pooled one, so one nominal threshold is not one test & Both thresholds are stated where they apply \\
+Estimand & Efficiency is detected on mean turns and reported as a median, and heavy tails make them disagree & Both are printed \\
+Confidence values & The confidence on a diagnosis is an author prior and does not move with the sample size & Read as an ordering, not a probability \\
+Selection on resolution & Efficiency is measured only on sessions that resolved, so a fault that changes which conversations resolve would bias it & Stated as a limit; the current fault keeps resolution flat \\
+Controls can move with the fault & A tenant-wide KB problem or a change that moves every sibling would defeat the controls, and we would under-report & Accepted trade; we prefer a miss to a false alarm \\
+No cross-tenant control & Peers and siblings stay inside a tenant, which avoids tenant confounds but hides a global model fault & Accepted trade; only the judge-boundary check crosses tenants \\
+\bottomrule
+\end{tabular}
+\end{table*}
 
 % =========================================================
 % 13. IMPLEMENTATION
@@ -743,50 +856,41 @@ Decision & Human & [Interface / storage] \\
 \caption{Implementation stack.}
 \label{tab:stack}
 \small
-\begin{tabular}{p{0.29\columnwidth}p{0.57\columnwidth}}
+\begin{tabular}{p{0.30\columnwidth}p{0.62\columnwidth}}
 \toprule
 \textbf{Component} & \textbf{Implementation} \\
 \midrule
-Language & [Python / etc.] \\
-Data processing & [Libraries / implementation] \\
-Detection & [Method] \\
-Diagnosis & [Method] \\
-Semantic judgement & [Model / version] \\
-Replay & [Implementation] \\
-Screen & [Framework] \\
-Report generation & [Implementation] \\
-Storage & [Implementation] \\
+Language & Python 3, standard library only \\
+Data processing & Streaming gzip JSONL and CSV; one in-memory session table \\
+Detection & Day-window scan with a Welch z, plus relative thresholds \\
+Diagnosis & Mechanism evidence plus the changed configuration dimension \\
+Semantic judgement & None. No model is called for any logged fact \\
+Replay & HTTP client to the provided replay service \\
+Screen & Standard-library HTTP server plus one HTML page \\
+Report generation & Deterministic JSON assembly and schema validation \\
+Storage & The report file, a decision log, a replay log, and a frozen golden set \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \subsection{Report Generation}
 
-The final \texttt{loop-report.json} is generated directly by the system
-and validated against the provided schema.
-
-Describe:
-
-\begin{itemize}
-    \item Report generation;
-    \item Schema validation;
-    \item Evidence storage;
-    \item Human decision persistence;
-    \item Error handling.
-\end{itemize}
+The report is produced by the pipeline, validated against the provided
+schema plus a set of cross-field checks, and written through a unique
+temporary file with an atomic replace. The screen never recomputes a
+number. A decision updates one approval field and revalidates before it
+writes. Recorded approvals survive a regeneration: when the pipeline
+runs again it carries an approval forward onto a prescription with the
+same id, diagnosis and target, so a re-run does not silently erase a
+human decision.
 
 \subsection{Execution Environment}
 
-State the exact environment required to execute the system:
-
-\begin{itemize}
-    \item Operating environment;
-    \item Python version;
-    \item Dependencies;
-    \item Docker image;
-    \item CPU / memory requirements;
-    \item Offline execution requirements.
-\end{itemize}
+Python 3.9 or later, no third-party packages, and no network access
+except the optional local replay call. The pipeline runs offline. The
+screen is the only component that may reach the network, and only for
+optional web fonts; offline it falls back to system fonts, and it sends
+no data out.
 
 % =========================================================
 % 14. COMPUTATIONAL EFFICIENCY
@@ -794,43 +898,37 @@ State the exact environment required to execute the system:
 
 \section{Computational Efficiency}
 
-\subsection{Runtime and Memory}
+All figures below are the practice corpus (80,252 sessions, 883,764
+steps). The sealed corpus has the same shape.
 
 \begin{table}[h]
 \centering
 \caption{Computational performance.}
 \label{tab:compute}
 \small
-\begin{tabular}{p{0.50\columnwidth}c}
+\begin{tabular}{p{0.52\columnwidth}r}
 \toprule
 \textbf{Metric} & \textbf{Value} \\
 \midrule
-Average runtime / sealed scenario & [X] sec \\
-Best runtime & [X] sec \\
-Worst runtime & [X] sec \\
-Peak memory & [X] MB \\
-Dataset preprocessing time & [X] sec \\
-Map / index / cache size & [X] MB \\
+Average runtime & 9.2 s, over three runs \\
+Best runtime & 9.1 s \\
+Worst runtime & 9.3 s \\
+Peak memory & about 488 MB \\
+Dataset preprocessing (load and fold) & about 5.3 s \\
+Map / index / cache size & session table dominates; golden set a few kilobytes \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\subsection{Bottlenecks}
-
-Identify the dominant computational bottlenecks and explain the
-optimizations used.
-
-Examples include:
-
-\begin{itemize}
-    \item Precomputation;
-    \item Indexing;
-    \item Cohort pruning;
-    \item Caching;
-    \item Vectorization;
-    \item Parallel processing;
-    \item Coarse-to-fine analysis.
-\end{itemize}
+The replay call adds nothing measurable at this size, one localhost
+request per run. The dominant cost is the single pass over the 883,764
+steps and the session map it builds, about 5.3 s of the 9.2. The asks
+pass is next at about 2.3 s, mostly the calibration join and the
+review-queue scan. The three detectors together are about 1.3 s, so the
+window scan is not the bottleneck here even though it grows with the
+square of the number of days. A larger corpus changes that balance,
+because the session map is held in memory and the scan runs across
+every cohort.
 
 % =========================================================
 % 15. RESULTS
@@ -838,43 +936,42 @@ Examples include:
 
 \section{Final Results}
 
-\subsection{Overall Performance}
-
-Summarize the final system performance on the sealed run.
-
 \begin{table}[h]
 \centering
 \caption{Final system performance.}
 \label{tab:results}
 \small
-\begin{tabular}{p{0.46\columnwidth}c}
+\begin{tabular}{p{0.52\columnwidth}r}
 \toprule
 \textbf{Metric} & \textbf{Result} \\
 \midrule
-Diagnostic accuracy & [X] \\
-False alarms & [X] \\
-Metric coverage & [X]\% \\
-Detection hit rate & [X]\% \\
-Loop completeness & [X]\% \\
-Average runtime / scenario & [X] sec \\
-Peak memory & [X] MB \\
+Diagnostic accuracy & 20 / 20 \\
+Specificity, false alarms & 15 / 15, zero false alarms \\
+Loop completeness & 8 / 8 \\
+Honesty & 12 / 12 \\
+Machine subtotal & 55.0 / 55 \\
+Held-out pool & 3 / 3 pass, 55.0 each \\
+Moved-fault corpus & 55.0 \\
+Moved-fault with a third tenant & 55.0 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\subsection{Evidence Summary}
-
-Include the most important evidence supporting the final result.
-
-\begin{figure}[h]
+\begin{figure*}[t]
     \centering
-    \includegraphics[width=0.98\columnwidth]
-    {figures/results.png}
-    \caption{
-        Summary of final detection, diagnosis, and verification results.
-    }
+    \includegraphics[width=0.94\textwidth]{figures/results.png}
+    \caption{Summary of final detection, diagnosis and verification
+    results.}
     \label{fig:results}
-\end{figure}
+\end{figure*}
+
+All numbers are the practice corpus and the held-out corpora we
+generated; the sealed corpus is executed by the organisers against
+hidden ground truth. The held-out corpora were generated by a separate
+harness that renames labels, relocates the faults across tenants and
+slices, and adds an unseen tenant. Passing them with the same code, and
+with no corpus literal in the detectors, is the evidence that the result
+comes from the method rather than from a fit to the practice data.
 
 % =========================================================
 % 16. SCREEN / OPERATOR EXPERIENCE
@@ -882,36 +979,32 @@ Include the most important evidence supporting the final result.
 
 \section{Operator Screen}
 
-The system provides one actionable screen rather than a collection of
-engineering dashboards.
+The screen is one brief and one signature rather than a dashboard. The
+header carries the coverage and fidelity chips and a disclosure for what
+is real, stubbed and simulated. A one-line switcher has three views:
+\textbf{To decide} (the regressions), \textbf{Not a problem} (the
+lookalikes we examined and dismissed), and \textbf{We will not invent}
+(the refusals, failover first). The brief shows the claim, three harm
+numbers, the consequence of waiting, the cause, the proposed change and
+the replay. Evidence and baseline working sit under a disclosure, and
+the detector codes sit in a Technical names footer. The sticky panel
+carries the ask, the risk and the no-ship condition, and a traffic-light
+gate: a green Accept, a red Reject, and a grey Defer, each with a
+required reason. Arrow keys and Home/End move the selection through a
+long queue. The claim is set in Newsreader and the chrome in Source Sans
+3, with system fallbacks when the page cannot reach the web fonts.
 
-\begin{figure}[h]
+\begin{figure*}[t]
     \centering
-    \includegraphics[width=0.98\columnwidth]
-    {figures/operator_screen.png}
-    \caption{
-        Final operator-facing screen showing the finding, evidence,
-        proposed fix, and approval/rejection control.
-    }
+    \includegraphics[width=0.66\textwidth]{figures/operator_screen.png}
+    \caption{Final operator-facing screen showing the finding, evidence,
+    proposed fix, and approval/rejection control.}
     \label{fig:screen}
-\end{figure}
+\end{figure*}
 
-The screen communicates:
-
-\begin{itemize}
-    \item What went wrong;
-    \item Who was affected;
-    \item Evidence supporting the finding;
-    \item Baseline and computation;
-    \item Diagnosis;
-    \item Proposed fix;
-    \item Risk;
-    \item Verification result;
-    \item Approve / Reject decision.
-\end{itemize}
-
-Explain how a new operator could determine the appropriate action
-without requiring assistance from the development team.
+An operator who has never seen the system can read the claim and the
+harm, act on the gate, and open the evidence only if they want to check
+it.
 
 % =========================================================
 % 17. FAILURE CASES AND LIMITATIONS
@@ -921,36 +1014,67 @@ without requiring assistance from the development team.
 
 \subsection{Known Failure Cases}
 
-Discuss cases where the system:
-
-\begin{itemize}
-    \item Missed a genuine regression;
-    \item Produced an uncertain diagnosis;
-    \item Could not establish a valid baseline;
-    \item Could not measure an important metric;
-    \item Proposed an ineffective fix;
-    \item Required human intervention.
-\end{itemize}
+A fault under the statistical floors is reported as a miss, not as a
+clean bill of health. A global model or provider fault is invisible to
+the detectors because the controls stay inside a tenant. Efficiency is
+measured on resolved sessions, so a fault that changes which
+conversations resolve would bias it. Cost is read at session grain, so a
+schema that moved cost onto steps would need a roll-up. CSAT is present
+on a small and biased subset and is deliberately not surfaced.
 
 \subsection{Scale Limitations}
 
-Describe what breaks or becomes expensive at approximately
-\textbf{100$\times$ the current scale}.
+At around 100 times the current size the in-memory session table becomes
+the first limit. The report file is a single-file store that suits one
+operator, not many concurrent approvers. The window scan grows with the
+square of the number of days, and the replay service has a run budget.
+Human review, rather than computation, becomes the binding constraint
+once the queue is long.
 
-Consider:
+\subsection{Data Integrity and Catalog Drift}
 
-\begin{itemize}
-    \item Data volume;
-    \item Storage;
-    \item Query complexity;
-    \item Model inference cost;
-    \item Replay cost;
-    \item Search space;
-    \item Human review burden.
-\end{itemize}
+The catalog disagreed with the corpus in three places and we treated the
+corpus as the truth for measurement: cost and knowledge-base coverage
+were declared lower than they are, the calibration set was declared as
+100 sessions when 96 join, and the only real emission hole is tool
+calls. Each affected metric carries a structured declared-versus-observed
+note, so the disagreement is visible rather than smoothed over. One data
+blemish, a pasted path inside a label session id, was repaired; the
+pipeline never reads that file.
 
-Clearly distinguish between components that are implemented and those
-that are simulated or stubbed.
+\subsection{Defects Found and Fixed During Development}
+
+We audited the pipeline against a set of edge cases and found real
+defects, which we record because the fixes are part of the engineering
+result.
+
+\begin{table*}[t]
+\centering
+\caption{Defects found and fixed during development.}
+\label{tab:defects}
+\small
+\begin{tabular}{p{0.30\textwidth}p{0.40\textwidth}p{0.26\textwidth}}
+\toprule
+\textbf{Defect} & \textbf{Effect} & \textbf{Fix} \\
+\midrule
+A loop variable shadowed the all-session list & Judged quality, the failover proxy count and the cardinality count silently covered one tenant only & Renamed the loop variable; counts now cover both tenants \\
+The mix-adjusted month comparison mixed two intent scopes & The change beyond mix partly measured a change in which intents were included & Both ends now sit on the common-intent scope; a cohort born in the second month is named \\
+Missing cost was labelled as infinite unit cost & An intent with a telemetry gap read as the worst case & Separated unbounded, which means zero resolutions, from cost unavailable \\
+Empty tool success treated a missing field as zero & A valid response with no result-field key would be flagged as a failure & Only an explicit count of zero counts as empty \\
+The mix dismissal compared two different outcomes & A by-design handoff shift could be dismissed as a mix shift & Both sides of the comparison use the same outcome \\
+The plan advertised breakdowns it did not produce & A reader looking for an advertised cut would not find it & Every declaration was narrowed to what is produced \\
+A judged metric could vanish with no explanation & A missing calibration removed the reading silently & It now files an explicit gap \\
+Regeneration reset recorded approvals & A human verdict was lost on the next run & Approvals are carried forward by identity \\
+Two decisions at once could collide on one temp file & Both returned success while one was lost, and a partial write left the report as invalid JSON & Decisions serialize on a lock; every writer uses a unique temp file, fsync and replace \\
+A corrupt report dropped the connection & The screen could not load and never recovered & The report endpoint returns 500 report\_invalid \\
+A non-JSON replay response crashed the run & An unexpected body from the replay endpoint aborted the run before the report was written & The client treats an unreadable body as unavailable \\
+One label session id contained a pasted path & A visibly broken data file, though the pipeline never reads it & The id was restored against the corpus \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+None of these changed the machine score, which is the point: the score
+alone would not have surfaced them.
 
 % =========================================================
 % 18. ASSUMPTIONS AND TRANSPARENCY
@@ -958,22 +1082,20 @@ that are simulated or stubbed.
 
 \section{Assumptions and Transparency}
 
-Explicitly state:
-
 \begin{itemize}
-    \item What is fully implemented;
-    \item What is stubbed;
-    \item What is simulated;
-    \item What uses a language model;
-    \item What is directly measured from logs;
-    \item What is derived from measured quantities;
-    \item What is judged by a model;
-    \item What requires human input;
-    \item What does not work at larger scale.
+    \item Everything is implemented in the pipeline except the replay
+    service, which is provided and is a seeded hypothesis verifier.
+    \item No language model is called. Logged facts stay in deterministic
+    Python.
+    \item The judged quality reading comes from the corpus's own judge
+    and is calibrated against 96 human labels.
+    \item Nothing is simulated inside the pipeline. The replay's before
+    figure is the endpoint's own baseline and is labelled as such.
+    \item The final action is human. The system proposes and verifies; a
+    person approves, rejects or defers with a reason.
+    \item No metric definition, judge version or reviewed good set is
+    changed to improve the reported result.
 \end{itemize}
-
-No metric definition, judge version, or reviewed ``good'' set is changed
-to improve the reported result.
 
 % =========================================================
 % 19. REPRODUCIBILITY
@@ -983,30 +1105,28 @@ to improve the reported result.
 
 \subsection{Execution Procedure}
 
-Provide the minimum steps required to reproduce the sealed-run output.
-
 \begin{enumerate}
-    \item [Step 1: Environment setup]
-    \item [Step 2: Dataset / configuration]
-    \item [Step 3: System execution]
-    \item [Step 4: Report generation]
-    \item [Step 5: Schema validation]
-    \item [Step 6: Screen launch]
+    \item \textbf{Environment:} Python 3.9 or later; no third-party
+    packages; the provided kit.
+    \item \textbf{Dataset and configuration:} the kit at
+    \verb|kit/|; start the replay service with
+    \verb|tools/nexus-loop-kit/replay/serve.py|.
+    \item \textbf{System execution:}
+    \verb|python3 run.py --kit kit --team NAME --out out/loop-report.json|.
+    \item \textbf{Report generation:} the pipeline writes and validates
+    \verb|out/loop-report.json| against the provided schema.
+    \item \textbf{Validation:} the pipeline scores the report when
+    ground truth is present.
+    \item \textbf{Screen:}
+    \verb|python3 -m nexus_loop.app --report out/loop-report.json|.
 \end{enumerate}
 
 \subsection{Generated Artifacts}
 
-The submission contains:
-
-\begin{itemize}
-    \item \texttt{loop-report.json};
-    \item Complete system source code;
-    \item Operator-facing screen;
-    \item README / execution instructions;
-    \item [Additional files].
-\end{itemize}
-
-The final report must be generated by the system without manual edits.
+The submission contains the generated \texttt{loop-report.json}, the
+complete system source code, the operator-facing screen, the frozen
+golden set, the decision log, this report, and a README with the same
+steps. The final report is generated by the system without manual edits.
 
 % =========================================================
 % 20. CONCLUSION
@@ -1014,21 +1134,18 @@ The final report must be generated by the system without manual edits.
 
 \section*{Conclusion}
 
-We presented \textbf{[SYSTEM NAME]}, an autonomous improvement loop for
-AI-agent deployments. The system connects detection, diagnosis,
-prescription, verification, and human decision-making into a single
-workflow.
+Nexus Loop connects detection, diagnosis, prescription, verification and
+a human decision into one deterministic loop. On the practice corpus it
+finds three genuine regressions with the right slice and cause, dismisses
+three lookalikes with written reasons, refuses two questions the data
+cannot answer, and verifies a fix through replay. It scores 55.0 of 55
+machine points and the same on every held-out corpus we generated, with
+no corpus literal in the detection code.
 
-The final system identifies \textbf{[X]} genuine problems, correctly
-dismisses \textbf{[X]} lookalikes, reports \textbf{[X]} measurement
-gaps, and verifies \textbf{[X]} proposed fixes. It achieves
-\textbf{[KEY RESULT]} while maintaining \textbf{[RUNTIME]} runtime and
-\textbf{[COVERAGE]} coverage.
-
-The central contribution is not merely anomaly detection, but a
-traceable improvement loop in which every important number has a
-defined provenance, every diagnosis is supported by evidence, proposed
-changes are verified, and the final action remains in human hands.
+What makes the loop useful is the provenance behind each number, the
+evidence behind each diagnosis, verification before a fix is proposed for
+shipping, a specification instead of a guess when the data cannot answer
+a question, and a final decision that stays with a person.
 
 % =========================================================
 % REFERENCES
@@ -1038,28 +1155,13 @@ changes are verified, and the final action remains in human hands.
 
 \bibitem{YellowAI}
 Yellow.ai,
-\textit{Nexus Loop -- TECHQUEST Problem Statement Series},
-Product Development \& Agentic AI.
+\textit{Nexus Loop, TECHQUEST Problem Statement Series},
+Product Development and Agentic AI.
 
 \bibitem{Kit}
 Yellow.ai,
 \textit{Nexus Loop Kit, Schema, Examples and Replay Service},
 Provided Challenge Resources.
-
-\bibitem{Method1}
-[Author(s)],
-\textit{[Primary Method / Algorithm Used]},
-[Year].
-
-\bibitem{Method2}
-[Author(s)],
-\textit{[Root Cause Analysis / Agent Evaluation Method]},
-[Year].
-
-\bibitem{Method3}
-[Author(s)],
-\textit{[Model / Judge / Retrieval Method Used]},
-[Year].
 
 \end{thebibliography}
 
