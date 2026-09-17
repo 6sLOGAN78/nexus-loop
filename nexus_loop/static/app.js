@@ -211,10 +211,6 @@
   const bar = (frac, cls, thin) =>
     `<span class="bar${thin ? " thin" : ""}"><i class="${cls || ""}" data-w="${isNum(frac) ? Math.max(0, Math.min(1, frac)) : 0}"></i></span>`;
   function fidelityPill(f) { return f ? pill(f, FIDELITY[f] || "neutral") : ""; }
-  function coveragePill(c) {
-    if (!c || !isNum(c.value)) return "";
-    return pill("coverage " + pct(c.value, 0), c.value >= 0.95 ? "outline" : "warning");
-  }
   function fold(summary, body, open) {
     return `<details class="fold"${open ? " open" : ""}><summary>${I.chev}${esc(summary)}</summary><div class="fold-body">${body}</div></details>`;
   }
@@ -275,15 +271,6 @@
   function standardLine(st, metric) {
     if (!st) return "";
     return `Healthy conversations here sit around ${metricVal(st.metric, st.median)} ${metricLbl(metric || st.metric).toLowerCase()} (best ${metricVal(st.metric, st.best)}).`;
-  }
-  function relatedMetrics(rep, f) {
-    const c = f.cohort || {};
-    const keys = [c.tool, c.intent].filter(Boolean);
-    return (rep.metrics || []).filter((m) => {
-      const blob = JSON.stringify(m.breakdown || {}) + JSON.stringify(m.value);
-      const tenantOk = !/—|-/.test(m.name) || m.name.includes(f.tenant);
-      return tenantOk && keys.some((k) => blob.includes('"' + k + '"'));
-    }).slice(0, 4);
   }
 
   /* ---------------- top bar ---------------- */
@@ -420,11 +407,7 @@
         { k: "test run", v: v && v.replay_run_id },
         { k: "finding", v: f.id },
       ])}`;
-    return `<div class="workspace"><div class="stack">${main}</div>${decisionPanel(p)}</div>`;
-  }
-  function barRow(label, value, f, cls) {
-    const scale = Math.max(1, ...[f.expected, f.observed].filter(isNum));
-    return `<div class="bar-row"><span class="muted">${esc(label)}</span>${bar(isNum(value) ? value / scale : 0, cls)}<span class="mono">${esc(metricVal(f.metric, value))}</span></div>`;
+    return `<div class="workspace"><div class="stack">${main}</div>${decisionPanel(p, f)}</div>`;
   }
   function changeLine(ac) {
     if (!ac) return "Nothing in the setup changed with this";
@@ -452,15 +435,64 @@
       <p class="small muted">${esc([golden, isNum(v.prediction_error) ? "gap vs prediction " + num(v.prediction_error, 3) : ""].filter(Boolean).join(" · "))}${golden || isNum(v.prediction_error) ? ". " : ""}The test’s “before” is simulated, not our measured number.</p>`;
   }
 
-  function decisionPanel(p) {
+  /* A paste-ready note for a recorded decision: the human's verdict, reason and
+     timestamp, plus the finding it applies to. Copied via the global [data-copy]. */
+  function decisionNote(f, p, a) {
+    if (!f || !p || !a) return "";
+    const verdict = (VERDICT_UI[a.verdict] || [a.verdict])[0];
+    const ds = (f.impact || {}).downstream || {};
+    const lines = [
+      `${verdict}: ${p.target || "this change"}`,
+      `Finding: ${f.headline || f.id}`,
+      `Slice: ${[f.tenant, cohortText(f.cohort), windowText(f.window)].filter(Boolean).join(" · ")}`,
+      `Reason: "${a.reason}"`,
+      `By ${a.decided_by} at ${when(a.at)}`,
+    ];
+    if (isNum(f.observed) && isNum(f.expected)) {
+      lines.push(`What moved: ${metricLbl(f.metric)} ${metricVal(f.metric, f.expected)} → ${metricVal(f.metric, f.observed)}`);
+    }
+    const down = [
+      isNum(ds.would_have_resolved_at_baseline) ? `${int(ds.would_have_resolved_at_baseline)} lost resolutions` : null,
+      isNum(ds.unplanned_handoffs) ? `${int(ds.unplanned_handoffs)} unplanned handoffs` : null,
+      isNum(ds.abandoned) ? `${int(ds.abandoned)} abandoned` : null,
+      isNum(ds.extra_turns) ? `${int(ds.extra_turns)} extra turns` : null,
+    ].filter(Boolean);
+    if (down.length) lines.push(`Impact: ${down.join(", ")}`);
+    if (p.description) lines.push(`Fix: ${p.description}`);
+    if (p.decision && p.decision.risk_if_diagnosis_wrong) lines.push(`Risk if wrong: ${p.decision.risk_if_diagnosis_wrong}`);
+    lines.push(`Open: ${location.origin}${location.pathname}#/findings/${encodeURIComponent(f.id)}`);
+    return lines.join("\n");
+  }
+  function allDecisionsNote(rep, ix) {
+    const decided = (rep.prescriptions || []).filter((p) => p.approval);
+    if (!decided.length) return "";
+    const lines = [`Decisions for ${rep.team || "this run"} · corpus ${rep.corpus || "—"}`, ""];
+    for (const p of decided) {
+      const f = ix.findingForRx(p);
+      const a = p.approval;
+      const v = (VERDICT_UI[a.verdict] || [a.verdict])[0];
+      lines.push(`${v}: ${f ? (f.headline || f.id) : p.id}`);
+      lines.push(`  Reason: "${a.reason}"`);
+      lines.push(`  By ${a.decided_by} at ${when(a.at)}`);
+    }
+    const dismissed = (ix.dismissed || []).length;
+    const gaps = (ix.gaps || []).length;
+    lines.push("");
+    if (dismissed) lines.push(`Dismissed signals: ${dismissed} looked like problems and are not.`);
+    if (gaps) lines.push(`No measurement: ${gaps} questions we will not invent.`);
+    return lines.join("\n");
+  }
+
+  function decisionPanel(p, f) {
     if (!p) return `<aside class="panel"><h2 class="title">No fix proposed</h2><p>Nothing to approve on this finding yet.</p></aside>`;
     const dec = p.decision || {};
     const a = p.approval;
     const who = storeGet("nl.who") || "";
     const ui = a ? VERDICT_UI[a.verdict] || [a.verdict, "neutral"] : null;
+    const note = a ? decisionNote(f, p, a) : "";
     return `<aside class="panel" aria-label="Your decision">
       <h2 class="title">${esc(dec.asking_approval_for || p.description)}</h2>
-      ${a ? `<div class="decided"><div class="row" data-style="gap:8px">${pill(ui[0], ui[1])}<span class="small muted">by ${esc(a.decided_by)} · ${esc(when(a.at))}</span></div><p data-style="margin-top:6px"><q>${esc(a.reason)}</q></p><p class="small muted" data-style="margin-top:4px">Saved in loop-report.json. A new decision replaces it.</p></div>` : ""}
+      ${a ? `<div class="decided"><div class="row" data-style="gap:8px">${pill(ui[0], ui[1])}<span class="small muted">by ${esc(a.decided_by)} · ${esc(when(a.at))}</span></div><p data-style="margin-top:6px"><q>${esc(a.reason)}</q></p><div data-style="margin-top:10px"><button class="btn sm secondary" data-copy="${esc(note)}">${I.copy}Copy decision note</button></div></div>` : ""}
       <div>
         ${fold("Risk if we are wrong", `<p>${rich(dec.risk_if_diagnosis_wrong || "Not stated.")}</p>`)}
         ${fold("We would not ship if", `<p>${rich(dec.would_not_ship_if || "Not stated.")}</p>`)}
@@ -552,8 +584,16 @@
           return Object.entries(v).map(([t, x]) => x.change_beyond_mix != null
             ? `${t}: ${fmtPts(x.change_beyond_mix)} beyond mix`
             : `${t}: resolution ${pct(x.resolution[0])} → ${pct(x.resolution[1])}`);
-        case "A03": { const top = Object.entries(v).sort((a, b) => b[1] - a[1])[0]; return top ? [`${top[0]} ${usd(top[1], 3)}`] : []; }
-        case "A08": return [Object.values(v).map((x) => usd(x, 0)).join(" → ") + " per 28 days"];
+        case "A03": {
+          const rows = Object.entries(v);
+          const numeric = rows.filter(([, x]) => isNum(x)).sort((a, b) => b[1] - a[1]);
+          const top = numeric[0];
+          const out = top ? [`${top[0]} ${usd(top[1], 3)}`] : ["no priced resolution"];
+          const unavailable = rows.filter(([, x]) => !isNum(x)).map(([k, x]) => `${k}: ${human(x)}`);
+          if (unavailable.length) out.push(`${unavailable.length} intent(s) without a cost: ${unavailable.join(", ")}`);
+          return out;
+        }
+        case "A08": return Object.entries(v).map(([k, x]) => `${k.replace(/^days_/, "").replace(/_/g, "–")} days: ${usd(x, 0)}`);
         case "A05": return [`${pct(v.reach_rate[v.reach_rate.length - 1], 0)} reach ${v.milestones[v.milestones.length - 1]}`, `n = ${int(v.n)}`];
         case "A06":
           return Object.entries(v).map(([k, x]) => x.kb_hit_rate != null ? `${k}: hit ${pct(x.kb_hit_rate, 0)}` : `judge ${k}: ${num(x.mean, 2)} (n ${int(x.n)})`);
@@ -644,7 +684,7 @@
     const audit = rx.filter((p) => p.approval).sort((a, b) => String(b.approval.at).localeCompare(String(a.approval.at)));
     const trusted = isNum(sa.cycles) && sa.cycles >= 3;
     return `<div class="page stack">
-      <div class="header"><h1 class="display">What humans decided</h1>
+      <div class="header"><div class="row" data-style="justify-content:space-between;align-items:baseline;width:100%"><h1 class="display">What humans decided</h1>${audit.length ? `<button class="btn sm secondary" data-copy="${esc(allDecisionsNote(rep, ix))}">${I.copy}Copy all decisions</button>` : ""}</div>
         <p class="muted">Every decision below is read back from loop-report.json.</p></div>
       <section class="card flush"><div class="table-wrap"><table class="data">
         <thead><tr><th>Fix</th><th>Finding</th><th>Change</th><th>Predicted</th><th>Replay</th><th>Decision</th><th>By</th><th>When</th><th>Reason</th></tr></thead>
@@ -745,6 +785,7 @@
   function readHash() {
     const h = decodeURIComponent(location.hash.replace(/^#\/?/, ""));
     const [tab, ...rest] = h.split("/");
+    if (h && !TABS.includes(tab)) return;   // e.g. #view from the skip link
     state.tab = TABS.includes(tab) ? tab : "findings";
     const key = rest.join("/");
     state.key = key ? (state.tab === "refusals" ? "g:" : "f:") + key : null;
@@ -779,6 +820,36 @@
   }
   function banner(msg) {
     $("banner").innerHTML = msg ? `<div class="callout error" role="alert">${I.alert}<p>${esc(msg)}</p></div>` : "";
+  }
+
+  /* Optional demo action: re-run the pipeline into the same report, then reload.
+     Only offered when the server started with generate enabled (/health). */
+  async function checkGenerate() {
+    const btn = $("generate");
+    if (!btn) return;
+    try {
+      const r = await fetch("/health", { cache: "no-store" });
+      const b = await r.json();
+      if (b && b.generate) { btn.hidden = false; btn.addEventListener("click", generate); }
+    } catch (e) { /* leave hidden */ }
+  }
+  async function generate() {
+    const btn = $("generate");
+    const label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Generating…";
+    try {
+      const r = await fetch("/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+      const body = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(body.detail || body.error || "HTTP " + r.status);
+      toast("Report regenerated");
+      await load();
+    } catch (e) {
+      toast("Generate failed: " + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = label;
+    }
   }
 
   async function submitDecision(form, verdict, btn) {
@@ -865,4 +936,5 @@
 
   readHash();
   load();
+  checkGenerate();
 })();
