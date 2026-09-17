@@ -135,8 +135,10 @@ renders report fields — including the **Did the test help** span and before/af
 bars from `verifications[]` (`nexus_loop/static/index.html`).
 
 The desk is a sunken `#F7F8F9` canvas with raised rounded cards. Type is
-Newsreader (claims and span headings) plus Source Sans 3 (chrome and
-numbers), with Iowan/Palatino and Segoe fallbacks. The gate is a traffic
+exactly two families: Newsreader (claims, span headings, and technical jargon
+such as Technical names / codes / paths) and Source Sans 3 (chrome, KPI
+figures, and buttons), with Iowan/Palatino and Segoe
+fallbacks — no separate monospace stack. The gate is a traffic
 light: green Accept `#1F845A`, red Reject `#C9372C`, grey Defer, equal
 targets, required reason. Finding groups sit on a top mode bar above the three
 panes: **Needs attention** / **Dismissed signals** / **No measurement**;

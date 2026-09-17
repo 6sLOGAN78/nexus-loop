@@ -30,8 +30,9 @@ python3 run.py --kit kit --team demo --out out/loop-report.json
 
 The screen is `nexus_loop/static/index.html` (plain HTML/CSS/JS, no build step)
 served by `nexus_loop/app.py` (Python stdlib `http.server`). No API keys. The only
-external request is the optional web fonts (Newsreader, Source Sans 3); offline
-they fall back to Iowan/Palatino and Segoe/Inter, and no data leaves the box.
+external request is the optional web fonts (Newsreader, Source Sans 3 — exactly
+two families); offline they fall back to Iowan/Palatino and Segoe UI, and no
+data leaves the box.
 
 For a zero-setup look without running anything, open `examples/demo.html` — a
 standalone lo-fi **wireframe** populated with `examples/sample-report.json` (the
@@ -138,8 +139,9 @@ navigation, selected rows, and links — **not** Accept. Finding tabs sit on a
 3-column grid; To decide is danger red matching `.dot.bad`. KPI cards are
 colour-coded on a 5-column strip (label / figure / caption). Span titles
 (`.span .name`) are Newsreader `h2`s: sentence case, weight 500. KPI labels
-are uppercase tracked; observed values are tabular Source Sans. Offline
-fallback: Iowan / Palatino + Segoe / Inter.
+are uppercase tracked; observed values are tabular Source Sans. Technical
+names and codes use the claim Newsreader face (no third monospace). Offline
+fallback: Iowan / Palatino + Segoe UI.
 
 ---
 

@@ -153,7 +153,7 @@ replay client, scorer) belong to the backend write-up.
 
 | Component | Implementation |
 |---|---|
-| Operator screen | One-page standard-library HTML/CSS/JS (`nexus_loop/static/index.html`) served by a Python `http.server` (`nexus_loop/app.py`). No SPA framework, no build step, no API keys. Newsreader and Source Sans 3 load when the network is available; Iowan/Palatino and Segoe/Inter are the offline fallbacks. The page fetches `GET /report.json` and writes `POST /decision`. |
+| Operator screen | One-page standard-library HTML/CSS/JS (`nexus_loop/static/index.html`) served by a Python `http.server` (`nexus_loop/app.py`). No SPA framework, no build step, no API keys. Exactly two faces load when the network is available (Newsreader + Source Sans 3); Iowan/Palatino and Segoe UI are the offline fallbacks. The page fetches `GET /report.json` and writes `POST /decision`. |
 
 ---
 
@@ -283,9 +283,11 @@ brand bar), links, and the small mark that a human is on the page. It is not
 used for Accept. Using the brand colour as a proceed cue would collapse
 navigation and verdict into one pre-attentive channel.
 
-Type is a wealth-desk pairing: **Newsreader** serif for claims and span
-headings, **Source Sans 3** for chrome, KPI figures, and buttons. Offline,
-Newsreader falls back to Iowan / Palatino and Source Sans 3 to Segoe / Inter.
+Type is a wealth-desk pairing with exactly two families: **Newsreader** serif
+for claims, span headings, and technical jargon (codes, paths, Technical
+names), **Source Sans 3** for chrome, KPI figures, and buttons (no separate
+monospace). Offline, Newsreader falls back to
+Iowan / Palatino and Source Sans 3 to Segoe UI.
 
 ### 16.5 The gate as a traffic light
 
