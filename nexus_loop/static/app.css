@@ -1,9 +1,10 @@
-/* Nexus Loop operator console. Offline: no CDN, no build step. Tokens follow docs/stitch-prompt-v2.md.
-   Fonts: Inter / JetBrains Mono when installed, else Segoe UI / Consolas. */
-@font-face { font-family: "Inter"; font-weight: 100 900; font-display: swap;
-  src: local("Inter"), local("Inter Variable"); }
-@font-face { font-family: "JetBrains Mono"; font-weight: 100 800; font-display: swap;
-  src: local("JetBrains Mono"); }
+/* Nexus Loop operator console. Offline: no CDN, no build step.
+   Type follows yellow-ai-port/knowledge-base/design-ui/brand.md: Inter for headings and body,
+   JetBrains Mono for code. Both are bundled under static/fonts (SIL OFL 1.1, licences alongside). */
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("fonts/InterVariable.woff2") format("woff2"); }
+@font-face { font-family: "JetBrains Mono"; font-style: normal; font-weight: 100 800; font-display: swap;
+  src: url("fonts/JetBrainsMono-Variable.woff2") format("woff2"); }
 
 :root {
   --canvas: #F6F7F9; --surface: #FFFFFF; --subtle: #F1F3F6; --border: #E4E7EC;
@@ -16,15 +17,15 @@
   --neutral: #475467; --neutral-bg: #F2F4F7;
   --shadow: 0 1px 2px rgba(16, 24, 40, .05);
   --shadow-lg: 0 4px 16px rgba(16, 24, 40, .08), 0 1px 2px rgba(16, 24, 40, .05);
-  --sans: "Inter", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
-  --mono: "JetBrains Mono", "Cascadia Mono", Consolas, ui-monospace, monospace;
+  --sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", "Fira Code", Consolas, monospace;
   --top: 56px;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; }
 body {
-  background: var(--canvas); color: var(--body); font: 400 14px/22px var(--sans);
+  background: var(--canvas); color: var(--body); font: 400 15px/24px var(--sans); font-feature-settings: "cv11", "ss01";
   font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased;
 }
 button, input, textarea { font: inherit; color: inherit; }
@@ -36,8 +37,8 @@ code, .code { font-family: var(--mono); font-size: 12px; background: var(--subtl
 .muted { color: var(--muted); }
 .small { font-size: 12px; line-height: 18px; }
 .label { font-size: 12px; line-height: 18px; font-weight: 500; color: var(--muted); }
-.display { font-size: 26px; line-height: 32px; font-weight: 600; letter-spacing: -.015em; color: var(--text); text-wrap: balance; }
-.title { font-size: 17px; line-height: 24px; font-weight: 600; color: var(--text); text-wrap: balance; }
+.display { font-size: 28px; line-height: 36px; font-weight: 600; letter-spacing: -.015em; color: var(--text); text-wrap: balance; }
+.title { font-size: 18px; line-height: 26px; font-weight: 600; color: var(--text); text-wrap: balance; }
 p { text-wrap: pretty; }
 .metric { font-size: 32px; line-height: 36px; font-weight: 600; color: var(--text); letter-spacing: -.01em; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -282,17 +283,6 @@ tr.open .caret { transform: rotate(90deg); }
   .grid2, .grid3 { grid-template-columns: 1fr; }
 }
 
-/* ---------- required asks strip (A01, A04, A09, A11) ---------- */
-.asks { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding: 24px 32px 0; max-width: 1224px; margin: 0 auto; }
-.ask-card { text-align: left; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px;
-  display: flex; flex-direction: column; gap: 6px; cursor: pointer; min-width: 0; transition: border-color .15s ease-out, background-color .15s ease-out; }
-.ask-card:hover { border-color: #C9CFD8; background: #FCFCFD; }
-.ask-id { font-family: var(--mono); font-size: 12px; color: var(--muted); }
-.ask-q { font-size: 13px; line-height: 19px; font-weight: 600; color: var(--text); }
-.ask-body { display: flex; flex-direction: column; gap: 4px; }
-.ask-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 13px; line-height: 20px; color: var(--text); }
-.ask-line strong { font-size: 15px; }
-
 /* impact tiles: count varies with the fault's shape */
 .tiles { grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); row-gap: 16px; }
 .tile { border-left: 0; padding: 0 16px 0 0; }
@@ -303,5 +293,37 @@ tr.open .caret { transform: rotate(90deg); }
 .tech-foot .kv { grid-template-columns: 120px 1fr; font-size: 12px; }
 .callout > div p + p { margin-top: 4px; }
 
-@media (max-width: 1100px) { .asks { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 860px) { .asks { grid-template-columns: 1fr; padding: 16px 16px 0; } }
+
+/* ---------- calmer spacing ---------- */
+.workspace { gap: 40px; padding: 40px 40px 64px; grid-template-columns: minmax(0, 720px) 340px; }
+.workspace.single { grid-template-columns: minmax(0, 760px); }
+.stack { gap: 20px; }
+.card { padding: 24px; }
+.card > .title { margin-bottom: 12px; }
+.card > p + p, .card > p + .compare, .card > .compare + p { margin-top: 8px; }
+.card .lede + .compare { margin-top: 16px; }
+.header { gap: 8px; padding-bottom: 8px; }
+.tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.tiles-more { margin-top: 16px; }
+.divider { margin: 16px 0; }
+.row-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.row-line + .small { margin-top: 6px; }
+.marker { margin-top: 12px; }
+.tech-foot { border-top: 0; margin-top: 0; padding-top: 0; }
+.tech-foot > summary { padding-top: 0; color: var(--muted); }
+
+/* ---------- rail: three dropdown groups ---------- */
+.rail { padding: 12px 0 24px; }
+.rail-group + .rail-group { margin-top: 4px; }
+.rail-group > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px;
+  margin: 0 8px; padding: 10px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; color: var(--text); }
+.rail-group > summary::-webkit-details-marker { display: none; }
+.rail-group > summary:hover { background: var(--subtle); }
+.rail-group > summary .count { font-weight: 400; color: var(--muted); }
+.rail-group > summary .icon { margin-left: auto; color: var(--muted); transition: transform .15s ease-out; }
+.rail-group[open] > summary .icon { transform: rotate(90deg); }
+.rail-list { padding: 2px 0 8px; }
+.rail-empty { padding: 4px 20px; }
+@media (prefers-reduced-motion: reduce) { .rail-group > summary .icon { transition: none; } }
+@media (max-width: 1280px) { .workspace { grid-template-columns: minmax(0, 1fr); padding: 32px; } }
+@media (max-width: 860px) { .workspace { padding: 16px; } .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

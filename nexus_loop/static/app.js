@@ -107,7 +107,7 @@
     minus: '<svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M5.5 8h5"/></svg>',
   };
 
-  const state = { rep: null, tab: "findings", key: null, open: {}, error: null };
+  const state = { rep: null, tab: "findings", key: null, open: {}, railOpen: {}, error: null };
 
   /* ---------------- formatting ---------------- */
   function esc(v) {
@@ -162,10 +162,6 @@
     const cap = max || 140;
     return cut.length <= cap ? cut : cut.slice(0, cap - 1) + "…";
   }
-  function clip(text, max) {
-    const t = String(text || "").replace(/\s+/g, " ").trim();
-    return t.length <= max ? t : t.slice(0, t.lastIndexOf(" ", max - 1) > 0 ? t.lastIndexOf(" ", max - 1) : max - 1) + "…";
-  }
   function gapClaim(g) {
     if (!g) return "We will not invent this number";
     if (g.ask_id === "A11") return "We will not invent a failover rate";
@@ -198,8 +194,8 @@
   function techBlock(rows) {
     const bits = (rows || []).filter((r) => r && r.v != null && String(r.v) !== "");
     if (!bits.length) return "";
-    return `<footer class="tech-foot"><h2 class="label">Technical names</h2><dl class="kv">${
-      bits.map((r) => `<dt>${esc(r.k)}</dt><dd><code translate="no">${esc(r.v)}</code></dd>`).join("")}</dl></footer>`;
+    return `<details class="fold tech-foot"><summary>${I.chev}Technical names</summary><div class="fold-body"><dl class="kv">${
+      bits.map((r) => `<dt>${esc(r.k)}</dt><dd><code translate="no">${esc(r.v)}</code></dd>`).join("")}</dl></div></details>`;
   }
   function when(iso) {
     if (!iso) return "—";
@@ -301,10 +297,8 @@
     }
     const vers = rep.verifications || [];
     const cycles = rep.self_assessment && rep.self_assessment.cycles;
-    const judged = (rep.metrics || []).find((m) => m.fidelity === "judged" && m.calibration);
     $("topmeta").innerHTML =
       `${rep.corpus ? pill("Corpus " + rep.corpus, "") : ""}` +
-      (judged ? `<span title="${esc("Judged numbers: agreement with the kit's human labels")}">Scorecard agrees with humans ${esc(pct(judged.calibration.agreement))} (n=${esc(int(judged.calibration.n))})</span>` : "") +
       `<span>Generated ${esc(when(rep.generated_at))}</span>` +
       `<span class="row" data-style="gap:6px"><span class="dot ${vers.length ? "ok" : "off"}"></span>` +
       `${vers.length ? `Replay · ${int(vers.length)} run${vers.length === 1 ? "" : "s"}` : "Replay not run" + (isNum(cycles) ? ` · ${int(cycles)} cycles` : "")}</span>`;
@@ -327,13 +321,23 @@
     const disItems = ix.dismissed.map((f) =>
       railItem("f:" + f.id, '<span class="dot low"></span>', headlineShort(f), `${f.tenant} · ${windowText(f.window)}`));
     const gapItems = ix.gaps.map((g) =>
-      railItem("g:" + g.ask_id, I.lock, `${g.ask_id} ${(ASKS[g.ask_id] || [g.ask_id])[0]}`, GAP_VERDICT[g.verdict] || human(g.verdict)));
-    const group = (label, items, empty) =>
-      `<div class="rail-group"><span class="label">${esc(label)} · ${items.length}</span>${items.join("") || `<div class="small muted" data-style="padding:0 20px">${esc(empty)}</div>`}</div>`;
+      railItem("g:" + g.ask_id, I.lock, gapClaim(g), `${g.ask_id} · ${GAP_VERDICT[g.verdict] || human(g.verdict)}`));
+    const [kind, id] = splitKey(state.key);
+    const holds = {
+      decide: kind === "f" && ix.regs.some((f) => f.id === id),
+      dismissed: kind === "f" && ix.dismissed.some((f) => f.id === id),
+      refused: kind === "g",
+    };
+    const group = (gid, label, items, empty) => {
+      const open = gid in state.railOpen ? state.railOpen[gid] : holds[gid];
+      return `<details class="rail-group" data-group="${gid}"${open ? " open" : ""}>
+        <summary><span>${esc(label)}</span><span class="count">${items.length}</span>${I.chev}</summary>
+        <div class="rail-list">${items.join("") || `<p class="small muted rail-empty">${esc(empty)}</p>`}</div></details>`;
+    };
     $("rail").innerHTML =
-      group("Needs a decision", regItems, "No regressions found.") +
-      group("Checked and dismissed", disItems, "No lookalikes checked.") +
-      group("Refused to answer", gapItems, "Every ask has a number.");
+      group("decide", "Needs a decision", regItems, "No regressions found.") +
+      group("dismissed", "Checked and dismissed", disItems, "No lookalikes checked.") +
+      group("refused", "Refused to answer", gapItems, "Every ask has a number.");
     fixInlineStyles($("rail"));
   }
   function headlineShort(f) { return String(f.headline || f.id).split(/\s+[—-]\s+|,\s/)[0]; }
@@ -362,62 +366,56 @@
     const who = audienceFor(f, d);
     const worse = isNum(f.observed) && isNum(f.expected) && (/turn|cost|fail|error|abandon|latency/i.test(f.metric) ? f.observed > f.expected : f.observed < f.expected);
     const tiles = impactTiles(f);
-    const related = relatedMetrics(rep, f);
+    // cost always stays visible: the brief asks what the problem has cost
+    const cost = tiles.find((t) => t[0] === "Recorded cost");
+    const others = tiles.filter((t) => t !== cost);
+    const shown = others.slice(0, 3).concat(cost ? [cost] : []), rest = others.slice(3);
     const ac = d && d.attributed_change;
     const main = `
       <div class="header">
-        <div class="pills">${pill(({ critical: "Critical", high: "High", medium: "Medium", low: "Low" })[f.severity] || f.severity, esc(f.severity))}${d ? pill(causeLbl(d.cause_class), "") : ""}</div>
+        <div class="pills">${pill(({ critical: "Critical", high: "High", medium: "Medium", low: "Low" })[f.severity] || f.severity, esc(f.severity))}</div>
         <h1 class="display">${esc(f.headline || metricLbl(f.metric))}</h1>
-        <div class="muted">${esc([f.tenant, cohortText(f.cohort), windowText(f.window), isNum(im.days_running) ? `running ${im.days_running} days` : ""].filter(Boolean).join(" · "))}</div>
+        <p class="muted">${esc([f.tenant, cohortText(f.cohort), windowText(f.window), isNum(im.days_running) ? `running ${im.days_running} days` : ""].filter(Boolean).join(" · "))}</p>
       </div>
       <section class="card" aria-label="Impact">
-        <div class="tiles" data-n="${tiles.length}">${tiles.map(([l, n, sub]) => `<div class="tile"><span class="label">${esc(l)}</span><span class="metric">${esc(n)}</span><span class="sub">${esc(sub)}</span></div>`).join("")}</div>
+        <div class="tiles">${shown.map(([l, n, sub]) => `<div class="tile"><span class="label">${esc(l)}</span><span class="metric">${esc(n)}</span><span class="sub">${esc(sub)}</span></div>`).join("")}</div>
+        ${rest.length ? `<p class="small muted tiles-more">${rest.map(([l, n]) => `${esc(l)} <strong>${esc(n)}</strong>`).join(" · ")}</p>` : ""}
         ${im.derivation || f.baseline ? fold("How these were counted, and the baseline", `${im.derivation ? `<p>${rich(im.derivation)}</p>` : ""}${f.baseline ? `<p data-style="margin-top:8px"><strong>Baseline.</strong> ${esc(f.baseline)}</p>` : ""}`) : ""}
       </section>
-      <div class="callout">${I.clock}<div><p><strong>${esc(who || "Someone")} needs to act.</strong></p>${f.if_nothing_changes ? `<p><strong>If nobody acts:</strong> ${esc(f.if_nothing_changes)}</p>` : ""}</div></div>
+      <div class="callout">${I.clock}<div><p><strong>${esc(who || "Someone")} needs to act.</strong></p>${f.if_nothing_changes ? `<p>${esc(f.if_nothing_changes)}</p>` : ""}</div></div>
       <section class="card">
-        <div class="card-head"><h2 class="title">What moved</h2></div>
-        <div class="grid2">
-          <div>
-            <div class="compare"><span class="metric">${esc(metricVal(f.metric, f.expected))}</span><span class="arrow">→</span><span class="metric to ${worse ? "bad" : "good"}">${esc(metricVal(f.metric, f.observed))}</span></div>
-            <div class="label" data-style="margin-top:6px">${esc(metricLbl(f.metric))}: before this broke → now</div>
-            ${std ? `<p class="small muted" data-style="margin-top:4px">${esc(standardLine(std, f.metric))}</p>` : ""}
-          </div>
-          <div class="bars">
-            ${barRow("Before this broke", f.expected, f, "")}
-            ${barRow("Now", f.observed, f, worse ? "bad" : "good")}
-            ${std ? barRow("Best of this cohort", std.best, f, "brand") : ""}
-          </div>
-        </div>
-        ${std ? fold("Standard this cohort is held to", kv([
+        <h2 class="title">What moved</h2>
+        <div class="compare"><span class="metric">${esc(metricVal(f.metric, f.expected))}</span><span class="arrow">→</span><span class="metric to ${worse ? "bad" : "good"}">${esc(metricVal(f.metric, f.observed))}</span></div>
+        <p class="muted">${esc(metricLbl(f.metric))}, before this broke → now.${std ? " " + esc(standardLine(std, f.metric)) : ""}</p>
+        ${std ? fold("The standard this cohort is held to", kv([
           ["Best / median", esc(`${metricVal(std.metric, std.best)} / ${metricVal(std.metric, std.median)}`)],
           ["Gap to best", esc(metricVal(std.metric, std.deficit))],
           ["Exemplars", esc(int(std.exemplar_n))], ["Golden set", std.golden_set_version ? `<code>${esc(std.golden_set_version)}</code>` : null],
           ["Derivation", rich(std.derivation)]])) : ""}
       </section>
       <section class="card">
-        <div class="card-head"><h2 class="title">Evidence</h2><span class="right small muted">${(f.evidence || []).length} checks from the corpus</span></div>
+        <h2 class="title">Evidence</h2>
         ${evidenceList(f.evidence)}
-        ${related.length ? fold("Related measurements", related.map((m) =>
-          `<div class="row" data-style="gap:8px;padding:4px 0"><span class="mono">${esc(m.ask_id)}</span><span>${esc(toManagerEnglish(m.name))}</span>${fidelityPill(m.fidelity)}${coveragePill(m.coverage)}</div>`).join("")) : ""}
       </section>
       ${d ? `<section class="card">
-        <div class="card-head"><h2 class="title">Why we think so</h2><span class="right small muted">${esc(pct(d.confidence, 0))} confidence</span></div>
-        <p class="lede">${esc(causeLbl(d.cause_class))}</p>
-        <div class="marker"><p><strong>${esc(changeLine(ac))}</strong></p>${ac && ac.kind ? `<p class="small muted">Setup timeline entry: ${esc(ac.kind)}${ac.day != null ? ", day " + esc(ac.day) : ""}</p>` : ""}</div>
-        ${(d.evidence || []).length ? fold("How this was computed", evidenceList(d.evidence)) : ""}
+        <h2 class="title">Why we think so</h2>
+        <p class="lede">${esc(causeLbl(d.cause_class))} <span class="muted">· ${esc(pct(d.confidence, 0))} confidence</span></p>
+        <p class="marker">${esc(changeLine(ac))}</p>
+        ${(d.evidence || []).length ? fold("How this was computed", evidenceList(d.evidence, 99)) : ""}
       </section>` : ""}
       ${p ? `<section class="card">
-        <div class="card-head"><h2 class="title">What we would change</h2><span class="right pills">${p.autonomy_rung ? pill("Autonomy " + p.autonomy_rung, "info") : ""}</span></div>
+        <h2 class="title">The fix</h2>
         <p>${rich(toManagerEnglish(p.description))}</p>
-        ${p.predicted_delta ? `<p class="small muted" data-style="margin-top:8px">Predicted ${esc(metricLbl(p.predicted_delta.metric).toLowerCase())}: <strong>${esc(metricVal(p.predicted_delta.metric, p.predicted_delta.from))} today → ${esc(metricVal(p.predicted_delta.metric, p.predicted_delta.to))} if we change it</strong>${(p.golden_set || []).length ? ` · ${int(p.golden_set.length)} known-good conversations frozen as the check` : ""}</p>` : ""}
-      </section>
-      <section class="card">${replayCard(rep, p, v)}</section>` : ""}
+        ${p.predicted_delta ? `<p class="muted">Predicted ${esc(metricLbl(p.predicted_delta.metric).toLowerCase())}: ${esc(metricVal(p.predicted_delta.metric, p.predicted_delta.from))} → <strong>${esc(metricVal(p.predicted_delta.metric, p.predicted_delta.to))}</strong></p>` : ""}
+        <div class="divider"></div>
+        ${replaySummary(rep, p, v)}
+      </section>` : ""}
       ${techBlock([
         { k: "cause", v: d && d.cause_class },
         { k: "metric", v: f.metric },
         { k: "change", v: p && p.change_type },
         { k: "target", v: p && p.target },
+        { k: "autonomy", v: p && p.autonomy_rung },
         { k: "attributed kind", v: ac && ac.kind },
         { k: "test run", v: v && v.replay_run_id },
         { k: "finding", v: f.id },
@@ -434,28 +432,24 @@
     const vers = ac.from != null && ac.to != null ? ` (${ac.from} → ${ac.to})` : "";
     return `${ac.target || "Something"} changed${day}${vers}`;
   }
-  function evidenceList(items) {
-    return `<ol class="evidence">${(items || []).map((e) =>
-      `<li><span>${rich(toManagerEnglish(e))}</span><button class="iconbtn" data-copy="${esc(e)}" title="Copy">${I.copy}<span class="sr-only">Copy</span></button></li>`).join("")}</ol>`;
+  function evidenceList(items, limit) {
+    const all = items || [];
+    const cap = limit || 3;
+    const li = (e) => `<li><span>${rich(toManagerEnglish(e))}</span><button class="iconbtn" data-copy="${esc(e)}" title="Copy">${I.copy}<span class="sr-only">Copy</span></button></li>`;
+    const head = `<ul class="evidence">${all.slice(0, cap).map(li).join("")}</ul>`;
+    const more = all.slice(cap);
+    return more.length ? head + fold(`${more.length} more check${more.length === 1 ? "" : "s"}`, `<ul class="evidence">${more.map(li).join("")}</ul>`) : head;
   }
-  function replayCard(rep, p, v) {
+  function replaySummary(rep, p, v) {
     if (!v) {
-      const note = rep.self_assessment && rep.self_assessment.notes;
-      return `<div class="card-head"><h2 class="title">Did the test help</h2><span class="right">${pill("Not replayed", "neutral")}</span></div>
-        <p class="lede">${esc(replayLbl(null))}</p>
-        <p class="small muted">${esc(note || "The report is still the decision record.")}</p>`;
+      return `<p class="row-line">${pill("Not replayed", "neutral")}<span class="muted">${esc(replayLbl(null))}. The report is still the decision record.</span></p>`;
     }
     const ui = REPLAY_UI[v.verdict] || [human(v.verdict), "neutral"];
     const m = v.metric || (p.predicted_delta && p.predicted_delta.metric);
-    const facts = [
-      v.golden_set_pass === true ? "known-good conversations still passed" : v.golden_set_pass === false ? "a known-good conversation got worse" : "known-good conversations not checked",
-      isNum(v.prediction_error) ? "prediction error " + num(v.prediction_error, 3) : "",
-    ].filter(Boolean);
-    return `<div class="card-head"><h2 class="title">Did the test help</h2><span class="right">${pill(ui[0], "upper " + ui[1])}</span></div>
-      <p class="lede">${esc(replayLbl(v))}</p>
-      <div class="compare"><span class="metric">${esc(metricVal(m, v.before))}</span><span class="arrow">→</span><span class="metric to ${v.verdict === "improved" ? "good" : v.verdict === "regressed" ? "bad" : ""}">${esc(metricVal(m, v.after))}</span></div>
-      <p class="small muted" data-style="margin-top:6px">${esc(facts.join(" · "))}</p>
-      <p class="small muted" data-style="margin-top:6px">${pill("simulated", "neutral")} The test’s “before” is simulated, not our measured number.</p>`;
+    const golden = v.golden_set_pass === true ? "known-good conversations still passed"
+      : v.golden_set_pass === false ? "a known-good conversation got worse" : "";
+    return `<p class="row-line">${pill(ui[0], ui[1])}<span>${esc(replayLbl(v))}: ${esc(metricVal(m, v.before))} → <strong>${esc(metricVal(m, v.after))}</strong></span></p>
+      <p class="small muted">${esc([golden, isNum(v.prediction_error) ? "gap vs prediction " + num(v.prediction_error, 3) : ""].filter(Boolean).join(" · "))}${golden || isNum(v.prediction_error) ? ". " : ""}The test’s “before” is simulated, not our measured number.</p>`;
   }
 
   function decisionPanel(p) {
@@ -466,10 +460,9 @@
     const ui = a ? VERDICT_UI[a.verdict] || [a.verdict, "neutral"] : null;
     return `<aside class="panel" aria-label="Your decision">
       <h2 class="title">${esc(dec.asking_approval_for || p.description)}</h2>
-      ${dec.risk_if_diagnosis_wrong ? `<p class="small"><strong>If we are wrong.</strong> ${esc(clip(dec.risk_if_diagnosis_wrong, 170))}</p>` : ""}
       ${a ? `<div class="decided"><div class="row" data-style="gap:8px">${pill(ui[0], ui[1])}<span class="small muted">by ${esc(a.decided_by)} · ${esc(when(a.at))}</span></div><p data-style="margin-top:6px"><q>${esc(a.reason)}</q></p><p class="small muted" data-style="margin-top:4px">Saved in loop-report.json. A new decision replaces it.</p></div>` : ""}
       <div>
-        ${fold("Full risk if we are wrong", `<p>${rich(dec.risk_if_diagnosis_wrong || "Not stated.")}</p>`)}
+        ${fold("Risk if we are wrong", `<p>${rich(dec.risk_if_diagnosis_wrong || "Not stated.")}</p>`)}
         ${fold("We would not ship if", `<p>${rich(dec.would_not_ship_if || "Not stated.")}</p>`)}
       </div>
       <div class="divider"></div>
@@ -493,26 +486,19 @@
     const d = ix.diag(f);
     const who = audienceFor(f, d);
     const delta = isNum(f.observed) && isNum(f.expected) ? f.observed - f.expected : null;
-    const rate = isRateName(f.metric);
-    const deltaTxt = delta == null ? "—" : rate ? `${delta >= 0 ? "+" : "−"}${Math.abs(delta * 100).toFixed(1)} pts` : `${delta >= 0 ? "+" : "−"}${num(Math.abs(delta), 3)}`;
+    const deltaTxt = delta == null ? "" : isRateName(f.metric) ? `${delta >= 0 ? "+" : "−"}${Math.abs(delta * 100).toFixed(1)} pts` : `${delta >= 0 ? "+" : "−"}${num(Math.abs(delta), 3)}`;
     return `<div class="workspace"><div class="stack">
       <div class="header">
-        <div class="pills">${pill("Not a problem", "success")}${d ? pill(causeLbl(d.cause_class), "") : ""}</div>
+        <div class="pills">${pill("Not a problem", "success")}</div>
         <h1 class="display">${esc(f.headline || metricLbl(f.metric))}</h1>
-        <div class="muted">${esc([f.tenant, cohortText(f.cohort), windowText(f.window)].filter(Boolean).join(" · "))}</div>
+        <p class="muted">${esc([f.tenant, cohortText(f.cohort), windowText(f.window)].filter(Boolean).join(" · "))}</p>
       </div>
-      <section class="card subtle"><p class="lede">${rich(toManagerEnglish(f.not_a_regression_because || "Checked and dismissed."))}</p></section>
       <section class="card">
-        <div class="card-head"><h2 class="title">What we checked</h2></div>
-        <div class="grid2">
-          <div>
-            <div class="compare"><span class="metric">${esc(metricVal(f.metric, f.expected))}</span><span class="arrow">→</span><span class="metric">${esc(metricVal(f.metric, f.observed))}</span></div>
-            <div class="label" data-style="margin-top:6px">${esc(metricLbl(f.metric))}: usual → this window (${esc(deltaTxt)})</div>
-          </div>
-          <div class="bars">${barRow("Usual", f.expected, f, "")}${barRow("This window", f.observed, f, "warn")}</div>
-        </div>
+        <p class="lede">${rich(toManagerEnglish(f.not_a_regression_because || "Checked and dismissed."))}</p>
+        <div class="compare"><span class="metric">${esc(metricVal(f.metric, f.expected))}</span><span class="arrow">→</span><span class="metric">${esc(metricVal(f.metric, f.observed))}</span></div>
+        <p class="muted">${esc(metricLbl(f.metric))}, usual → this window${deltaTxt ? ` (${esc(deltaTxt)})` : ""}. ${d ? esc(causeLbl(d.cause_class)) + "." : ""}</p>
       </section>
-      <section class="card"><div class="card-head"><h2 class="title">Why we are sure</h2></div>${evidenceList(f.evidence)}</section>
+      <section class="card"><h2 class="title">Why we are sure</h2>${evidenceList(f.evidence)}</section>
       ${techBlock([{ k: "cause", v: d && d.cause_class }, { k: "metric", v: f.metric }, { k: "finding", v: f.id }])}
     </div>
     <aside class="panel"><h2 class="title">${esc(idleGateCopy("dismissed"))}</h2>
@@ -523,7 +509,6 @@
     const ask = ASKS[g.ask_id] || [g.ask_id, g.ask_id];
     const ev = g.required_event;
     const spec = ev ? JSON.stringify(ev, null, 2) : "";
-    const others = (rep.gaps || []).filter((x) => x !== g);
     return `<div class="workspace single"><div class="stack">
       <div class="header">
         <div class="row" data-style="gap:12px"><span class="lock">${I.lock}</span>${pill(GAP_VERDICT[g.verdict] || human(g.verdict), "upper")}<span class="mono muted">${esc(g.ask_id)}</span></div>
@@ -531,7 +516,7 @@
         <p class="muted">${esc(ask[0])}</p>
       </div>
       <p class="lede">${esc(gapLede(g))}</p>
-      <section class="card"><div class="card-head"><h2 class="title">${esc(gapClaim(g))}</h2></div><p>${rich(toManagerEnglish(gapWhy(g)))}</p></section>
+      <section class="card"><h2 class="title">${esc(gapClaim(g))}</h2><p>${rich(toManagerEnglish(gapWhy(g)))}</p></section>
       ${g.nearest_proxy ? `<section class="card"><div class="grid2">
         <div><span class="label">The tempting number</span><p data-style="margin-top:6px;color:var(--text)">${rich(toManagerEnglish(g.nearest_proxy))}</p></div>
         <div><span class="label">${g.ask_id === "A11" ? "Why a retry is not failover" : "Why it misleads"}</span><p data-style="margin-top:6px">${rich(toManagerEnglish(g.why_the_proxy_misleads || ""))}</p></div>
@@ -542,10 +527,6 @@
           <div><span class="k">name </span><span class="v">${esc(ev.name)}</span> <span class="k">· grain </span><span class="v">${esc(ev.grain)}</span> <span class="k">· owner </span><span class="v">${esc(ev.owner)}</span></div>
           <table>${(ev.fields || []).map((x) => `<tr><td class="v">${esc(typeof x === "string" ? x : x.name)}</td><td class="t">${esc(typeof x === "string" ? "" : x.type || "")}</td></tr>`).join("")}</table>
         </div></section>` : ""}
-      ${others.length ? `<div class="grid2">${others.map((o) => `<button class="card rail-link" data-key="g:${esc(o.ask_id)}" data-style="text-align:left;cursor:pointer">
-        <div class="title" data-style="font-size:14px">${esc(gapClaim(o))}</div>
-        <span class="label">${esc(o.ask_id)} · ${esc(GAP_VERDICT[o.verdict] || human(o.verdict))}</span>
-        <p class="small muted" data-style="margin-top:4px">${esc(gapLede(o))}</p></button>`).join("")}</div>` : ""}
       <div class="callout info">${I.info}<p>${esc(idleGateCopy("gap", g))}</p></div>
       ${techBlock([
         { k: "ask", v: g.ask_id }, { k: "verdict", v: g.verdict }, { k: "nearest proxy", v: g.nearest_proxy },
@@ -559,38 +540,6 @@
   function gapWhy(g) {
     const raw = String((g && g.why) || "—");
     return raw.replace(/\s*Required event:[\s\S]*$/i, "").trim() || raw;
-  }
-
-  /* ---------------- required asks (A01, A04, A09, A11) ---------------- */
-  function requiredAsks(rep) {
-    const metrics = rep.metrics || [], gaps = rep.gaps || [];
-    const card = (id, body, target) =>
-      `<button class="ask-card" data-${target[0]}="${esc(target[1])}"><span class="ask-id">${esc(id)}</span>
-        <span class="ask-q">${esc((ASKS[id] || [id, id])[1])}</span>${body}</button>`;
-    const cards = REQUIRED_ASKS.map((id) => {
-      const gap = gaps.find((g) => g.ask_id === id);
-      const ms = metrics.filter((m) => m.ask_id === id);
-      const measured = ms.filter((m) => m.fidelity === "measured");
-      const shown = measured.length ? measured : ms;
-      if (shown.length && (!gap || gap.verdict === "CARDINALITY_REFUSED")) {
-        const lines = shown.map((m) => {
-          const tenant = (String(m.name).split(/\s+[—-]\s+/)[1]) || "";
-          const cov = m.coverage || {};
-          return `<span class="ask-line"><strong>${esc(metricVal(m.name, m.value))}</strong>${tenant ? ` <span class="muted">${esc(tenant)}</span>` : ""}
-            ${fidelityPill(m.fidelity)}${isNum(cov.value) ? pill("coverage " + pct(cov.value, 0), cov.value >= 0.95 ? "outline" : "warning") : ""}</span>`;
-        }).join("");
-        const excluded = [...new Set(shown.flatMap((m) => (m.coverage && m.coverage.excluded) || []))];
-        return card(id, `<span class="ask-body">${lines}</span>${excluded.length ? `<span class="small muted">Not counted: ${esc(toManagerEnglish(excluded.join(", ")))}</span>` : ""}`, ["metric", id]);
-      }
-      if (gap) {
-        const ev = gap.required_event;
-        return card(id, `<span class="ask-body"><span class="ask-line"><strong>${esc(gapClaim(gap))}</strong></span>
-          <span class="ask-line">${pill(GAP_VERDICT[gap.verdict] || human(gap.verdict), "critical")}${ev ? pill("needs event " + ev.name, "outline") : ""}</span></span>
-          <span class="small muted">${esc(gapLede(gap))}</span>`, ["key", "g:" + id]);
-      }
-      return card(id, `<span class="ask-body">${pill("Missing from this report", "critical")}</span>`, ["metric", id]);
-    });
-    return `<section class="asks" aria-label="Required questions"><h2 class="sr-only">Required questions</h2>${cards.join("")}</section>`;
   }
 
   /* ---------------- metrics ---------------- */
@@ -760,7 +709,7 @@
       } else {
         body = `<div class="empty"><h1 class="title">No regressions found</h1><p class="muted">${ix.dismissed.length} lookalikes checked.</p></div>`;
       }
-      view.innerHTML = requiredAsks(rep) + body;
+      view.innerHTML = body;
     } else if (state.tab === "metrics") {
       view.innerHTML = renderMetrics(rep);
     } else {
@@ -883,15 +832,6 @@
       (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(() => toast("Copied"), () => toast("Copy not available here"));
       return;
     }
-    const askEl = ev.target.closest("[data-metric]");
-    if (askEl) {
-      const ask = askEl.dataset.metric;
-      state.open = {};
-      (state.rep.metrics || []).forEach((m, i) => { if (m.ask_id === ask) state.open["m" + i] = true; });
-      go("metrics");
-      window.scrollTo(0, 0);
-      return;
-    }
     const keyEl = ev.target.closest("[data-key]");
     if (keyEl) return openKey(keyEl.dataset.key);
     const row = ev.target.closest("tr[data-open]");
@@ -918,6 +858,10 @@
   document.addEventListener("pointerdown", (ev) => { const b = ev.target.closest("button[data-verdict]"); if (b) lastSubmitter = b; });
   document.addEventListener("input", (ev) => { if (ev.target.id === "reason" && ev.target.value.trim()) $("reason-field").classList.remove("invalid"); });
   window.addEventListener("hashchange", () => { readHash(); render(); });
+  document.addEventListener("toggle", (ev) => {
+    const g = ev.target.closest && ev.target.closest("details.rail-group");
+    if (g === ev.target) state.railOpen[g.dataset.group] = g.open;
+  }, true);
 
   readHash();
   load();

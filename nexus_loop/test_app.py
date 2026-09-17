@@ -99,11 +99,26 @@ class ScreenHttp(unittest.TestCase):
         self.assertEqual(st, 200)
         return data.decode()
 
-    def test_required_asks_are_on_the_screen(self):
+    def test_required_asks_are_marked_in_metrics(self):
         js = self._js()
         self.assertIn('const REQUIRED_ASKS = ["A01", "A04", "A09", "A11"];', js)
-        self.assertIn("function requiredAsks(rep)", js)
-        self.assertIn("view.innerHTML = requiredAsks(rep) + body;", js)
+        self.assertIn('REQUIRED_ASKS.includes(m.ask_id)', js)
+        self.assertIn('REQUIRED_ASKS.includes(g.ask_id)', js)
+
+    def test_rail_groups_are_dropdowns(self):
+        js = self._js()
+        self.assertIn('<details class="rail-group"', js)
+        for label in ("Needs a decision", "Checked and dismissed", "Refused to answer"):
+            self.assertIn(label, js)
+
+    def test_fonts_are_bundled_and_served(self):
+        _, _, css = self._json("GET", "/static/app.css")
+        self.assertIn('url("fonts/InterVariable.woff2")', css.decode())
+        for name in ("InterVariable.woff2", "JetBrainsMono-Variable.woff2"):
+            st, hdrs, data = self._json("GET", "/static/fonts/" + name)
+            self.assertEqual(st, 200, name)
+            self.assertEqual({k.lower(): v for k, v in hdrs.items()}["content-type"], "font/woff2")
+            self.assertEqual(data[:4], b"wOF2")
 
     def test_manager_english_and_idle_gate_copy(self):
         js = self._js()
