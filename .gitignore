@@ -35,3 +35,7 @@ out/
 # Node (signed-copy test runners)
 node_modules/
 package-lock.json
+
+# Next.js build output (nexus_loop/web)
+.next/
+next-env.d.ts
