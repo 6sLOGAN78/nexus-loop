@@ -219,70 +219,22 @@ Header summary: **What is real, stubbed, simulated**. Parsed from
 
 ---
 
-## Signed copy (`nexus_loop/static/signed-copy/contract.js`)
+## Copy decision note (`nexus_loop/static/app.js`)
 
-Every string below is quoted from `COPY` in `contract.js`. Do not paraphrase.
-Field sources are the desk seam / recorded decision — never recomputed.
+After a recorded verdict, **Copy decision note** builds plain text from the
+report only. The lines are:
 
-### Note lines (`COPY.note`)
+    <Verdict>: <target>
+    Finding: <headline>
+    Slice: <tenant> · <cohort> · <window>
+    Reason: "<approval.reason>"
+    By <approval.decided_by> at <approval.at>
+    What moved: <metric> <expected> -> <observed>
+    Impact: <lost resolutions, handoffs, abandoned, extra turns>
+    Fix: <prescription.description>
+    Risk if wrong: <risk_if_diagnosis_wrong>
+    Open: <deep link to the finding>
 
-| COPY key | Quoted string | Comes from |
-|---|---|---|
-| `note.accept.headline` | `Accepted: go ahead with the change to {target}.` | verdict + `changeTarget` |
-| `note.accept.headlineNoTarget` | `Accepted: go ahead with this change.` | verdict, no target |
-| `note.accept.reasonLabel` | `My reason` | accept / reject reason label |
-| `note.accept.changeLabel` | `What we're changing` | accept change line |
-| `note.reject.headline` | `Rejected: do not make the change to {target}.` | reject + target |
-| `note.reject.headlineNoTarget` | `Rejected: do not make this change.` | reject, no target |
-| `note.reject.reasonLabel` | `My reason` | reject reason label |
-| `note.reject.changeLabel` | `What was proposed` | reject / defer change line |
-| `note.reject.stillOpen` | `Rejecting the change does not close this finding.` | reject only |
-| `note.defer.headline` | `Not decided yet: the change to {target} is on hold.` | defer + target |
-| `note.defer.headlineNoTarget` | `Not decided yet: this change is on hold.` | defer, no target |
-| `note.defer.reasonLabel` | `What I'm waiting for` | defer reason label |
-| `note.defer.changeLabel` | `What was proposed` | defer change line |
-| `note.finding` | `Finding: {title}` | story claim / headline |
-| `note.reason` | `{label}: "{reason}"` | recorded `approval.reason` (verbatim) |
-| `note.whatBroke` | `What broke: {metric} is {observed}, expected {expected}.` | metric + observed + expected |
-| `note.affected` | `Who was affected: {affected} conversations.` | conversations-affected figure |
-| `note.whyBoth` | `Why we think so: {cause}, after {configChange}.` | cause + config change |
-| `note.whyCause` | `Why we think so: {cause}.` | cause only |
-| `note.whyConfig` | `Why we think so: it started after {configChange}.` | config only |
-| `note.changeBoth` | `{label}: {target}: {description}.` | target + description |
-| `note.changeTarget` | `{label}: {target}.` | target only |
-| `note.changeDescription` | `{label}: {description}.` | description only |
-| `note.replay` | `Replay test: {before} → {after} (before is the test's simulated baseline, not live traffic).` | verification before/after |
-| `note.replayNone` | `Replay test: No test this run.` | no verification |
-| `note.risk` | `If the diagnosis is wrong: {risk}.` | `risk_if_diagnosis_wrong` |
-| `note.ifNothingChanges` | `If nothing changes: {ifNothingChanges}.` | `if_nothing_changes` |
-| `note.owner` | `Owner: {owner}.` | audience “needs to act” line |
-| `note.open` | `Open this finding: {url}` | hash deep link |
-| `note.technicalNames` | `Technical names: {names}` | tech-foot values |
-| `note.technicalNamesSeparator` | ` · ` | joins technical names |
-| `note.recorded` | `Recorded {recordedAt}` | recorded-at display (null on this desk) |
-| `note.metaSeparator` | ` · ` | joins recorded + coverage |
-
-### Summary (`COPY.summary`) and UI (`COPY.ui`)
-
-| COPY key | Quoted string |
-|---|---|
-| `summary.title` | `Decisions` |
-| `summary.titleWithRun` | `Decisions for {run}` |
-| `summary.accept` | `Accepted: {title}` |
-| `summary.reject` | `Rejected: {title}` |
-| `summary.defer` | `Not decided yet: {title}` |
-| `summary.reason` | `Reason: "{reason}"` |
-| `summary.waitingFor` | `Waiting for: "{reason}"` |
-| `summary.open` | `Open: {url}` |
-| `summary.dismissedOne` | `Dismissed signals: 1 looked like a problem and is not.` |
-| `summary.dismissedMany` | `Dismissed signals: {count} looked like problems and are not.` |
-| `summary.refusals` | `No measurement: {claims}.` |
-| `summary.refusalsSeparator` | `; ` |
-| `ui.button` | `Copy signed copy` |
-| `ui.preview` | `See the note` |
-| `ui.copied` | `Copied. Paste it wherever the owning team works.` |
-| `ui.copyFailed` | `Could not copy automatically. The note is selected below. Copy it from there.` |
-| `ui.summaryButton` | `Copy all decisions` |
-| `ui.summaryPreview` | `See all decisions` |
-| `ui.summaryCopied` | `Copied all decisions.` |
-| `ui.summaryCopyFailed` | `Could not copy automatically. All decisions are selected below. Copy them from there.` |
+**Copy all decisions** lists every recorded verdict with its reason and
+timestamp, then the dismissed-signals count and the refusal count. Verdict
+words: Approved, Rejected, Deferred.

@@ -970,19 +970,26 @@ comes from the method rather than from a fit to the practice data.
 \section{Operator Screen}
 
 The screen is one brief and one signature rather than a dashboard. The
-header carries the coverage and fidelity chips and a disclosure for what
-is real, stubbed and simulated. A one-line switcher has three views:
-\textbf{To decide} (the regressions), \textbf{Not a problem} (the
-lookalikes we examined and dismissed), and \textbf{We will not invent}
-(the refusals, failover first). The brief shows the claim, three harm
-numbers, the consequence of waiting, the cause, the proposed change and
-the replay. Evidence and baseline working sit under a disclosure, and
-the detector codes sit in a Technical names footer. The sticky panel
-carries the ask, the risk and the no-ship condition, and a traffic-light
-gate: a green Accept, a red Reject, and a grey Defer, each with a
-required reason. Arrow keys and Home/End move the selection through a
-long queue. The claim is set in Newsreader and the chrome in Source Sans
-3, with system fallbacks when the page cannot reach the web fonts.
+left rail groups the queue into \textbf{Needs a decision},
+\textbf{Checked and dismissed} and \textbf{Refused to answer}, and the
+header carries the active section as four tabs --- Findings, Refusals,
+Metrics, Decisions --- each with its live count, alongside the corpus,
+the generation time and a Replay badge. The brief shows the claim, a
+severity chip and a coverage chip scoped to the tenant, the cohort and
+window, the before $\rightarrow$ now metric, four harm counters
+(conversations, lost resolutions, handoffs, recorded cost), a
+\textbf{Needs to act} callout naming the owners and the consequence of
+waiting, and a \textbf{What moved} card that states the cohort's own
+baseline inline and keeps the counting rules and the standard under
+disclosure. Evidence sits below with a copy button per line. The sticky
+panel carries the proposed change, the risk and the no-ship condition,
+the required name and reason, and the gate --- a green Approve, a red
+Reject and a grey Defer --- with a note that the decision is written back
+into \texttt{loop-report.json}. The refusals section leads with the
+failover question, the clearest case of a number we refuse to invent.
+Sections deep-link by hash (\texttt{\#/findings/<id>},
+\texttt{\#/refusals/<ask>}), and the surface is set in bundled Inter and
+JetBrains Mono with no network call.
 
 \begin{figure*}[t]
     \centering

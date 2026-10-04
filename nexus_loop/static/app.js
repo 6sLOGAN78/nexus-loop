@@ -29,7 +29,8 @@
   /* The four asks the problem statement requires; the rest are answered in Metrics. */
   const REQUIRED_ASKS = ["A01", "A04", "A09", "A11"];
 
-  /* Manager English: the operator reads labels, the codes stay in "Technical names". */
+  /* Manager English: the operator reads labels, the codes stay in "Technical names".
+     Catalogued in docs/manager-english.md. */
   const AUDIENCE = {
     agent_builder: "Agent team",
     platform_owner: "Platform team",

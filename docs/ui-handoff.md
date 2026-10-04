@@ -73,16 +73,8 @@ A sample is written by any `run.py`; the practice corpus produces a rich one.
 |---|---|
 | `GET /` | The screen (`static/index.html`) |
 | `GET /report.json` | The current report, verbatim |
-| `GET /health` | `{ok, report, generate}` booleans. Does not leak a filesystem path. |
+| `GET /health` | `{ok, report}` booleans. Does not leak a filesystem path. |
 | `POST /decision` | Record a human decision. Wrong method → 405. Body > 64KiB → 413. |
-| `POST /generate` | Re-run `run.py` into the same report path (gated). Then reload `/report.json`. |
-
-`POST /generate` is **off by default**. Enable with `--allow-generate` or
-`NEXUS_LOOP_ALLOW_GENERATE=1` (and a discoverable `kit/`). `run.py --serve`
-turns it on automatically for that kit. Default regeneration uses `--no-replay`;
-pass `--with-replay` / `NEXUS_LOOP_REPLAY_URL` only when the kit replay service
-is up. Disabled → 403; already running → 409. The header **Generate report**
-button calls this endpoint and reloads the screen from the new report.
 
 `POST /decision` body:
 
@@ -123,7 +115,7 @@ scrolling through evidence.
 
 | Region | Role |
 |--------|------|
-| Header | Quiet title, corpus, **Generate report**, coverage/fidelity chips. REAL / STUBBED / SIMULATED sit under a disclosure — Framing 12 without a wall of notes. |
+| Header | Quiet title, corpus, coverage/fidelity chips. REAL / STUBBED / SIMULATED sit under a disclosure — Framing 12 without a wall of notes. |
 | List | To decide / Not a problem / We will not invent (A11 first, titled “We will not invent a failover rate”). 3-column sticky tab grid; **To decide** is danger red, same token as `.dot.bad`. Not a problem is mint; We will not invent is grey/info. Compact rows: title, tenant · days subtitle, stat (conversation count, **not a problem**, or **we will not invent**). The list body scrolls under the tabs. ArrowUp/ArrowDown and Home/End move the selection. Default selection is the verification’s prescription, else `tool.contract_break`. Hash deep-links the selected id. |
 | Story | Four steps copied from the report: what changed, why we think so, what we would change, did the test help. Each step label is uppercase tracked; `.span .name` is a Newsreader heading; observed values are tabular sans. A matching `standard[]` sentence sits under what changed. Bars plot report values in red vs green (not brown). Colour-coded KPI strip (5 columns, label / figure / caption): conversations info, would-have-resolved warn, handoffs/abandoned bad, cost warn. Evidence under a disclosure. Codes under **Technical names** in a `.tech-foot` footer pinned at the bottom of the story column. Gap ledes are short (A11: “Failover does not exist here. There is no rate to show.”); full `why` under **Full reason**. |
 | Your decision | The ask, a one-line risk, then full risk/no-ship under a disclosure, then Accept / Reject / Defer and a required reason. On **Not a problem** or **We will not invent**, the gate is an idle line only: “Nothing to approve. This is not a problem.” or “Nothing to approve. We will not invent a failover rate.” (A11 / `NOT_MEASURABLE`; other gaps name their claim or “this number”) After save, the page POSTs `/decision` and re-fetches `/report.json`. |
@@ -270,45 +262,21 @@ including missing sections (e.g. an empty `verifications` when replay is off).
 
 ---
 
-## 10. Signed copy modules and seam
+## 10. Copy decision note
 
-After a recorded verdict on a **Needs attention** finding, the gate mounts a
-slot and the Signed copy UI. Modules live under
-`nexus_loop/static/signed-copy/` and load before the desk inline script:
+After a recorded verdict on a **Needs attention** finding, the decision panel
+shows **Copy decision note**. The note is built in `nexus_loop/static/app.js`
+(`decisionNote(f, p, a)`) from the report only, and copied through the global
+`[data-copy]` handler:
 
-| File | Global | Role |
-|---|---|---|
-| `contract.js` | `SignedCopy.contract` | Frozen `COPY`, helpers, `normalizeVerdict` |
-| `template.js` | `SignedCopy.template` | `buildSignedCopy(input)` |
-| `summary.js` | `SignedCopy.summary` | `toSummaryInput` / `buildDecisionsSummary` |
-| `adapter.js` | `SignedCopy.adapter` | `toSignedCopyInput(desk, finding)` |
-| `ui.js` | `SignedCopy.ui` | `render(slotEl, finding)` |
-| `signed-copy.css` | — | Secondary control styles (existing tokens) |
+- the verdict and target, the finding and slice, the reason verbatim, who
+  decided and when, what moved, the downstream impact, the fix, the risk if
+  wrong, and a deep link to the finding.
 
-### `window.NexusDesk`
+The Decisions tab adds **Copy all decisions** (`allDecisionsNote(rep, ix)`)
+once any decision exists: every verdict, the dismissed-signals count, and the
+refusal count. Both are plain text on the clipboard; there is no preview pane
+and no second module to load.
 
-Frozen read-only seam at the end of the desk script. Every method returns
-display strings the screen already shows (or `null`). See
-`docs/prd-signed-copy.md` Appendix A for the inventory. Decisions come only
-from the loaded report (`decisionFor`); `recordedAtText` is always `null`
-because the desk does not display `approval.at`.
-
-### DOM contract
-
-Inside `[data-testid="signed-copy-slot"]` (open + prescription path only,
-directly under the recorded-verdict alert):
-
-```html
-<section data-testid="signed-copy" aria-label="Signed copy">
-  <button type="button" data-testid="signed-copy-button">Copy signed copy</button>
-  <p data-testid="signed-copy-status" role="status" aria-live="polite"></p>
-  <details data-testid="signed-copy-preview">
-    <summary>See the note</summary>
-    <textarea data-testid="signed-copy-text" readonly rows="14"></textarea>
-  </details>
-</section>
-```
-
-When every open finding is decided, a second section
-`[data-testid="decisions-summary"]` follows with the same pattern and the
-`COPY.ui.summary*` labels. Static assets are served at `/signed-copy/*`.
+The earlier `SignedCopy.*` modules and their `/signed-copy` route were removed;
+`COPY` wording now lives inline in `app.js`.
