@@ -73,75 +73,85 @@ class ScreenHttp(unittest.TestCase):
         c.close()
         return r.status, dict(r.getheaders()), data
 
-    def test_finding_tabs_and_idle_copy(self):
+    def test_screen_is_offline_and_escapes(self):
         st, _, body = self._json("GET", "/")
         page = body.decode()
         self.assertEqual(st, 200)
-        self.assertIn('id="modebar"', page)
-        self.assertIn("class=\"mode-bar\"", page)
-        self.assertIn("function renderModeBar(rep)", page)
-        self.assertIn("`Needs attention (${regs.length})`", page)
-        self.assertIn("`Dismissed signals (${dismissed.length})`", page)
-        self.assertIn("`No measurement (${gaps.length})`", page)
-        self.assertNotIn("`To decide (${regs.length})`", page)
-        self.assertNotIn("`Not a problem (${dismissed.length})`", page)
-        self.assertNotIn("`We will not invent (${gaps.length})`", page)
-        self.assertNotIn("`All clear (${dismissed.length})`", page)
-        self.assertNotIn("`No number (${gaps.length})`", page)
-        self.assertNotIn("We would not guess", page)
-        self.assertNotIn("list-head", page)
-        self.assertIn("Nothing to approve. This is not a problem.", page)
-        self.assertIn("Nothing to approve. We will not invent a failover rate.", page)
-        self.assertIn("Nothing to approve. We will not invent this number.", page)
-        self.assertIn('"Nothing to approve. " + gapClaim(g) + "."', page)
-        self.assertIn('g.ask_id === "A11" || g.verdict === "NOT_MEASURABLE"', page)
-        self.assertIn('pack.kind === "dismissed" || !pack.p', page)
-        self.assertNotIn("Nothing to approve. This is all clear.", page)
-        self.assertNotIn("Nothing to approve on this finding.", page)
-        self.assertIn("We will not invent a failover rate", page)
-        self.assertIn(">Needs attention<", page)
-        self.assertIn(">Dismissed signals<", page)
-        self.assertIn(">No measurement<", page)
-        self.assertIn(">dismissed signals<", page)
-        self.assertIn(">no measurement<", page)
-        self.assertNotIn(">not a problem<", page)
-        self.assertNotIn(">we will not invent<", page)
-        self.assertNotIn(">all clear<", page)
-        self.assertNotIn(">no number<", page)
-        self.assertIn('pack.kind === "gap"', page)
-        self.assertIn('pack.kind === "dismissed"', page)
-        self.assertIn("content-visibility: auto", page)
-        self.assertIn("list-body", page)
-        self.assertIn("-webkit-line-clamp: 2;", page)
-        self.assertIn("toManagerEnglish", page)
-        self.assertIn("audienceFor", page)
-        self.assertIn("function pairBars(", page)
-        self.assertIn("function shareWeight(", page)
-        self.assertIn("function clearCompare(", page)
-        self.assertIn("function inventBlock(", page)
-        self.assertIn("pair-fig", page)
-        self.assertIn("share-weight", page)
-        self.assertIn("Weight of conversations", page)
-        self.assertIn("state-fig", page)
-        self.assertIn("impact-viz", page)
-        self.assertIn("Now vs before", page)
-        self.assertIn("Today vs if we change it", page)
-        self.assertIn("Test before / after", page)
-        self.assertIn("No rate to plot", page)
-        self.assertIn("bar-grow", page)
+        self.assertIn('src="/static/app.js"', page)
+        self.assertIn('href="/static/app.css"', page)
+        for name in ("app.js", "app.css"):
+            st, hdrs, data = self._json("GET", "/static/" + name)
+            self.assertEqual(st, 200)
+            text = data.decode()
+            # no CDN, no web fonts, no remote scripts
+            self.assertNotRegex(text, r"https?://")
+        _, hdrs, js = self._json("GET", "/static/app.js")
+        self.assertIn("javascript", {k.lower(): v for k, v in hdrs.items()}["content-type"])
+        js = js.decode()
+        self.assertIn("function esc(v)", js)
+        self.assertIn('fetch("/decision"', js)
+        self.assertIn('fetch("/report.json"', js)
+        self.assertIn("A reason is required.", js)
+        self.assertNotIn(' style="', js)
 
-    def test_idle_gate_copy_is_two_states(self):
-        st, _, body = self._json("GET", "/")
-        page = body.decode()
+    def _js(self):
+        st, _, data = self._json("GET", "/static/app.js")
         self.assertEqual(st, 200)
-        self.assertIn("function idleGateCopy(pack)", page)
-        self.assertIn('g.ask_id === "A11" || g.verdict === "NOT_MEASURABLE"', page)
-        self.assertIn("Nothing to approve. We will not invent a failover rate.", page)
-        self.assertIn("Nothing to approve. This is not a problem.", page)
-        self.assertIn('pack.kind === "dismissed" || !pack.p', page)
-        self.assertNotIn("Nothing to approve — we would not guess this number", page)
-        self.assertNotIn("Nothing to approve. This is all clear.", page)
-        self.assertNotIn("Nothing to approve on this finding.", page)
+        return data.decode()
+
+    def test_required_asks_are_marked_in_metrics(self):
+        js = self._js()
+        self.assertIn('const REQUIRED_ASKS = ["A01", "A04", "A09", "A11"];', js)
+        self.assertIn('REQUIRED_ASKS.includes(ask)', js)
+        self.assertIn("One row per question", js)
+
+    def test_rail_groups_are_dropdowns(self):
+        js = self._js()
+        self.assertIn('<details class="rail-group"', js)
+        for label in ("Needs a decision", "Checked and dismissed", "Refused to answer"):
+            self.assertIn(label, js)
+
+    def test_fonts_are_bundled_and_served(self):
+        _, _, css = self._json("GET", "/static/app.css")
+        self.assertIn('url("fonts/InterVariable.woff2")', css.decode())
+        for name in ("InterVariable.woff2", "JetBrainsMono-Variable.woff2"):
+            st, hdrs, data = self._json("GET", "/static/fonts/" + name)
+            self.assertEqual(st, 200, name)
+            self.assertEqual({k.lower(): v for k, v in hdrs.items()}["content-type"], "font/woff2")
+            self.assertEqual(data[:4], b"wOF2")
+
+    def test_manager_english_and_idle_gate_copy(self):
+        js = self._js()
+        self.assertIn("function toManagerEnglish(text)", js)
+        self.assertIn('"tool.contract_break": "The tool said success but sent an empty answer"', js)
+        self.assertIn("function audienceFor(f, d)", js)
+        self.assertIn('A11: "Failover does not exist here. There is no rate to show."', js)
+        self.assertIn('"Nothing to approve. We will not invent a failover rate."', js)
+        self.assertIn('return "Nothing to approve. This is not a problem.";', js)
+        self.assertIn("Required event:", js)  # stripped from gap prose; the spec is shown structurally
+        self.assertIn("Technical names", js)
+
+    def test_both_impact_shapes_are_rendered(self):
+        js = self._js()
+        for field in ("would_have_resolved_at_baseline", "resolved_conversations_slowed",
+                      "extra_turns", "excess_cost_usd", "unplanned_handoffs", "abandoned"):
+            self.assertIn("ds." + field, js)
+
+    def test_standard_match_treats_null_cohort_keys_as_wildcards(self):
+        self.assertIn("sc[k] == null || sc[k] === c[k]", self._js())
+
+    def test_csp_has_no_inline_or_remote_sources(self):
+        _, hdrs, _ = self._json("GET", "/")
+        csp = {k.lower(): v for k, v in hdrs.items()}["content-security-policy"]
+        self.assertNotIn("unsafe-inline", csp)
+        self.assertNotIn("https:", csp)
+        self.assertIn("script-src 'self'", csp)
+
+    def test_static_whitelist(self):
+        for bad in ("/static/../app.py", "/static/%2e%2e/app.py", "/static/app.py",
+                    "/static/fonts/../../app.py", "/static/", "/static/nope.css"):
+            st, _, _ = self._json("GET", bad)
+            self.assertEqual(st, 404, bad)
 
     def test_get_page_and_security_headers(self):
         st, hdrs, body = self._json("GET", "/")
@@ -158,65 +168,7 @@ class ScreenHttp(unittest.TestCase):
         obj = json.loads(data)
         self.assertTrue(obj["ok"])
         self.assertTrue(obj["report"])
-        self.assertFalse(obj["generate"])
         self.assertNotIn(self.tmp.name, data.decode())
-
-    def test_generate_disabled_by_default(self):
-        st, _, data = self._json("POST", "/generate", {})
-        self.assertEqual(st, 403)
-        self.assertEqual(json.loads(data)["error"], "generate_disabled")
-
-    def test_generate_wrong_method_405(self):
-        st, hdrs, data = self._json("GET", "/generate")
-        lower = {k.lower(): v for k, v in hdrs.items()}
-        self.assertEqual(st, 405)
-        self.assertIn("POST", lower.get("allow", ""))
-        self.assertEqual(json.loads(data)["error"], "method_not_allowed")
-
-    def test_generate_runs_and_reloads_report(self):
-        stamped = dict(MIN_REPORT)
-        stamped["generated_at"] = "2099-01-01T00:00:00Z"
-        stamped["system_notes"] = "regenerated by test runner"
-
-        def runner():
-            Path(self.report).write_text(json.dumps(stamped), encoding="utf-8")
-            return {
-                "ok": True,
-                "generated_at": stamped["generated_at"],
-                "findings": 1,
-                "prescriptions": 1,
-                "verifications": 0,
-                "gaps": 0,
-            }
-
-        self.httpd.shutdown()
-        self.httpd.server_close()
-        store = ReportStore(self.report, schema_path=None, generate_runner=runner)
-        self.httpd = ThreadingHTTPServer(("127.0.0.1", 0), make_handler(store))
-        self.port = self.httpd.server_address[1]
-        self.thread = threading.Thread(target=self.httpd.serve_forever, daemon=True)
-        self.thread.start()
-
-        st, _, data = self._json("GET", "/health")
-        self.assertTrue(json.loads(data)["generate"])
-        st, _, data = self._json("POST", "/generate", {})
-        self.assertEqual(st, 200, data)
-        summary = json.loads(data)
-        self.assertTrue(summary["ok"])
-        self.assertEqual(summary["generated_at"], "2099-01-01T00:00:00Z")
-        st2, _, body = self._json("GET", "/report.json")
-        self.assertEqual(st2, 200)
-        self.assertEqual(json.loads(body)["generated_at"], "2099-01-01T00:00:00Z")
-
-    def test_generate_button_in_served_html(self):
-        st, _, body = self._json("GET", "/")
-        page = body.decode()
-        self.assertEqual(st, 200)
-        self.assertIn("Generate report", page)
-        self.assertIn('id="gen-btn"', page)
-        self.assertIn('api("/generate"', page)
-        self.assertIn("function generateReport", page)
-        self.assertIn("Did the test help", page)
 
     def test_unknown_path_404(self):
         st, _, data = self._json("GET", "/etc/passwd")
@@ -262,71 +214,6 @@ class ScreenHttp(unittest.TestCase):
         self.assertEqual(st, 200, data)
         saved = json.loads(Path(self.report).read_text())
         self.assertEqual(saved["prescriptions"][0]["approval"]["reason"], payload["reason"])
-
-    def test_tech_names_are_a_visible_story_footer(self):
-        st, _, body = self._json("GET", "/")
-        page = body.decode()
-        self.assertEqual(st, 200)
-        self.assertIn('class="tech-foot"', page)
-        self.assertIn("function pinStoryLayout", page)
-        self.assertIn(".story-scroll", page)
-        self.assertIn("flex-direction: column", page)
-        self.assertNotIn('details("Technical names"', page)
-        self.assertIn("min-height: 10rem", page)
-        self.assertIn('{ k: "fields", v: (ev.fields || []).join(", ") }', page)
-        self.assertIn("overflow-x: auto", page)
-
-    def test_list_body_wrapper_in_served_html(self):
-        st, _, body = self._json("GET", "/")
-        page = body.decode()
-        self.assertEqual(st, 200)
-        self.assertIn(".list-body {", page)
-        self.assertIn('`<div class="list-body">${items.join("")', page)
-        self.assertIn("overflow-y: auto", page)
-        self.assertNotIn("list-head", page)
-
-    def test_gap_lede_and_first_beat_helpers(self):
-        st, _, body = self._json("GET", "/")
-        page = body.decode()
-        self.assertEqual(st, 200)
-        self.assertIn("const GAP_LEDE = {", page)
-        self.assertIn(
-            'A11: "Failover does not exist here. There is no rate to show."',
-            page,
-        )
-        self.assertIn("function gapLede(g)", page)
-        self.assertIn("GAP_LEDE[g.ask_id]", page)
-        self.assertIn("function firstBeat(s, max)", page)
-        self.assertIn("${esc(gapLede(g))}", page)
-
-    def test_list_keyboard_navigation_bound(self):
-        st, _, body = self._json("GET", "/")
-        page = body.decode()
-        self.assertEqual(st, 200)
-        self.assertIn("function bindListKeys(rep)", page)
-        self.assertIn("bindListKeys(rep);", page)
-        self.assertIn('$("list").addEventListener("keydown"', page)
-        self.assertIn('ev.key !== "ArrowDown"', page)
-        self.assertIn('ev.key !== "ArrowUp"', page)
-        self.assertIn('ev.key !== "Home"', page)
-        self.assertIn('ev.key !== "End"', page)
-
-    def test_finding_tab_label_contract(self):
-        st, _, body = self._json("GET", "/")
-        page = body.decode()
-        self.assertEqual(st, 200)
-        self.assertIn('id="modebar"', page)
-        self.assertIn(".mode-bar {", page)
-        self.assertIn("`Needs attention (${regs.length})`", page)
-        self.assertIn("`Dismissed signals (${dismissed.length})`", page)
-        self.assertIn("`No measurement (${gaps.length})`", page)
-        self.assertNotIn("`To decide (${regs.length})`", page)
-        self.assertNotIn("`Not a problem (${dismissed.length})`", page)
-        self.assertNotIn("`We will not invent (${gaps.length})`", page)
-        self.assertNotIn("`All clear (${dismissed.length})`", page)
-        self.assertNotIn("`No number (${gaps.length})`", page)
-        self.assertNotIn("We would not guess", page)
-        self.assertNotIn("list-head", page)
 
     def test_corrupt_report_returns_error_not_drop(self):
         Path(self.report).write_text("{ not json", encoding="utf-8")
@@ -378,18 +265,14 @@ class ScreenHttp(unittest.TestCase):
         log = Path(os.path.join(self.tmp.name, "decisions.log")).read_text().splitlines()
         self.assertEqual(len([line for line in log if line.strip()]), 2)
 
-    def test_signed_copy_contract_js_served(self):
-        st, headers, body = self._json("GET", "/signed-copy/contract.js")
+    def test_console_has_copy_decision_note(self):
+        st, _, js = self._json("GET", "/static/app.js")
         self.assertEqual(st, 200)
-        text = body.decode()
-        self.assertIn("normalizeVerdict", text)
-        self.assertIn("Copy signed copy", text)
-        ctype = headers.get("Content-Type") or headers.get("content-type") or ""
-        self.assertIn("javascript", ctype)
-        # Path traversal must 404
-        st404, _, data = self._json("GET", "/signed-copy/../index.html")
-        self.assertEqual(st404, 404)
-        self.assertEqual(json.loads(data)["error"], "not_found")
+        code = js.decode()
+        self.assertIn("function decisionNote(", code)
+        self.assertIn("function allDecisionsNote(", code)
+        self.assertNotIn('id="generate"', self._json("GET", "/")[2].decode())
+        self.assertNotIn('fetch("/generate"', code)
 
 
 if __name__ == "__main__":

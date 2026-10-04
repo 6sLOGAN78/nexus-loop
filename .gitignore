@@ -30,8 +30,14 @@ tools/testbed/candidates.json
 tools/testbed/kits/
 
 # Nexus Loop pipeline output
-out/
+out/*
+!out/loop-report.json
+!out/golden_set.json
 
-# Node (signed-copy test runners)
+# Node & Next.js build artifacts
 node_modules/
+**/node_modules/
+.next/
+**/.next/
 package-lock.json
+
