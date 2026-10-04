@@ -1,0 +1,146 @@
+{
+  "corpus": "A",
+  "fingerprint": "80252/acme-bank,northwind-retail/56",
+  "sets": {
+    "acme-bank|agent_id=acme_main_v3": {
+      "cohort": {
+        "agent_id": "acme_main_v3"
+      },
+      "frozen_at": "2026-09-17T05:15:59+00:00",
+      "n": 30,
+      "rule": "eligible baseline sessions (resolved, no unplanned handoff, no tool error / empty answer / KB miss where telemetry exists), lowest turns first, ties by session_id; none from the fault window",
+      "session_ids": [
+        "s_acme_017127",
+        "s_acme_017167",
+        "s_acme_017179",
+        "s_acme_017438",
+        "s_acme_017820",
+        "s_acme_017890",
+        "s_acme_017953",
+        "s_acme_018082",
+        "s_acme_018339",
+        "s_acme_018380",
+        "s_acme_018507",
+        "s_acme_018516",
+        "s_acme_018825",
+        "s_acme_018856",
+        "s_acme_018866",
+        "s_acme_019121",
+        "s_acme_019438",
+        "s_acme_019793",
+        "s_acme_019893",
+        "s_acme_020026",
+        "s_acme_020254",
+        "s_acme_020279",
+        "s_acme_020298",
+        "s_acme_020365",
+        "s_acme_020454",
+        "s_acme_020485",
+        "s_acme_020533",
+        "s_acme_020722",
+        "s_acme_020726",
+        "s_acme_021103"
+      ],
+      "tenant": "acme-bank",
+      "version": "gs_v1",
+      "window": [
+        46,
+        55
+      ]
+    },
+    "acme-bank|intent=premium_card_info": {
+      "cohort": {
+        "intent": "premium_card_info"
+      },
+      "frozen_at": "2026-09-17T05:15:59+00:00",
+      "n": 30,
+      "rule": "eligible baseline sessions (resolved, no unplanned handoff, no tool error / empty answer / KB miss where telemetry exists), lowest turns first, ties by session_id; none from the fault window",
+      "session_ids": [
+        "s_acme_018175",
+        "s_acme_018274",
+        "s_acme_018353",
+        "s_acme_019290",
+        "s_acme_019676",
+        "s_acme_020208",
+        "s_acme_020303",
+        "s_acme_020454",
+        "s_acme_020481",
+        "s_acme_020726",
+        "s_acme_020747",
+        "s_acme_020759",
+        "s_acme_020784",
+        "s_acme_021211",
+        "s_acme_021254",
+        "s_acme_021696",
+        "s_acme_021700",
+        "s_acme_021764",
+        "s_acme_022254",
+        "s_acme_022323",
+        "s_acme_022368",
+        "s_acme_022427",
+        "s_acme_022472",
+        "s_acme_022750",
+        "s_acme_022762",
+        "s_acme_022935",
+        "s_acme_023331",
+        "s_acme_023447",
+        "s_acme_023567",
+        "s_acme_018148"
+      ],
+      "tenant": "acme-bank",
+      "version": "gs_v1",
+      "window": [
+        34,
+        44
+      ]
+    },
+    "northwind-retail|intent=order_status|tool=get_order_status": {
+      "cohort": {
+        "intent": "order_status",
+        "tool": "get_order_status"
+      },
+      "frozen_at": "2026-09-17T05:15:59+00:00",
+      "n": 30,
+      "rule": "eligible baseline sessions (resolved, no unplanned handoff, no tool error / empty answer / KB miss where telemetry exists), lowest turns first, ties by session_id; none from the fault window",
+      "session_ids": [
+        "s_nort_057379",
+        "s_nort_057398",
+        "s_nort_057429",
+        "s_nort_057594",
+        "s_nort_057617",
+        "s_nort_057636",
+        "s_nort_057638",
+        "s_nort_057649",
+        "s_nort_057711",
+        "s_nort_057713",
+        "s_nort_057831",
+        "s_nort_058042",
+        "s_nort_058133",
+        "s_nort_058224",
+        "s_nort_058286",
+        "s_nort_058293",
+        "s_nort_058308",
+        "s_nort_058399",
+        "s_nort_058620",
+        "s_nort_058682",
+        "s_nort_058747",
+        "s_nort_058763",
+        "s_nort_058825",
+        "s_nort_058957",
+        "s_nort_059005",
+        "s_nort_059193",
+        "s_nort_059268",
+        "s_nort_059368",
+        "s_nort_059538",
+        "s_nort_059600"
+      ],
+      "tenant": "northwind-retail",
+      "version": "gs_v1",
+      "window": [
+        40,
+        51
+      ]
+    }
+  },
+  "version": "gs_v1"
+}

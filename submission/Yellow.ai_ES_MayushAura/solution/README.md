@@ -38,6 +38,11 @@ Everything is on `master`:
   **Copy all decisions**.
 - **Testbed** (`tools/testbed/`): generates held-out corpora and evaluates any
   candidate solution against them.
+- **Planned advisory agent** (**not implemented**): after the deterministic
+  offline loop, a constrained harness may give an agent read-only access to the
+  validated report and tenant KB so it can draft cited answers and suggestions.
+  The human still approves, rejects, or defers. The contract and forbidden
+  actions are documented in `docs/advisory-agent-harness.md`.
 - **Docs** (`docs/`): the official problem statement, the solution overview, a
   findings-and-fixes log (issues found in the kit and in our own pipeline, and
   how each was resolved), and the honesty note (real / stubbed / simulated /
@@ -57,7 +62,7 @@ question for the organisers; the solution reports measured coverage regardless.
 |---|---|
 | `nexus_loop/` | The solution package: ingestion, features, detectors, asks, report, replay client, decision screen |
 | `run.py` | The one-command entrypoint that produces `loop-report.json` |
-| `docs/` | Official problem statement, solution overview, findings and fixes, and the honesty note |
+| `docs/` | Official problem statement, solution overview, findings and fixes, honesty note, and the planned advisory-agent harness contract |
 | `kit/` | The practice dataset (sessions, steps, turns, config timeline, labels, catalog, asks, ground truth, ~33 MB) |
 | `tools/nexus-loop-kit/` | Organiser tooling: generator, starter, scorer, replay service, schema, reference reports |
 | `tools/testbed/` | The held-out test suite |
@@ -175,7 +180,10 @@ answers the eleven operator asks as metrics or gaps, mines a "good" standard and
 freezes a golden set, assembles a schema-valid report of findings, diagnoses,
 impact and decision-shaped prescriptions, verifies one fix on the replay
 service, and serves a decision screen. Deterministic Python throughout; no LLM
-is called for any logged fact. Full detail: **`docs/solution-overview.md`**.
+is called for any logged fact. A planned, unimplemented advisory agent may later
+sit between the validated report and the human gate, with read-only report + KB
+access and draft-only output. Full detail: **`docs/solution-overview.md`** and
+**`docs/advisory-agent-harness.md`**.
 
 ---
 
@@ -189,6 +197,7 @@ New to the repo, read in this order:
 4. `docs/findings-and-fixes.md` — what the kit actually does, what we found, and what we fixed.
 5. `docs/submission-note.md` — real / stubbed / simulated / breaks at 100×.
 6. `tools/testbed/README.md` — how to evaluate a candidate.
+7. `docs/advisory-agent-harness.md` — the planned, unimplemented agent boundary.
 
 ---
 

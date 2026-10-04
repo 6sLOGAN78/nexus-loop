@@ -11,6 +11,12 @@ human operator one approve/reject action to take on each.
 Everything below is self-contained and offline. No API keys, no network calls,
 no model downloads.
 
+**Planned extension (documentation only):** after the deterministic offline
+loop, a constrained advisory-agent harness may read the validated report and a
+tenant-scoped knowledge base to draft cited answers and suggestions for the
+human operator. It is not implemented and cannot approve, deploy, or change
+evidence. See `solution/docs/advisory-agent-harness.md`.
+
 ---
 
 ## 1. What is in this ZIP
@@ -39,7 +45,7 @@ Inside `solution/`:
 | `kit/` | The practice dataset: sessions, steps, config timeline, labels, catalog, asks, ground truth (~33 MB). |
 | `tools/nexus-loop-kit/` | Organiser tooling: schema, scorer, and the replay service. |
 | `tools/testbed/` | Held-out corpus generator and candidate evaluator. |
-| `docs/` | The official problem statement, the solution overview, the findings-and-fixes log, and the honesty note. |
+| `docs/` | The official problem statement, solution overview, findings-and-fixes log, honesty note, and planned advisory-agent harness contract. |
 
 ---
 

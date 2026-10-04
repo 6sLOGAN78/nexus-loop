@@ -115,7 +115,11 @@ SUBTOTAL                55.0 / 55   (machine-scored)
 | **Tooling & Testbeds** | |
 | `tools/nexus-loop-kit/` | Organiser tooling: JSON schema, replay service (`serve.py`), and scoring harness (`score.py`). |
 | `tools/testbed/` | Multi-corpus generator and evaluation harness for held-out corpus testing. |
-| `tests/` | Test suites for the operator desk and signed copy adapters. |
+| `nexus_loop/test_app.py` | Complete unit test suite verifying offline static serving, security headers, atomic decision persistence, and decision note exports. |
+| **Submission & Reference Deliverables** | |
+| `submission/` | Official competition submission package: `Yellow.ai_ES_MayushAura.zip` and unpacked submission tree. |
+| `YellowAI_PS_TechQuest (1).pdf` | Official Yellow.ai TechQuest Problem Statement specification. |
+| `examples/` | Standalone reference artifacts: pre-rendered `demo.html` operator screen and `sample-report.json`. |
 | **Documentation** | |
 | `docs/` | Comprehensive technical documentation: `solution-overview.md`, `submission-note.md`, `advisory-agent-harness.md`, `findings-and-fixes.md`, `manager-english.md`, `ux-psychology.md`, `report-audit.md`, and `edge-cases.md`. |
 
@@ -227,4 +231,5 @@ Before any fix is prescribed, 30 eligible baseline sessions in the top efficienc
 **Team Mayush Aura**  
 Indian Institute of Technology Patna  
 - Ayush Maurya ([@6sLOGAN78](https://github.com/6sLOGAN78))
+- Mayookh Ghosh ([@Man1ac-1773](https://github.com/Man1ac-1773))
 - Developed for the **Yellow.ai TechQuest Hackathon**

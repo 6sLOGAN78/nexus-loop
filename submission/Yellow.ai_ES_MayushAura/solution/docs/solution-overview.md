@@ -97,6 +97,25 @@ kit/ (logs)
 Run order matters in one place: the detectors run **before** the asks, so the
 asks can deconfound themselves against detected faults and decoys.
 
+### Planned advisory layer — not implemented
+
+After the offline loop has produced and validated the report, a future advisory
+agent may review that evidence through a constrained harness. The harness would
+allow read-only access to `loop-report.json` and tenant-scoped KB retrieval, then
+return a cited answer or bounded suggestion to the operator. It would not be
+allowed to alter evidence, invent missing metrics, edit the KB, deploy a change,
+or record the human verdict.
+
+```text
+validated report → advisory harness → report.read + kb.search/kb.read
+                                  → cited draft answer / suggestion
+                                  → human approve / reject / defer
+```
+
+There is no agent runtime or model call in the current solution. The proposed
+capabilities, exchange shape, and forbidden actions are defined in
+`docs/advisory-agent-harness.md`.
+
 ---
 
 ## 5. The data model (the first thing to get right)
