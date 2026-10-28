@@ -233,3 +233,5 @@ Indian Institute of Technology Patna
 - Ayush Maurya ([@6sLOGAN78](https://github.com/6sLOGAN78))
 - Mayookh Ghosh ([@Man1ac-1773](https://github.com/Man1ac-1773))
 - Developed for the **Yellow.ai TechQuest Hackathon**
+
+- Anupam Sharma ([@Anupamgt](https://github.com/Anupamgt))
